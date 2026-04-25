@@ -1,0 +1,312 @@
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'background.dart';
+import 'screens/splash_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/quest_screen.dart';
+import 'screens/stats_screen.dart';
+import 'screens/shop_screen.dart';
+import 'screens/profile_screen.dart';
+import 'services/storage.dart';
+import 'services/auth_service.dart';
+import 'theme/theme.dart';
+import 'dart:ui';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  try {
+    await Hive.initFlutter();
+    await Storage.init();
+  } catch (e) {
+    debugPrint('Storage/Hive init error: $e');
+  }
+
+  try {
+    await AuthService().initialize();
+    if (Storage.isLoggedIn()) {
+      await Storage.checkDailyLoginReward();
+    }
+  } catch (e) {
+    debugPrint('Services init error: $e');
+  }
+  runApp(const SoloGainzApp());
+}
+
+class SoloGainzApp extends StatefulWidget {
+  const SoloGainzApp({super.key});
+  @override
+  State<SoloGainzApp> createState() => _SoloGainzAppState();
+}
+
+class _SoloGainzAppState extends State<SoloGainzApp> {
+  bool _splashDone = false;
+  ValueListenable<Box>? _loginListenable;
+
+  @override
+  void initState() {
+    super.initState();
+    _loginListenable = Storage.watch('is_logged_in');
+    _loginListenable?.addListener(_onLoginStateChange);
+  }
+
+  void _onLoginStateChange() {
+    // No-op as we are always logged in now
+  }
+
+  @override
+  void dispose() {
+    _loginListenable?.removeListener(_onLoginStateChange);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
+
+    return MaterialApp(
+      title: 'Solo Gainz',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
+      home: _splashDone
+          ? (Storage.getData('is_onboarded', defaultValue: false)
+              ? AppShell(onLogout: () async {})
+              : const OnboardingScreen())
+          : SplashScreen(onDone: () => setState(() => _splashDone = true)),
+    );
+  }
+}
+
+class AppShell extends StatefulWidget {
+  final VoidCallback onLogout;
+  const AppShell({super.key, required this.onLogout});
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell>
+    with SingleTickerProviderStateMixin {
+  int _idx = 0;
+  late final List<Widget> _pages;
+  late AnimationController _navAnimCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _navAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      value: Storage.isNavbarFloating() ? 1.0 : 0.0,
+    );
+    _pages = [
+      const SGScreenEntrance(child: HomePage()),
+      const SGScreenEntrance(child: StatsPage()),
+      const SGScreenEntrance(child: QuestPage()),
+      const SGScreenEntrance(child: ShopPage()),
+      SGScreenEntrance(child: ProfilePage(onLogout: widget.onLogout)),
+    ];
+  }
+
+  @override
+  void dispose() {
+    _navAnimCtrl.dispose();
+    super.dispose();
+  }
+
+  static const double gap = 16.0;
+  static const double navHeight = 64.0;
+
+  static const _icons = [
+    (Icons.space_dashboard_rounded, Icons.space_dashboard_outlined, 'Home'),
+    (Icons.analytics_rounded, Icons.analytics_outlined, 'Stats'),
+    (Icons.task_rounded, Icons.task_outlined, 'Quests'),
+    (Icons.local_mall_rounded, Icons.local_mall_outlined, 'Shop'),
+    (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return ValueListenableBuilder(
+      valueListenable:
+          Storage.watch(['is_navbar_floating', 'is_navbar_hidden']),
+      builder: (context, _, __) {
+        final isFloating = Storage.isNavbarFloating();
+        final isHidden = Storage.isNavbarHidden();
+
+        if (isFloating && _navAnimCtrl.value != 1.0) {
+          _navAnimCtrl.animateTo(1.0, curve: Curves.easeOutCubic);
+        } else if (!isFloating && _navAnimCtrl.value != 0.0) {
+          _navAnimCtrl.animateTo(0.0, curve: Curves.easeOutCubic);
+        }
+
+        return Stack(
+          children: [
+            const LivelyBackground(child: SizedBox.expand()),
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              extendBody: true,
+              body: AnimatedBuilder(
+                animation: _navAnimCtrl,
+                builder: (context, child) {
+                  return ClipPath(
+                    clipper: _ProNavClipper(
+                        bottomPadding, isHidden ? 0.0 : _navAnimCtrl.value),
+                    child: child,
+                  );
+                },
+                child: SafeArea(
+                  bottom: false,
+                  child: IndexedStack(index: _idx, children: _pages),
+                ),
+              ),
+              bottomNavigationBar: AnimatedSlide(
+                offset: isHidden ? const Offset(0, 1.5) : Offset.zero,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.fastOutSlowIn,
+                child: AnimatedBuilder(
+                  animation: _navAnimCtrl,
+                  builder: (context, child) {
+                    final t = _navAnimCtrl.value;
+                    final currentGap = gap * t;
+                    final marginSide = 16.0 * t;
+                    final radius = 20.0 * t;
+                    final currentNavHeight =
+                        navHeight + (bottomPadding * (1 - t));
+
+                    return Container(
+                      margin: EdgeInsets.fromLTRB(
+                          marginSide, 0, marginSide, currentGap),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            height: currentNavHeight,
+                            padding: EdgeInsets.only(
+                                bottom: bottomPadding * (1 - t)),
+                            decoration: BoxDecoration(
+                              color: AppTheme.glassLight,
+                              borderRadius: BorderRadius.circular(radius),
+                              border: Border(
+                                top: BorderSide(
+                                    color: AppTheme.glassBorder, width: 1),
+                                bottom: BorderSide(
+                                    color: t > 0.01
+                                        ? AppTheme.glassBorder
+                                        : Colors.transparent,
+                                    width: t > 0.01 ? 1 : 0),
+                                left: BorderSide(
+                                    color: t > 0.01
+                                        ? AppTheme.glassBorder
+                                        : Colors.transparent,
+                                    width: t > 0.01 ? 1 : 0),
+                                right: BorderSide(
+                                    color: t > 0.01
+                                        ? AppTheme.glassBorder
+                                        : Colors.transparent,
+                                    width: t > 0.01 ? 1 : 0),
+                              ),
+                            ),
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: List.generate(_icons.length, (i) {
+                      final sel = _idx == i;
+                      final item = _icons[i];
+                      return Expanded(
+                        child: SGTouchable(
+                          onTap: () => setState(() => _idx = i),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                sel ? item.$1 : item.$2,
+                                size: 20,
+                                color: sel ? AppTheme.accent : AppTheme.muted,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(item.$3,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    fontWeight:
+                                        sel ? FontWeight.w600 : FontWeight.w500,
+                                    color:
+                                        sel ? AppTheme.accent : AppTheme.muted,
+                                    letterSpacing: 0.2,
+                                  )),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ProNavClipper extends CustomClipper<Path> {
+  final double bottomPadding;
+  final double t;
+  _ProNavClipper(this.bottomPadding, this.t);
+
+  @override
+  Path getClip(Size size) {
+    final fullPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    if (t <= 0.0) return fullPath;
+
+    final gap = bottomPadding > 0 ? bottomPadding : 16.0;
+    const navHeight = 64.0;
+
+    final currentGap = gap * t;
+    final marginSide = 16.0 * t;
+    final radius = 20.0 * t;
+    final currentNavHeight = navHeight + (bottomPadding * (1 - t));
+    final navTop = size.height - currentNavHeight - currentGap;
+
+    final punchPath = Path();
+
+    final navRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+          marginSide, navTop, size.width - (marginSide * 2), currentNavHeight),
+      Radius.circular(radius),
+    );
+    punchPath.addRRect(navRRect);
+
+    if (t > 0) {
+      final gapRect = Rect.fromLTWH(marginSide, navTop + navHeight / 2,
+          size.width - (marginSide * 2), (navHeight / 2) + currentGap + 10);
+      punchPath.addRect(gapRect);
+    }
+
+    return Path.combine(PathOperation.difference, fullPath, punchPath);
+  }
+
+  @override
+  bool shouldReclip(_ProNavClipper oldClipper) =>
+      bottomPadding != oldClipper.bottomPadding || t != oldClipper.t;
+}

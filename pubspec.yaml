@@ -1,0 +1,46 @@
+name: solo_gainz
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  image_picker: ^1.1.0
+  google_fonts: ^7.0.0
+  supabase_flutter: ^2.3.0
+  connectivity_plus: ^5.0.0
+  image_cropper: ^8.0.0
+  flutter_local_notifications: ^17.1.0
+  permission_handler: ^11.3.1
+  timezone: ^0.9.4
+  flutter_timezone: ^5.0.2
+  url_launcher: ^6.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  hive_generator: ^2.0.0
+  build_runner: ^2.4.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - Assets/Player Model/Idle/
+    - Assets/Player Model/Run/
+    - Assets/Player Model/Sprint/
+    - Assets/Player Model/Jump/
+    - Assets/Player Model/Hit/
+    - Assets/Player Model/HitUp/
+    - Assets/Player Model/Stunned/
+    - Assets/Rank Shields/
+    - Assets/Chests/Wooden Chest/Idle/
+    - Assets/Chests/Wooden Chest/open/
+    - Assets/Chests/Iron Chest/Idle/
+    - Assets/Chests/Iron Chest/Open/
