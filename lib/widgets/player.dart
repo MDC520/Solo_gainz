@@ -48,6 +48,7 @@ class _PlayerState extends State<Player> {
     'Stunned': 7,
     'JumpDust': 7,
     'LandingDust': 6,
+    'Spin': 8,
   };
 
   @override

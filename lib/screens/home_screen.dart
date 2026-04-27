@@ -634,8 +634,7 @@ class _HomePageState extends State<HomePage> {
                                     const SizedBox(width: 12),
                                     Text(
                                       'CLEAR FLOOR 1',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.black,
+                                      style: AppTheme.h3(color: Colors.black).copyWith(
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 2,
                                         fontSize: 16,

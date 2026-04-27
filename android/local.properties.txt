@@ -1,0 +1,5 @@
+sdk.dir=/home/mouhamedbhia/Android/Sdk
+flutter.sdk=/home/mouhamedbhia/Documents/flutterengine
+flutter.buildMode=release
+flutter.versionName=0.1.0
+flutter.versionCode=1

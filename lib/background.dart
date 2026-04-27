@@ -34,43 +34,7 @@ class _LivelyBackgroundState extends State<LivelyBackground>
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.black,
-      child: Stack(
-        children: [
-          // Aura 1 (Accent)
-          AnimatedBuilder(
-            animation: _ctrl,
-            builder: (context, _) {
-              final angle = _ctrl.value * 2 * pi;
-              final dx = cos(angle) * 100;
-              final dy = sin(angle) * 50;
-              return Positioned(
-                top: -100 + dy,
-                left: -100 + dx,
-                child: _buildAura(AppTheme.accent, 300),
-              );
-            },
-          ),
-
-          // Aura 2 (Cyan)
-          AnimatedBuilder(
-            animation: _ctrl,
-            builder: (context, _) {
-              final angle = _ctrl.value * 2 * pi + pi; // Opposite phase
-              final dx = cos(angle) * 80;
-              final dy = sin(angle) * 100;
-              return Positioned(
-                bottom: -150 + dy,
-                right: -100 + dx,
-                child: _buildAura(AppTheme.cyan, 400),
-              );
-            },
-          ),
-
-          // Content Layer (The blur is handled by individual SGCards now,
-          // or we can add a global subtle noise grain here in the future)
-          Positioned.fill(child: widget.child),
-        ],
-      ),
+      child: widget.child,
     );
   }
 

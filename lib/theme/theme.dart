@@ -26,6 +26,7 @@ class AppTheme {
   static const Color amber     = Color(0xFFFFD500); // Solar Gold
   static const Color red       = Color(0xFFFF3366); // Cyber Crimson
   static const Color purple    = Color(0xFFB52BFF); // Deep Void Purple
+  static const Color silver    = Color(0xFFAEB2B5); // Premium Silver
 
   // ── Glass Tints (Opacities) ───────────────────────────────────
   static final Color glassLight = Colors.white.withValues(alpha: 0.03);

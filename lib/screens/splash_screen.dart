@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen>
               children: [
                 Text('SOLO GAINZ',
                     style: GoogleFonts.poppins(
-                      fontSize: 32,
+                      fontSize: 48,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.text1,
                       letterSpacing: 4,

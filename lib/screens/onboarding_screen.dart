@@ -1,227 +1,121 @@
-import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'dart:ui';
-import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../models/user_stats.dart';
 import '../services/storage.dart';
+import '../services/auth_service.dart';
 import '../theme/theme.dart';
-import '../main.dart';
 import '../background.dart';
+import '../widgets/player.dart';
+import '../services/notification_manager.dart';
+import 'dart:math' as math;
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback onDone;
+  const OnboardingScreen({super.key, required this.onDone});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  final PageController _categoryPageController = PageController();
-  int _currentPage = 0;
+  final PageController _pageCtrl = PageController();
+  int _page = 0;
+  static const int _totalPages = 5;
+  bool _isFinishing = false;
 
-  // Level Selection State
-  int _selectedLevelIndex = 0;
+  // Step 3 — Daily goal
+  String _dailyGoal = 'medium'; // light / medium / hard
 
-  // Quest Selection State
+  // Step 4 — Notifications
+  bool _notificationsEnabled = true;
+
+  // Step 5 — Level
+  int _levelIndex = 0;
+
+  // Step 6 — Loadout
   final List<Exercise> _selected = [];
-  final List<Exercise> _customExercises = [];
-  int _categoryIndex = 0; // 0: Home, 1: Gym, 2: Custom
-
-
+  final List<Exercise> _custom = [];
+  int _catIndex = 0;
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _categoryPageController.dispose();
+    _pageCtrl.dispose();
     super.dispose();
   }
 
+  // ── Navigation ─────────────────────────────────────────────────
   void _next() {
-    if (_currentPage < 3) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOutExpo,
-      );
+    if (_page < _totalPages - 1) {
+      _pageCtrl.nextPage(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutExpo);
     } else {
       _finish();
     }
   }
 
   void _back() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOutExpo,
-      );
+    if (_page > 0) {
+      _pageCtrl.previousPage(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutExpo);
     }
   }
 
-
-
-  void _toggle(Exercise ex) {
-    AppTheme.tap();
-    setState(() {
-      if (_selected.contains(ex)) {
-        _selected.remove(ex);
-      } else if (_selected.length < 4) {
-        _selected.add(ex);
-      }
-    });
+  bool get _canProceed {
+    if (_page == _totalPages - 1) return _selected.length == 4;
+    return true;
   }
 
-  IconData _getExerciseIcon(String type) {
-    if (type.contains('pushup')) return Icons.fitness_center_rounded;
-    if (type.contains('situp') || type.contains('crunch'))
-      return Icons.accessibility_new_rounded;
-    if (type.contains('plank') || type.contains('twist'))
-      return Icons.self_improvement_rounded;
-    if (type.contains('squat') || type.contains('lunge'))
-      return Icons.directions_walk_rounded;
-    if (type.contains('run') ||
-        type.contains('sprint') ||
-        type.contains('treadmill')) return Icons.directions_run_rounded;
-    if (type.contains('press')) return Icons.unfold_more_rounded;
-    if (type.contains('row') || type.contains('pull'))
-      return Icons.align_vertical_bottom_rounded;
-    if (type.contains('machine')) return Icons.settings_input_component_rounded;
-    if (type.contains('burpee') || type.contains('jump'))
-      return Icons.bolt_rounded;
-    if (type.contains('custom')) return Icons.edit_note_rounded;
-    return Icons.fitness_center_rounded;
-  }
-
-  void _addCustomExercise() {
-    final nameCtrl = TextEditingController();
-    String system = 'reps';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-              30, 20, 30, MediaQuery.of(context).viewInsets.bottom + 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                  child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(2)))),
-              const SizedBox(height: 24),
-              Text("Create Custom Quest", style: AppTheme.h2()),
-              const SizedBox(height: 24),
-              TextField(
-                controller: nameCtrl,
-                autofocus: true,
-                style: AppTheme.body(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Exercise Name (e.g. Walking)",
-                  hintStyle: AppTheme.body(color: Colors.white38),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildModalTab(
-                      active: system == 'reps',
-                      label: "REPS",
-                      onTap: () => setModalState(() => system = 'reps'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildModalTab(
-                      active: system == 'timer',
-                      label: "TIMER",
-                      onTap: () => setModalState(() => system = 'timer'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              SGButton(
-                label: "Create Quest",
-                onTap: () {
-                  if (nameCtrl.text.isEmpty) return;
-                  final ex = Exercise(
-                    name: nameCtrl.text,
-                    type: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-                    system: system,
-                    defaultGoal: system == 'reps' ? 20 : 300,
-                  );
-                  setState(() {
-                    _customExercises.add(ex);
-                    if (_selected.length < 4) _selected.add(ex);
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModalTab(
-      {required bool active,
-      required String label,
-      required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 50,
-        decoration: BoxDecoration(
-          color: active ? AppTheme.accent : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        alignment: Alignment.center,
-        child: Text(label,
-            style: AppTheme.label(color: active ? Colors.black : Colors.white)),
-      ),
-    );
-  }
-
+  // ── Finish ─────────────────────────────────────────────────────
   Future<void> _finish() async {
-    // Set Initial Stats based on Level Choice
-    String startRank = 'E';
-    int startLevel = 1;
+    setState(() => _isFinishing = true);
+    
+    // Play success haptic/sound
+    AppTheme.success();
 
-    if (_selectedLevelIndex == 1) {
-      startRank = 'D';
-      startLevel = 9;
-    } else if (_selectedLevelIndex == 2) {
-      startRank = 'C';
-      startLevel = 16;
+    // Set rank/level based on daily goal
+    String rank = 'E';
+    int level = 1;
+    if (_dailyGoal == 'medium') {
+      rank = 'D';
+      level = 9;
+    } else if (_dailyGoal == 'hard') {
+      rank = 'C';
+      level = 16;
+    }
+
+    // Save daily goal & notifications
+    await Storage.saveData('daily_goal', _dailyGoal);
+    await Storage.saveData('notifications_enabled', _notificationsEnabled);
+
+    if (_notificationsEnabled) {
+      try {
+        await NotificationManager().showNotification(
+          id: 100,
+          title: 'Welcome to Solo Gainz! 🏆',
+          body: 'Your journey starts now. Let\'s crush those daily quests!',
+        );
+
+        final now = DateTime.now();
+        final tomorrow = DateTime(now.year, now.month, now.day + 1, 8, 0);
+        await NotificationManager().scheduleNotification(
+          id: 101,
+          title: 'Training Time! ⚔️',
+          body: 'Don\'t break your streak. Your daily quests are waiting.',
+          scheduledDate: tomorrow,
+        );
+      } catch (e) {
+        debugPrint('Notification Error: $e');
+      }
     }
 
     final stats = Storage.getUserStats();
-    stats.rank = startRank;
-    stats.level = startLevel;
+    stats.rank = rank;
+    stats.level = level;
     await Storage.saveUserStats(stats);
 
-    final goal = RankSystem.getMaxReps(stats.rank, stats.level);
-    final xp = RankSystem.getQuestXpReward(stats.rank);
-
+    // Build quests
+    final goal = RankSystem.getMaxReps(rank, level);
+    final xp = RankSystem.getQuestXpReward(rank);
     final quests = _selected
         .map((e) => DailyQuest(
               questName: e.name,
@@ -236,620 +130,1010 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await Storage.saveDailyQuests(quests);
     await Storage.saveData('is_onboarded', true);
 
-    AppTheme.success();
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => AppShell(onLogout: () async {}),
-          transitionsBuilder: (_, a, __, c) =>
-              FadeTransition(opacity: a, child: c),
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+    // Sync to Supabase immediately and await it
+    try {
+      await AuthService().syncData();
+    } catch (e) {
+      debugPrint('Onboarding sync error: $e');
     }
+
+    // Wait for the animation to feel good (Requested 3.85 seconds)
+    // We subtract a bit for the sync time, but keep it roughly 3.85 total if possible
+    await Future.delayed(const Duration(milliseconds: 3850));
+
+    if (mounted) widget.onDone();
   }
 
+  // ── Exercise toggle ────────────────────────────────────────────
+  void _toggle(Exercise ex) {
+    AppTheme.tap();
+    setState(() {
+      if (_selected.contains(ex)) {
+        _selected.remove(ex);
+      } else if (_selected.length < 4) {
+        _selected.add(ex);
+      }
+    });
+  }
+
+  IconData _icon(String type) {
+    if (type.contains('pushup')) return Icons.fitness_center_rounded;
+    if (type.contains('situp') || type.contains('crunch')) {
+      return Icons.accessibility_new_rounded;
+    }
+    if (type.contains('plank') || type.contains('twist')) {
+      return Icons.self_improvement_rounded;
+    }
+    if (type.contains('squat') || type.contains('lunge')) {
+      return Icons.directions_walk_rounded;
+    }
+    if (type.contains('run') ||
+        type.contains('sprint') ||
+        type.contains('treadmill')) {
+      return Icons.directions_run_rounded;
+    }
+    if (type.contains('press')) return Icons.unfold_more_rounded;
+    if (type.contains('row') || type.contains('pull')) {
+      return Icons.align_vertical_bottom_rounded;
+    }
+    if (type.contains('machine')) return Icons.settings_input_component_rounded;
+    if (type.contains('burpee') || type.contains('jump')) {
+      return Icons.bolt_rounded;
+    }
+    if (type.contains('custom')) return Icons.edit_note_rounded;
+    return Icons.fitness_center_rounded;
+  }
+
+  // ── Add custom exercise ────────────────────────────────────────
+  void _addCustom() {
+    final ctrl = TextEditingController();
+    String system = 'reps';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, set) => Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+              24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                  child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: AppTheme.line,
+                          borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 20),
+              Text('Create Custom Quest', style: AppTheme.h2()),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.bg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.line),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                height: 44,
+                child: TextField(
+                  controller: ctrl,
+                  autofocus: true,
+                  style: AppTheme.body(color: AppTheme.text1),
+                  decoration: InputDecoration(
+                    hintText: 'Exercise name (e.g. Walking)',
+                    hintStyle: AppTheme.body(color: AppTheme.text2),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(children: [
+                Expanded(
+                    child: _modalTab('REPS', system == 'reps',
+                        () => set(() => system = 'reps'))),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _modalTab('TIMER', system == 'timer',
+                        () => set(() => system = 'timer'))),
+              ]),
+              const SizedBox(height: 24),
+              SGButton(
+                label: 'Create Quest',
+                onTap: () {
+                  if (ctrl.text.isEmpty) return;
+                  final ex = Exercise(
+                    name: ctrl.text,
+                    type: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+                    system: system,
+                    defaultGoal: system == 'reps' ? 20 : 300,
+                  );
+                  setState(() {
+                    _custom.add(ex);
+                    if (_selected.length < 4) _selected.add(ex);
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modalTab(String label, bool active, VoidCallback onTap) {
+    return SGTouchable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 44,
+        decoration: BoxDecoration(
+          color: active ? AppTheme.accent : AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: active ? AppTheme.accent : AppTheme.line),
+        ),
+        alignment: Alignment.center,
+        child: Text(label,
+            style: AppTheme.label(
+                color: active ? AppTheme.black : AppTheme.text2)),
+      ),
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.bg,
       body: LivelyBackground(
-        child: Stack(
-          children: [
-            PageView(
-              controller: _pageController,
-              onPageChanged: (i) => setState(() => _currentPage = i),
-              children: [
-                _buildIntroSlide(
-                  icon: Icons.auto_awesome_rounded,
-                  title: "Welcome to Solo Gainz",
-                  subtitle:
-                      "The ultimate gamified fitness experience. Level up your body like you level up your character.",
-                ),
-                _buildIntroSlide(
-                  icon: Icons.workspace_premium_rounded,
-                  title: "Earn Your Ranks",
-                  subtitle:
-                      "Complete daily quests, earn XP, and climb from Rank E to the legendary Rank SG.",
-                ),
-                _buildLevelSlide(),
-                _buildSelectionSlide(),
-              ],
-            ),
-            _buildNavigationOverlay(),
-          ],
-        ),
+        child: Stack(children: [
+          PageView(
+            controller: _pageCtrl,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (i) => setState(() => _page = i),
+            children: [
+              _introSlide(
+                title: 'Welcome to\nSolo Gainz',
+                subtitle:
+                    'The ultimate gamified fitness experience.\nLevel up your body like your favourite RPG character.',
+                customIcon: const WavingHand(),
+              ),
+              _introSlide(
+                title: 'Earn Your\nRanks',
+                subtitle:
+                    'Complete daily quests, earn XP, and climb\nfrom Rank E to the legendary Rank SG.',
+                customIcon: const RankDeck(),
+              ),
+              _dailyGoalSlide(),
+              _notificationsSlide(),
+              _loadoutSlide(),
+            ],
+          ),
+          _navOverlay(),
+          if (_isFinishing) _finishingOverlay(),
+        ]),
       ),
     );
   }
 
-  Widget _buildIntroSlide(
-      {required IconData icon, required String title, required String subtitle}) {
-    return Container(
-      color: Colors.transparent,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
+  Widget _finishingOverlay() {
+    String rankFile = 'E Rank.png';
+    if (_dailyGoal == 'medium') rankFile = 'D Rank.png';
+    if (_dailyGoal == 'hard') rankFile = 'C Rank.png';
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 800),
+      builder: (context, val, child) => Container(
+        color: AppTheme.black.withValues(alpha: val),
+        child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.accent.withOpacity(0.2), width: 2),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 1200),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, _) => Opacity(
+                  opacity: v,
+                  child: Transform.scale(
+                    scale: 0.9 + (0.1 * v),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 180,
+                          width: 180,
+                          child: Image.asset('Assets/Rank Shields/$rankFile'),
+                        ),
+                        const SizedBox(height: 40),
+                        Text('SYSTEM INITIALIZED',
+                            style: AppTheme.label(color: AppTheme.accent).copyWith(
+                              letterSpacing: 6,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            )),
+                        const SizedBox(height: 16),
+                        Text('WELCOME, PLAYER',
+                            style: AppTheme.h1().copyWith(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                            )),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Icon(icon, size: 80, color: AppTheme.accent),
               ),
               const SizedBox(height: 60),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: AppTheme.h1().copyWith(fontSize: 36, letterSpacing: -1),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: AppTheme.body()
-                    .copyWith(color: Colors.white70, fontSize: 17),
-              ),
-              const SizedBox(height: 100), // Space for button
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLevelSlide() {
-    return Container(
-      color: Colors.transparent,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(30, 0, 30, 140),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Select Difficulty",
-                  style: AppTheme.h1().copyWith(fontSize: 32)),
-              const SizedBox(height: 12),
-              Text(
-                "Your starting rank and stats will be adjusted based on this choice.",
-                textAlign: TextAlign.center,
-                style: AppTheme.body(color: AppTheme.text2),
-              ),
-              const SizedBox(height: 48),
-              _buildLevelCard(
-                index: 0,
-                title: "Beginner",
-                desc: "Rank E • 10 Reps Baseline",
-                icon: Icons.directions_walk_rounded,
-              ),
-              _buildLevelCard(
-                index: 1,
-                title: "Expert",
-                desc: "Rank D • 20 Reps Baseline",
-                icon: Icons.directions_run_rounded,
-              ),
-              _buildLevelCard(
-                index: 2,
-                title: "Master",
-                desc: "Rank C • 30 Reps Baseline",
-                icon: Icons.fitness_center_rounded,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLevelCard(
-      {required int index,
-      required String title,
-      required String desc,
-      required IconData icon}) {
-    final isSelected = _selectedLevelIndex == index;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: SGTouchable(
-        onTap: () => setState(() => _selectedLevelIndex = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppTheme.accent.withOpacity(0.08)
-                : Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? AppTheme.accent.withOpacity(0.8)
-                  : Colors.white.withOpacity(0.08),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon,
-                  color: isSelected ? AppTheme.accent : Colors.white38,
-                  size: 24),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: AppTheme.h3(
-                            color: isSelected ? AppTheme.accent : Colors.white)),
-                    const SizedBox(height: 2),
-                    Text(desc,
-                        style: AppTheme.caption(
-                            color: isSelected
-                                ? Colors.white70
-                                : Colors.white24)),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                const Icon(Icons.radio_button_checked_rounded,
-                    color: AppTheme.accent, size: 20),
-              if (!isSelected)
-                Icon(Icons.radio_button_off_rounded,
-                    color: Colors.white.withOpacity(0.1), size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectionSlide() {
-    final List<Exercise> exercises;
-    if (_categoryIndex == 0) {
-      exercises = ExerciseLibrary.homeExercises;
-    } else if (_categoryIndex == 1)
-      exercises = ExerciseLibrary.gymExercises;
-    else
-      exercises = _customExercises;
-
-    return Container(
-      color: Colors.transparent,
-      child: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Text("Your Loadout", style: AppTheme.h1().copyWith(fontSize: 28)),
-            const SizedBox(height: 8),
-            Text(
-              "Select 4 exercises to begin your training.",
-              style: AppTheme.body().copyWith(color: AppTheme.text2),
-            ),
-            const SizedBox(height: 24),
-
-            // Category Switcher (Sliding Style)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: LayoutBuilder(
-                  builder: (ctx, constraints) {
-                    final tabWidth = constraints.maxWidth / 3;
-                    return Stack(
-                      children: [
-                        // Sliding Indicator
-                        AnimatedPositioned(
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeOutCubic,
-                          left: _categoryIndex * tabWidth,
-                          top: 4,
-                          bottom: 4,
-                          width: tabWidth,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                        // Buttons
-                        Row(
-                          children: [
-                            _buildCategoryButton(0, "Home"),
-                            _buildCategoryButton(1, "Gym"),
-                            _buildCategoryButton(2, "Custom"),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Exercise Grid with separators & sliding PageView
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
-                    bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+              // Cinematic progress bar
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 3850),
+                builder: (context, progress, _) => SizedBox(
+                  width: 240,
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: AppTheme.line.withValues(alpha: 0.1),
+                        color: AppTheme.accent,
+                        minHeight: 2,
+                      ),
+                      const SizedBox(height: 8),
+                      Text('${(progress * 100).toInt()}%', 
+                        style: AppTheme.caption(color: AppTheme.accent).copyWith(fontFamily: 'monospace')),
+                    ],
                   ),
                 ),
-                child: PageView(
-                  controller: _categoryPageController,
-                  onPageChanged: (i) => setState(() => _categoryIndex = i),
-                  children: [
-                    _buildExerciseGrid(ExerciseLibrary.homeExercises),
-                    _buildExerciseGrid(ExerciseLibrary.gymExercises),
-                    _buildExerciseGrid(_customExercises, isCustom: true),
-                  ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _introSlide(
+      {IconData? icon,
+      Widget? customIcon,
+      required String title,
+      required String subtitle,
+      bool showIcon = true}) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (showIcon) ...[
+              if (customIcon != null) ...[
+                customIcon,
+                const SizedBox(height: 52),
+              ] else if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: AppTheme.accent.withValues(alpha: 0.2),
+                        width: 1.5),
+                  ),
+                  child: Icon(icon, size: 72, color: AppTheme.accent),
                 ),
+                const SizedBox(height: 52),
+              ],
+            ],
+            Text(title,
+                textAlign: TextAlign.center,
+                style: AppTheme.h1().copyWith(
+                  fontSize: 44,
+                  letterSpacing: -2,
+                  height: 1.05,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.text1,
+                )),
+            const SizedBox(height: 28),
+            // Subtle professional divider
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
+            const SizedBox(height: 28),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(subtitle,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.body(color: AppTheme.text2).copyWith(
+                    fontSize: 17,
+                    height: 1.55,
+                    letterSpacing: 0.1,
+                  )),
+            ),
+            const SizedBox(height: 140),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCategoryButton(int index, String label) {
-    final active = _categoryIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _categoryPageController.animateToPage(index,
-              duration: const Duration(milliseconds: 400),
-              curve: SGCurves.smooth);
-          setState(() => _categoryIndex = index);
-        },
-        child: Container(
-          color: Colors.transparent,
-          child: Center(
-            child: Text(
-              label,
-              style: AppTheme.label(
-                color: active ? Colors.white : Colors.white38,
-              ),
-            ),
-          ),
+  // ── Slide 3: Daily Goal ────────────────────────────────────────
+  Widget _dailyGoalSlide() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildPlayerPreview(),
+            const SizedBox(height: 32),
+            Text('Daily Training Goal',
+                style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
+            const SizedBox(height: 12),
+            Text('Slide to increase your training intensity',
+                textAlign: TextAlign.center,
+                style: AppTheme.body(color: AppTheme.text2)
+                    .copyWith(fontSize: 16)),
+            const SizedBox(height: 48),
+            _buildDifficultySlider(),
+            const SizedBox(height: 48),
+            _buildGoalInfo(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildExerciseGrid(List<Exercise> exercises, {bool isCustom = false}) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 140),
-      itemCount: exercises.length + (isCustom ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (isCustom && index == exercises.length) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: SGTouchable(
-              onTap: _addCustomExercise,
-              child: Container(
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DottedBorder(
-                  color: Colors.white.withOpacity(0.1),
-                  strokeWidth: 1.5,
-                  dashPattern: const [6, 4],
-                  radius: const Radius.circular(16),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.add_rounded,
-                            color: Colors.white24, size: 20),
-                        const SizedBox(width: 10),
-                        Text("Add Custom",
-                            style: AppTheme.label(color: Colors.white24)),
-                      ],
+  Widget _buildDifficultySlider() {
+    double value = 0;
+    if (_dailyGoal == 'medium') value = 1;
+    if (_dailyGoal == 'hard') value = 2;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppTheme.line),
+      ),
+      child: SliderTheme(
+        data: SliderThemeData(
+          trackHeight: 6,
+          activeTrackColor: _goalColor.withValues(alpha: 0.3),
+          inactiveTrackColor: AppTheme.line,
+          thumbColor: _goalColor,
+          overlayColor: _goalColor.withValues(alpha: 0.1),
+          activeTickMarkColor: Colors.transparent,
+          inactiveTickMarkColor: Colors.transparent,
+          thumbShape: const RoundSliderThumbShape(
+            enabledThumbRadius: 18,
+            elevation: 0,
+            pressedElevation: 0,
+          ),
+        ),
+        child: Slider(
+          value: value,
+          min: 0,
+          max: 2,
+          divisions: 2,
+          onChanged: (val) {
+            AppTheme.tap();
+            setState(() {
+              if (val == 0) _dailyGoal = 'light';
+              else if (val == 1) _dailyGoal = 'medium';
+              else _dailyGoal = 'hard';
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalInfo() {
+    String title = 'Beginner';
+    String desc = '2 quests per day • Casual training';
+    if (_dailyGoal == 'medium') {
+      title = 'Experienced';
+      desc = '4 quests per day • Balanced training';
+    } else if (_dailyGoal == 'hard') {
+      title = 'Elite';
+      desc = '6 quests per day • Intensive training';
+    }
+
+    return Column(
+      children: [
+        Text(title.toUpperCase(),
+            style: AppTheme.h2(color: _goalColor).copyWith(
+              letterSpacing: 2,
+              fontWeight: FontWeight.w900,
+            )),
+        const SizedBox(height: 8),
+        Text(desc, style: AppTheme.body(color: AppTheme.text2)),
+      ],
+    );
+  }
+
+  Color get _goalColor {
+    if (_dailyGoal == 'light') return AppTheme.accent;
+    if (_dailyGoal == 'medium') return AppTheme.amber;
+    return AppTheme.red;
+  }
+
+  // ── Slide 4: Notifications ────────────────────────────────────
+  Widget _notificationsSlide() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.cyan.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppTheme.cyan.withValues(alpha: 0.2), width: 1.5),
+              ),
+              child: Icon(Icons.notifications_rounded,
+                  size: 52, color: AppTheme.cyan),
+            ),
+            const SizedBox(height: 32),
+            Text('Daily Reminders',
+                style: AppTheme.h1().copyWith(fontSize: 30)),
+            const SizedBox(height: 10),
+            Text('Stay consistent. We\'ll remind you to train every day.',
+                textAlign: TextAlign.center,
+                style: AppTheme.body(color: AppTheme.text2)),
+            const SizedBox(height: 40),
+            SGCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cyan.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Icon(Icons.notifications_active_rounded,
+                        color: AppTheme.cyan, size: 22),
                   ),
-                ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                      child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Enable Notifications', style: AppTheme.h3()),
+                      Text('Daily training reminders',
+                          style: AppTheme.caption()),
+                    ],
+                  )),
+                  Switch(
+                    value: _notificationsEnabled,
+                    onChanged: (v) async {
+                      if (v) {
+                        final granted =
+                            await NotificationManager().requestPermissions();
+                        if (!granted) {
+                          // If they denied it, don't flip the switch or show a snackbar
+                          // For now, let's just keep it simple and update state if they want it
+                          // but the OS will still block it if denied.
+                        }
+                      }
+                      setState(() => _notificationsEnabled = v);
+                    },
+                    activeColor: AppTheme.cyan,
+                    activeTrackColor: AppTheme.cyan.withValues(alpha: 0.3),
+                    inactiveTrackColor: AppTheme.surface,
+                    inactiveThumbColor: AppTheme.text2,
+                  ),
+                ]),
+                if (_notificationsEnabled) ...[
+                  const SizedBox(height: 16),
+                  Divider(color: AppTheme.line, height: 1),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Icon(Icons.access_time_rounded,
+                        color: AppTheme.text2, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Reminder Time',
+                        style: AppTheme.body(color: AppTheme.text1)),
+                    const Spacer(),
+                    Text('8:00 AM',
+                        style: AppTheme.label(color: AppTheme.accent)),
+                  ]),
+                ],
+              ]),
+            ),
+            const SizedBox(height: 16),
+            Text('You can change this anytime in Profile → Settings.',
+                textAlign: TextAlign.center,
+                style: AppTheme.caption(color: AppTheme.muted)),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // ── Slide 6: Loadout ──────────────────────────────────────────
+  Widget _loadoutSlide() {
+    final exercises = _catIndex == 0
+        ? ExerciseLibrary.homeExercises
+        : _catIndex == 1
+            ? ExerciseLibrary.gymExercises
+            : _custom;
+
+    return SafeArea(
+      child: Column(children: [
+        const SizedBox(height: 24),
+        Text('Daily Loadout', style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Select ', style: AppTheme.body(color: AppTheme.text2)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: _selected.length == 4 ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _selected.length == 4 ? AppTheme.accent : AppTheme.line),
+              ),
+              child: Text('${_selected.length}/4', 
+                style: AppTheme.label(color: _selected.length == 4 ? AppTheme.accent : AppTheme.text1)),
+            ),
+            Text(' exercises for your quest.', style: AppTheme.body(color: AppTheme.text2)),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        // Category switcher (Premium Segmented Control)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.line),
+            ),
+            child: Row(children: [
+              _catBtn(0, 'Home', Icons.home_rounded),
+              _catBtn(1, 'Gym', Icons.fitness_center_rounded),
+              _catBtn(2, 'Custom', Icons.auto_awesome_rounded),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 160),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: exercises.length + (_catIndex == 2 ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (_catIndex == 2 && index == exercises.length) {
+                return _addCustomCard();
+              }
+              return _exerciseCard(exercises[index]);
+            },
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _exerciseCard(Exercise ex) {
+    final sel = _selected.contains(ex);
+    final selIndex = _selected.indexOf(ex) + 1;
+
+    return SGTouchable(
+      onTap: () => _toggle(ex),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: sel ? AppTheme.accent.withValues(alpha: 0.1) : AppTheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: sel ? AppTheme.accent.withValues(alpha: 0.8) : AppTheme.line,
+            width: sel ? 2 : 1,
+          ),
+          boxShadow: sel ? [
+            BoxShadow(
+              color: AppTheme.accent.withValues(alpha: 0.15),
+              blurRadius: 20,
+              spreadRadius: -2,
+            )
+          ] : [],
+        ),
+        child: Stack(
+          children: [
+            // Icon Background
+            Positioned(
+              right: -10,
+              bottom: -10,
+              child: Opacity(
+                opacity: sel ? 0.15 : 0.05,
+                child: Icon(_icon(ex.type), size: 80, color: sel ? AppTheme.accent : AppTheme.text2),
               ),
             ),
-          );
-        }
-
-        final ex = exercises[index];
-        final isSelected = _selected.contains(ex);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: SGTouchable(
-            onTap: () => _toggle(ex),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 64,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.accent.withOpacity(0.08)
-                    : Colors.white.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected
-                      ? AppTheme.accent.withOpacity(0.8)
-                      : Colors.white.withOpacity(0.08),
-                  width: 1,
-                ),
-              ),
-              child: Row(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    _getExerciseIcon(ex.type),
-                    color: isSelected ? AppTheme.accent : Colors.white38,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      ex.name,
-                      style: AppTheme.h3(
-                        color: isSelected ? AppTheme.accent : Colors.white,
-                      ).copyWith(fontSize: 15),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: sel ? AppTheme.accent : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: sel ? AppTheme.accent : AppTheme.line),
                     ),
+                    child: Icon(_icon(ex.type), 
+                      color: sel ? AppTheme.black : AppTheme.text2, 
+                      size: 18),
                   ),
-                  if (isSelected)
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: AppTheme.accent,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.accent.withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          "${_selected.indexOf(ex) + 1}",
-                          style: AppTheme.mono(
-                            color: Colors.black,
-                            size: 12,
-                          ).copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  if (!isSelected)
-                    Icon(Icons.radio_button_off_rounded,
-                        color: Colors.white.withOpacity(0.1), size: 20),
+                  const Spacer(),
+                  Text(ex.name, 
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.h3(color: sel ? AppTheme.accent : AppTheme.text1).copyWith(
+                      fontSize: 14,
+                      height: 1.2,
+                    )),
                 ],
               ),
             ),
-          ),
-        );
-      },
+            if (sel)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: Center(
+                    child: Text('$selIndex', 
+                      style: AppTheme.label(color: AppTheme.black).copyWith(fontSize: 12)),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildNavigationOverlay() {
+  Widget _addCustomCard() {
+    return SGTouchable(
+      onTap: _addCustom,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.bg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.line, style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.line),
+              ),
+              child: Icon(Icons.add_rounded, color: AppTheme.text2, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text('Custom', style: AppTheme.label(color: AppTheme.text2)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _catBtn(int index, String label, IconData icon) {
+    final active = _catIndex == index;
+    return Expanded(
+      child: SGTouchable(
+        onTap: () {
+          setState(() => _catIndex = index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: active ? AppTheme.accent.withValues(alpha: 0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: active ? AppTheme.accent.withValues(alpha: 0.4) : Colors.transparent),
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: active ? AppTheme.accent : AppTheme.text2),
+              const SizedBox(width: 8),
+              Text(label,
+                  style: AppTheme.label(
+                      color: active ? AppTheme.accent : AppTheme.text2)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Navigation overlay ────────────────────────────────────────
+  Widget _navOverlay() {
+    final isLast = _page == _totalPages - 1;
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(40, 20, 40, 50),
+        padding: const EdgeInsets.fromLTRB(28, 20, 28, 44),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
               Colors.transparent,
-              Colors.black.withOpacity(0.9),
-              Colors.black,
+              AppTheme.bg.withValues(alpha: 0.92),
+              AppTheme.bg,
             ],
             stops: const [0.0, 0.4, 1.0],
           ),
         ),
-        child: Column(
-          children: [
-            // Page Indicators (Hidden on the last step)
-            if (_currentPage < 3)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    height: 6,
-                    width: _currentPage == index ? 24 : 6,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? AppTheme.accent
-                          : Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  );
-                }),
-              ),
-            if (_currentPage < 3) const SizedBox(height: 32),
-            // Buttons
-            Row(
-              children: [
-                if (_currentPage > 0)
-                  Expanded(
-                    child: SGTouchable(
-                      onTap: _back,
-                      child: Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            "Back",
-                            style: AppTheme.label(color: Colors.white70)
-                                .copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (_currentPage > 0) const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: SGTouchable(
-                    onTap: _next,
-                    child: Container(
-                      height: 56,
+        child: Column(children: [
+          // Dot indicators
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+                _totalPages,
+                (i) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      height: 6,
+                      width: _page == i ? 22 : 6,
                       decoration: BoxDecoration(
-                        color: _currentPage == 3 && _selected.length < 4
-                            ? Colors.white.withOpacity(0.1)
-                            : AppTheme.accent,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          if (_currentPage != 3 || _selected.length == 4)
-                            BoxShadow(
-                              color: AppTheme.accent.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                        ],
+                        color: _page == i ? AppTheme.accent : AppTheme.line,
+                        borderRadius: BorderRadius.circular(3),
                       ),
-                      child: Center(
-                        child: Text(
-                          _currentPage == 3
-                              ? (_selected.length == 4
-                                  ? "Begin Training"
-                                  : "${_selected.length}/4 Selected")
-                              : "Continue",
-                          style: AppTheme.h3(
-                            color: _currentPage == 3 && _selected.length < 4
-                                ? Colors.white38
-                                : Colors.black,
-                          ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),
-                        ),
+                    )),
+          ),
+          const SizedBox(height: 24),
+
+          // Buttons
+          Row(children: [
+            if (_page > 0) ...[
+              Expanded(
+                child: SGButton(
+                  label: 'Back',
+                  outlined: true,
+                  onTap: _back,
+                  height: 52,
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              flex: 2,
+              child: SGButton(
+                label: isLast
+                    ? (_selected.length == 4
+                        ? 'Begin Training'
+                        : '${_selected.length}/4 Selected')
+                    : 'Continue',
+                onTap: _canProceed ? _next : null,
+                height: 52,
+              ),
+            ),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPlayerPreview() {
+    String anim = 'Spin';
+    if (_dailyGoal == 'medium') anim = 'Run';
+    if (_dailyGoal == 'hard') anim = 'Sprint';
+
+    return SizedBox(
+      height: 260,
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Ground line
+          Positioned(
+            bottom: 20,
+            left: 60,
+            right: 60,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.line.withValues(alpha: 0),
+                    AppTheme.accent.withValues(alpha: 0.6),
+                    AppTheme.line.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Player Model
+          Positioned(
+            bottom: 20,
+            child: Player(
+              animation: anim,
+              size: 260,
+              fps: anim == 'Sprint' ? 14 : 9,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Rank Deck (Pro Redesign) ──────────────────────────────────
+class RankDeck extends StatelessWidget {
+  const RankDeck({super.key});
+
+  final List<String> _ranks = const [
+    'E Rank.png',
+    'D Rank.png',
+    'C Rank.png',
+    'B Rank.png',
+    'A Rank.png',
+    'S Rank.png',
+    'SS Rank.png'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final centerX = constraints.maxWidth / 2;
+      return SizedBox(
+        height: 220,
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // Bottom grounding line (no glow)
+            Positioned(
+              bottom: 20,
+              child: Container(
+                width: 200,
+                height: 1,
+                color: AppTheme.line.withValues(alpha: 0.3),
+              ),
+            ),
+            // The Shields
+            ...List.generate(_ranks.length, (i) {
+              // We want SS Rank (last) to be in the front, so we order them
+              // but for a fan, usually center is front.
+              // Let's make it a progressive fan where the right-most (highest ranks)
+              // are slightly more prominent or the center is the hero.
+              final indexOffset = i - (_ranks.length - 1) / 2;
+              final xOffset = indexOffset * 36.0;
+              final rotation = indexOffset * 0.14;
+              final yOffset = indexOffset.abs() * 12.0;
+              final scale = 1.0 - (indexOffset.abs() * 0.05);
+              final opacity = 1.0 - (indexOffset.abs() * 0.1);
+
+              return Positioned(
+                left: centerX + xOffset - 60,
+                top: 20 + yOffset,
+                child: Opacity(
+                  opacity: opacity.clamp(0.5, 1.0),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Transform.rotate(
+                      angle: rotation,
+                      child: Image.asset(
+                        'Assets/Rank Shields/${_ranks[i]}',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              );
+            }),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
-class DottedBorder extends StatelessWidget {
-  final Widget child;
-  final Color color;
-  final double strokeWidth;
-  final List<double> dashPattern;
-  final Radius radius;
+// ── Waving Hand Animation ──────────────────────────────────────
+class WavingHand extends StatefulWidget {
+  const WavingHand({super.key});
+  @override
+  State<WavingHand> createState() => _WavingHandState();
+}
 
-  const DottedBorder({
-    super.key,
-    required this.child,
-    this.color = Colors.black,
-    this.strokeWidth = 1,
-    this.dashPattern = const [3, 1],
-    this.radius = Radius.zero,
-  });
+class _WavingHandState extends State<WavingHand>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DottedBorderPainter(
-        color: color,
-        strokeWidth: strokeWidth,
-        dashPattern: dashPattern,
-        radius: radius,
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        // Subtle waving motion
+        return Transform.rotate(
+          angle: (math.pi / 10) * (Curves.easeInOut.transform(_ctrl.value) - 0.5),
+          alignment: Alignment.bottomCenter,
+          child: child,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: AppTheme.accent.withValues(alpha: 0.12),
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: AppTheme.accent.withValues(alpha: 0.2), width: 1),
+        ),
+        child: const Icon(Icons.front_hand_rounded,
+            size: 82, color: AppTheme.accent),
       ),
-      child: child,
     );
   }
-}
-
-class _DottedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final List<double> dashPattern;
-  final Radius radius;
-
-  _DottedBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashPattern,
-    required this.radius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final Path path = Path();
-    path.addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height), radius));
-
-    final Path dashPath = Path();
-    for (final PathMetric metric in path.computeMetrics()) {
-      double distance = 0;
-      bool draw = true;
-      while (distance < metric.length) {
-        final double len = dashPattern[draw ? 0 : 1];
-        if (draw) {
-          dashPath.addPath(
-              metric.extractPath(distance, distance + len), Offset.zero);
-        }
-        distance += len;
-        draw = !draw;
-      }
-    }
-    canvas.drawPath(dashPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(_DottedBorderPainter oldDelegate) => false;
 }

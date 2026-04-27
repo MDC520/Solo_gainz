@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:ui';
 import 'background.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
@@ -8,90 +8,179 @@ import 'screens/quest_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/shop_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/no_connection_screen.dart';
+import 'screens/login_screen.dart';
 import 'services/storage.dart';
 import 'services/auth_service.dart';
+import 'services/security_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/notification_manager.dart';
 import 'theme/theme.dart';
-import 'dart:ui';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Notification Manager
+  final notificationManager = NotificationManager();
+  await notificationManager.init();
+
+  // Edge-to-edge display (better than immersiveSticky — less jank)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  // Lock to portrait
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Init storage & security in parallel
   try {
     await Hive.initFlutter();
-    await Storage.init();
+    await Future.wait([
+      Storage.init(),
+      SecurityService.init(),
+    ]);
   } catch (e) {
-    debugPrint('Storage/Hive init error: $e');
+    debugPrint('Init error: $e');
   }
 
+  // Init Supabase (auth service)
   try {
     await AuthService().initialize();
-    if (Storage.isLoggedIn()) {
-      await Storage.checkDailyLoginReward();
-    }
   } catch (e) {
-    debugPrint('Services init error: $e');
+    debugPrint('Supabase init error: $e');
   }
+
   runApp(const SoloGainzApp());
 }
 
-class SoloGainzApp extends StatefulWidget {
+// ── Root App ───────────────────────────────────────────────────────
+class SoloGainzApp extends StatelessWidget {
   const SoloGainzApp({super.key});
-  @override
-  State<SoloGainzApp> createState() => _SoloGainzAppState();
-}
-
-class _SoloGainzAppState extends State<SoloGainzApp> {
-  bool _splashDone = false;
-  ValueListenable<Box>? _loginListenable;
-
-  @override
-  void initState() {
-    super.initState();
-    _loginListenable = Storage.watch('is_logged_in');
-    _loginListenable?.addListener(_onLoginStateChange);
-  }
-
-  void _onLoginStateChange() {
-    // No-op as we are always logged in now
-  }
-
-  @override
-  void dispose() {
-    _loginListenable?.removeListener(_onLoginStateChange);
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
-
     return MaterialApp(
       title: 'Solo Gainz',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      home: _splashDone
-          ? (Storage.getData('is_onboarded', defaultValue: false)
-              ? AppShell(onLogout: () async {})
-              : const OnboardingScreen())
-          : SplashScreen(onDone: () => setState(() => _splashDone = true)),
+      home: const _AppRoot(),
     );
   }
 }
 
+// ── App Root State Machine ─────────────────────────────────────────
+enum _AppState { splash, noConnection, login, onboarding, shell }
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  _AppState _state = _AppState.splash;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (_state) {
+      case _AppState.splash:
+        return SplashScreen(onDone: _afterSplash);
+
+      case _AppState.noConnection:
+        return NoConnectionScreen(onConnected: _onConnected);
+
+      case _AppState.login:
+        return LoginScreen(
+          onSignUpSuccess: _goToOnboarding,
+          onSignInSuccess: _goToShell,
+        );
+
+      case _AppState.onboarding:
+        return OnboardingScreen(onDone: _goToShell);
+
+      case _AppState.shell:
+        return RepaintBoundary(
+          child: AppShell(onLogout: _onLogout),
+        );
+    }
+  }
+
+  // ── Splash done ────────────────────────────────────────────────
+  Future<void> _afterSplash() async {
+    // Always check connectivity first
+    final online = await ConnectivityService.isOnline();
+    if (!online) {
+      _setState(_AppState.noConnection);
+      return;
+    }
+
+    // Check auth state
+    if (Storage.isLoggedIn()) {
+      if (Storage.isOnboarded()) {
+        // Returning logged-in user — do daily reward check then go to shell
+        try {
+          await Storage.checkDailyLoginReward();
+          // Sync latest data from cloud
+          await AuthService().syncData();
+        } catch (_) {}
+        _setState(_AppState.shell);
+      } else {
+        _setState(_AppState.onboarding);
+      }
+    } else {
+      _setState(_AppState.login);
+    }
+  }
+
+  // ── No connection → retry ──────────────────────────────────────
+  void _onConnected() {
+    // After connectivity restored, re-evaluate auth state
+    _afterSplashNoAnim();
+  }
+
+  Future<void> _afterSplashNoAnim() async {
+    if (Storage.isLoggedIn()) {
+      if (Storage.isOnboarded()) {
+        _setState(_AppState.shell);
+      } else {
+        _setState(_AppState.onboarding);
+      }
+    } else {
+      _setState(_AppState.login);
+    }
+  }
+
+  // ── After sign-up ──────────────────────────────────────────────
+  void _goToOnboarding() => _setState(_AppState.onboarding);
+
+  // ── After sign-in or onboarding done ──────────────────────────
+  void _goToShell() => _setState(_AppState.shell);
+
+  // ── Logout ────────────────────────────────────────────────────
+  Future<void> _onLogout() async {
+    await AuthService().logout();
+    _setState(_AppState.login);
+  }
+
+  void _setState(_AppState s) {
+    if (mounted) setState(() => _state = s);
+  }
+}
+
+// ── App Shell ──────────────────────────────────────────────────────
 class AppShell extends StatefulWidget {
   final VoidCallback onLogout;
   const AppShell({super.key, required this.onLogout});
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -99,8 +188,18 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin {
   int _idx = 0;
-  late final List<Widget> _pages;
   late AnimationController _navAnimCtrl;
+
+  // Pages are built lazily via AutomaticKeepAlive pattern
+  static const _icons = [
+    (Icons.space_dashboard_rounded, Icons.space_dashboard_outlined, 'Home'),
+    (Icons.analytics_rounded, Icons.analytics_outlined, 'Stats'),
+    (Icons.task_rounded, Icons.task_outlined, 'Quests'),
+    (Icons.local_mall_rounded, Icons.local_mall_outlined, 'Shop'),
+    (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+  ];
+
+  late final List<Widget> _pages;
 
   @override
   void initState() {
@@ -111,11 +210,13 @@ class _AppShellState extends State<AppShell>
       value: Storage.isNavbarFloating() ? 1.0 : 0.0,
     );
     _pages = [
-      const SGScreenEntrance(child: HomePage()),
-      const SGScreenEntrance(child: StatsPage()),
-      const SGScreenEntrance(child: QuestPage()),
-      const SGScreenEntrance(child: ShopPage()),
-      SGScreenEntrance(child: ProfilePage(onLogout: widget.onLogout)),
+      const RepaintBoundary(child: SGScreenEntrance(child: HomePage())),
+      const RepaintBoundary(child: SGScreenEntrance(child: StatsPage())),
+      const RepaintBoundary(child: SGScreenEntrance(child: QuestPage())),
+      const RepaintBoundary(child: SGScreenEntrance(child: ShopPage())),
+      RepaintBoundary(
+          child:
+              SGScreenEntrance(child: ProfilePage(onLogout: widget.onLogout))),
     ];
   }
 
@@ -125,16 +226,8 @@ class _AppShellState extends State<AppShell>
     super.dispose();
   }
 
-  static const double gap = 16.0;
-  static const double navHeight = 64.0;
-
-  static const _icons = [
-    (Icons.space_dashboard_rounded, Icons.space_dashboard_outlined, 'Home'),
-    (Icons.analytics_rounded, Icons.analytics_outlined, 'Stats'),
-    (Icons.task_rounded, Icons.task_outlined, 'Quests'),
-    (Icons.local_mall_rounded, Icons.local_mall_outlined, 'Shop'),
-    (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-  ];
+  static const double _gap = 16.0;
+  static const double _navH = 64.0;
 
   @override
   Widget build(BuildContext context) {
@@ -155,19 +248,18 @@ class _AppShellState extends State<AppShell>
 
         return Stack(
           children: [
-            const LivelyBackground(child: SizedBox.expand()),
+            const RepaintBoundary(
+                child: LivelyBackground(child: SizedBox.expand())),
             Scaffold(
               backgroundColor: Colors.transparent,
               extendBody: true,
               body: AnimatedBuilder(
                 animation: _navAnimCtrl,
-                builder: (context, child) {
-                  return ClipPath(
-                    clipper: _ProNavClipper(
-                        bottomPadding, isHidden ? 0.0 : _navAnimCtrl.value),
-                    child: child,
-                  );
-                },
+                builder: (context, child) => ClipPath(
+                  clipper: _ProNavClipper(
+                      bottomPadding, isHidden ? 0.0 : _navAnimCtrl.value),
+                  child: child,
+                ),
                 child: SafeArea(
                   bottom: false,
                   child: IndexedStack(index: _idx, children: _pages),
@@ -181,21 +273,19 @@ class _AppShellState extends State<AppShell>
                   animation: _navAnimCtrl,
                   builder: (context, child) {
                     final t = _navAnimCtrl.value;
-                    final currentGap = gap * t;
                     final marginSide = 16.0 * t;
                     final radius = 20.0 * t;
-                    final currentNavHeight =
-                        navHeight + (bottomPadding * (1 - t));
+                    final currentNavH = _navH + (bottomPadding * (1 - t));
 
                     return Container(
                       margin: EdgeInsets.fromLTRB(
-                          marginSide, 0, marginSide, currentGap),
+                          marginSide, 0, marginSide, _gap * t),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(radius),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                           child: Container(
-                            height: currentNavHeight,
+                            height: currentNavH,
                             padding: EdgeInsets.only(
                                 bottom: bottomPadding * (1 - t)),
                             decoration: BoxDecoration(
@@ -268,6 +358,7 @@ class _AppShellState extends State<AppShell>
   }
 }
 
+// ── Nav Clipper ────────────────────────────────────────────────────
 class _ProNavClipper extends CustomClipper<Path> {
   final double bottomPadding;
   final double t;
@@ -281,7 +372,6 @@ class _ProNavClipper extends CustomClipper<Path> {
 
     final gap = bottomPadding > 0 ? bottomPadding : 16.0;
     const navHeight = 64.0;
-
     final currentGap = gap * t;
     final marginSide = 16.0 * t;
     final radius = 20.0 * t;
@@ -289,24 +379,19 @@ class _ProNavClipper extends CustomClipper<Path> {
     final navTop = size.height - currentNavHeight - currentGap;
 
     final punchPath = Path();
-
-    final navRRect = RRect.fromRectAndRadius(
+    punchPath.addRRect(RRect.fromRectAndRadius(
       Rect.fromLTWH(
           marginSide, navTop, size.width - (marginSide * 2), currentNavHeight),
       Radius.circular(radius),
-    );
-    punchPath.addRRect(navRRect);
-
+    ));
     if (t > 0) {
-      final gapRect = Rect.fromLTWH(marginSide, navTop + navHeight / 2,
-          size.width - (marginSide * 2), (navHeight / 2) + currentGap + 10);
-      punchPath.addRect(gapRect);
+      punchPath.addRect(Rect.fromLTWH(marginSide, navTop + navHeight / 2,
+          size.width - (marginSide * 2), (navHeight / 2) + currentGap + 10));
     }
-
     return Path.combine(PathOperation.difference, fullPath, punchPath);
   }
 
   @override
-  bool shouldReclip(_ProNavClipper oldClipper) =>
-      bottomPadding != oldClipper.bottomPadding || t != oldClipper.t;
+  bool shouldReclip(_ProNavClipper old) =>
+      bottomPadding != old.bottomPadding || t != old.t;
 }

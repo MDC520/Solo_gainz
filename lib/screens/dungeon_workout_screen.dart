@@ -202,10 +202,9 @@ class _DungeonWorkoutScreenState extends State<DungeonWorkoutScreen> {
                         ),
                         Text(
                           '${q.maxGoal}${isTimer ? "s" : ""}',
-                          style: GoogleFonts.inter(
+                          style: AppTheme.h1(color: AppTheme.white).copyWith(
                             fontSize: 64,
                             fontWeight: FontWeight.w900,
-                            color: AppTheme.white,
                             letterSpacing: -2,
                           ),
                         ),

@@ -259,6 +259,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             onPressed: () async {
               Navigator.pop(ctx);
               Navigator.pop(context);
+              // Clean storage completely
+              await Storage.clearAll();
+              // Logout from Supabase if needed
               await AuthService().logout();
               widget.onLogout();
             },
@@ -279,7 +282,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           padding: const EdgeInsets.only(top: 12.0),
           child: CupertinoTextField(
             controller: controller,
-            style: const TextStyle(color: Colors.black),
+            style: AppTheme.body(color: Colors.black),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(6),
@@ -457,7 +460,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                                       width: 1)),
                               child: Row(children: [
                                 Text(country.flag,
-                                    style: const TextStyle(fontSize: 22)),
+                                    style: AppTheme.h3().copyWith(fontSize: 22)),
                                 const SizedBox(width: 16),
                                 Expanded(
                                     child: Text(country.name,
@@ -496,7 +499,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           child: CupertinoTextField(
             controller: controller,
             placeholder: 'Enter verification code',
-            style: const TextStyle(color: Colors.black),
+            style: AppTheme.body(color: Colors.black),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(6),
@@ -723,6 +726,23 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   ),
                 ),
 
+                const SizedBox(height: 40),
+                _buildSectionHeader('ACCOUNT ACTIONS'),
+                SGCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _buildSettingsTile(
+                        icon: Icons.logout_rounded,
+                        label: 'Log Out',
+                        value: 'Exit and clear local data',
+                        color: AppTheme.red,
+                        onTap: _showSignOutDialog,
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 60),
                 Center(
                     child: Text(
@@ -792,10 +812,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(title,
-          style: GoogleFonts.inter(
-              fontSize: 10,
+          style: AppTheme.caption(color: AppTheme.text2).copyWith(
               fontWeight: FontWeight.w800,
-              color: AppTheme.text2,
               letterSpacing: 1.5)),
     );
   }

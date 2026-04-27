@@ -367,10 +367,9 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 6),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: AppTheme.h1(color: AppTheme.white).copyWith(
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: AppTheme.white,
               letterSpacing: -1,
             ),
           ),

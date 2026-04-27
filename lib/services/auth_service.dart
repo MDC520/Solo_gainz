@@ -1,259 +1,222 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'storage.dart';
 import '../models/user_stats.dart';
-
+import 'storage.dart';
+import 'security_service.dart';
+import 'data_serializer.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
   late SupabaseClient _supabaseClient;
+  Timer? _syncDebounce;
 
-  factory AuthService() {
-    return _instance;
-  }
-
+  factory AuthService() => _instance;
   AuthService._internal();
 
+  // ── Supabase credentials ───────────────────────────────────────
+  static const _supabaseUrl = 'https://xelqafpkriikivviasfm.supabase.co';
+  static const _anonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlbHFhZnBrcmlpa2l2dmlhc2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMDMxNDAsImV4cCI6MjA5Mjc3OTE0MH0.roRtHxgAzM2h9lhQjQ2zCjYQnWbT4NRN7NpzQ3nhqBs';
+
   Future<void> initialize() async {
-    await Supabase.initialize(
-      url: 'https://tulbevwmqhrxjjtuehmy.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1bGJldndtcWhyeGpqdHVlaG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDk3NDIsImV4cCI6MjA5MTAyNTc0Mn0.5Q0rgPjIuvlE27yPPRmXp3nDPofimvS3BXP9PqSpsgQ',
-    );
+    await Supabase.initialize(url: _supabaseUrl, anonKey: _anonKey);
     _supabaseClient = Supabase.instance.client;
   }
 
   SupabaseClient get client => _supabaseClient;
 
-  // Upload avatar to Supabase Storage
-  Future<String?> uploadAvatar(String filePath, String username) async {
-    if (username == 'Player') return null; // Skip for default local user
-    try {
-      final file = File(filePath);
-      if (!await file.exists()) throw 'File not found at $filePath';
-
-      // 1MB = 1,048,576 bytes
-      final size = await file.length();
-      if (size > 2 * 1024 * 1024) {
-        throw 'Image is too large (${(size / 1024 / 1024).toStringAsFixed(2)}MB). Max 2MB allowed.';
-      }
-
-      final safeName = username.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
-      final fileName = '$safeName/v_${DateTime.now().millisecondsSinceEpoch}.png';
-      
-      print('Uploading to avatars/$fileName...');
-
-      // 1. Upload file
-      await _supabaseClient.storage.from('avatars').upload(
-        fileName, 
-        file,
-        fileOptions: const FileOptions(upsert: true, contentType: 'image/png'),
-      );
-
-      // 2. Get Public URL
-      final publicUrl = _supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-      
-      // 3. Update database
-      await _supabaseClient
-          .from('user_data')
-          .update({'avatar_url': publicUrl})
-          .eq('username', username.toLowerCase());
-
-      return publicUrl;
-    } catch (e) {
-      print('Upload Error: $e');
-      rethrow;
-    }
-  }
-
-  // Check if username exists in database
+  // ── Username check ─────────────────────────────────────────────
   Future<bool> checkUsernameExists(String username) async {
     try {
       final response = await _supabaseClient
           .from('users')
-          .select()
+          .select('id')
           .eq('username', username.toLowerCase())
           .maybeSingle();
-
       return response != null;
-    } catch (e) {
-      print('Error checking username: $e');
+    } catch (_) {
       return false;
     }
   }
 
-  // Sign in
-  Future<Map<String, dynamic>> signIn(
-      String username, String password) async {
-    try {
-      final response = await _supabaseClient
-          .from('users')
-          .select()
-          .eq('username', username.toLowerCase())
-          .maybeSingle();
-
-      if (response == null) {
-        return {'success': false, 'message': 'User not found'};
-      }
-
-      if (response['password'] != password) {
-        return {'success': false, 'message': 'Incorrect password'};
-      }
-
-      // Storage will be updated in login screen finalize
-
-      // Fetch user data
-      final userData = await _supabaseClient
-          .from('user_data')
-          .select()
-          .eq('username', username.toLowerCase())
-          .maybeSingle();
-
-      if (userData != null) {
-        return {
-          'success': true,
-          'message': 'Login successful',
-          'user': {
-            'username': username.toLowerCase(),
-            'country': response['country'],
-            'avatar_url': userData['avatar_url'],
-            'coins': userData['coins'],
-            'progress': userData['progress'],
-            'stats': userData, 
-          }
-        };
-      }
-
-      return {'success': true, 'message': 'Login successful'};
-    } catch (e) {
-      print('SignIn Error: $e');
-      return {'success': false, 'message': 'Error: $e'};
-    }
-  }
-
-  // Sign up
+  // ── Sign Up ────────────────────────────────────────────────────
+  /// Creates a new user with hashed password + empty data row.
+  /// Returns {success, isNewUser, username, country}.
   Future<Map<String, dynamic>> signUp(
       String username, String password, String country) async {
     try {
-      // Validate inputs
-      if (username.isEmpty) {
-        return {'success': false, 'message': 'Username cannot be empty'};
-      }
-      if (password.length < 6) {
-        return {
-          'success': false,
-          'message': 'Password must be at least 6 characters'
-        };
-      }
-      if (country.isEmpty) {
-        return {'success': false, 'message': 'Please select a country'};
-      }
+      if (username.isEmpty) return _fail('Username cannot be empty');
+      if (password.length < 6) return _fail('Password must be at least 6 characters');
+      if (country.isEmpty) return _fail('Please select a country');
 
-      // Check if username exists
-      final existingUser = await _supabaseClient
+      final lower = username.toLowerCase();
+
+      final existing = await _supabaseClient
           .from('users')
-          .select()
-          .eq('username', username.toLowerCase())
+          .select('id')
+          .eq('username', lower)
           .maybeSingle();
+      if (existing != null) return _fail('Username already taken');
 
-      if (existingUser != null) {
-        return {'success': false, 'message': 'Username already exists'};
-      }
+      final hashedPw = SecurityService.hashPassword(password);
 
-      // Create user in users table
-      final userResponse = await _supabaseClient.from('users').insert({
-        'username': username.toLowerCase(),
-        'password': password,
+      final userRes = await _supabaseClient.from('users').insert({
+        'username': lower,
+        'password': hashedPw,
         'country': country,
       }).select();
+      if (userRes.isEmpty) return _fail('Failed to create user');
 
-      if (userResponse.isEmpty) {
-        return {'success': false, 'message': 'Failed to create user'};
-      }
-
-      // Create user data in user_data table
       await _supabaseClient.from('user_data').insert({
-        'username': username.toLowerCase(),
-        'coins': 0,
-        'progress': 0,
+        'username': lower,
+        'data': '{}',
       });
 
-      // Storage will be updated in login screen finalize
+      await SecurityService.storeSecure('current_password', password);
 
       return {
         'success': true,
-        'message': 'Account created successfully',
-        'user': {
-          'username': username.toLowerCase(),
-          'country': country,
-          'avatar_url': null,
-          'coins': 0,
-          'progress': 0,
-        }
+        'isNewUser': true,
+        'username': lower,
+        'country': country,
       };
     } catch (e) {
-      print('SignUp Error: $e');
-      return {'success': false, 'message': 'Error: $e'};
+      return _fail('Error: $e');
     }
   }
 
-  // Sync data with database
+  // ── Sign In ────────────────────────────────────────────────────
+  /// Authenticates and returns the encrypted data string.
+  Future<Map<String, dynamic>> signIn(String username, String password) async {
+    try {
+      final lower = username.toLowerCase();
+      final hashedPw = SecurityService.hashPassword(password);
+
+      final userRow = await _supabaseClient
+          .from('users')
+          .select('username, country, password')
+          .eq('username', lower)
+          .maybeSingle();
+
+      if (userRow == null) return _fail('User not found');
+      if (userRow['password'] != hashedPw) return _fail('Incorrect password');
+
+      final dataRow = await _supabaseClient
+          .from('user_data')
+          .select('data')
+          .eq('username', lower)
+          .maybeSingle();
+
+      final rawData = dataRow?['data'] as String? ?? '{}';
+
+      await SecurityService.storeSecure('current_password', password);
+
+      return {
+        'success': true,
+        'username': lower,
+        'country': userRow['country'] as String? ?? '',
+        'data': rawData,
+      };
+    } catch (e) {
+      return _fail('Error: $e');
+    }
+  }
+
+  // ── Sync (debounced) ───────────────────────────────────────────
+  /// Schedules a sync 2 seconds after the last call.
+  void scheduleSyncData() {
+    _syncDebounce?.cancel();
+    _syncDebounce = Timer(const Duration(seconds: 2), () async {
+      await syncData();
+    });
+  }
+
+  /// Immediately encodes, encrypts, and uploads all local data.
   Future<void> syncData() async {
     try {
       final username = Storage.getData('current_user');
       if (username == null) return;
 
-      final stats = Storage.getUserStats();
-      final avatarUrl = Storage.getData('profile_image_path'); 
+      final password = await SecurityService.readSecure('current_password') ?? '';
+      final jsonStr = DataSerializer.encodeAllData();
+      final encrypted = password.isNotEmpty
+          ? SecurityService.encrypt(jsonStr, password)
+          : jsonStr;
 
-      await _supabaseClient.from('user_data').update({
-        'coins': stats.coins,
-        'progress': stats.progress,
-        'rank': stats.rank,
-        'level': stats.level,
-        'xp': stats.xp,
-        if (avatarUrl != null && avatarUrl.startsWith('http')) 'avatar_url': avatarUrl,
-        'last_synced': DateTime.now().toIso8601String(),
-      }).eq('username', username);
+      await _supabaseClient.from('user_data').upsert({
+        'username': username,
+        'data': encrypted,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'username');
     } catch (e) {
-      print('Error syncing data: $e');
+      debugPrint('Sync error: $e');
     }
   }
 
-  // Logout
+  // ── Upload Avatar ──────────────────────────────────────────────
+  Future<String?> uploadAvatar(String filePath, String username) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) throw 'File not found';
+      final size = await file.length();
+      if (size > 2 * 1024 * 1024) throw 'Image too large (max 2MB)';
+
+      final safeName =
+          username.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+      final fileName =
+          '$safeName/v_${DateTime.now().millisecondsSinceEpoch}.png';
+
+      await _supabaseClient.storage.from('avatars').upload(
+        fileName,
+        file,
+        fileOptions:
+            const FileOptions(upsert: true, contentType: 'image/png'),
+      );
+      return _supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────────────
   Future<void> logout() async {
+    _syncDebounce?.cancel();
     await Storage.saveData('is_logged_in', false);
+    await Storage.saveData('is_onboarded', false);
     await Storage.saveData('current_user', null);
     await Storage.saveData('current_country', null);
-    // Reset UserStats to defaults
     await Storage.saveUserStats(UserStats());
-    // Also clear individual keys if they were used redundantly
-    await Storage.deleteData('coins');
-    await Storage.deleteData('progress');
+    await SecurityService.deleteSecure('current_password');
   }
 
-  // Update user information
-  Future<bool> updateUserInfo(String currentUsername, {String? newUsername, String? newCountry, String? newPassword}) async {
-    if (currentUsername == 'Player') {
-      // Handle local updates
-      if (newUsername != null) await Storage.saveData('current_user', newUsername);
-      if (newCountry != null) await Storage.saveData('current_country', newCountry);
-      return true;
-    }
+  // ── Update user info ──────────────────────────────────────────
+  Future<bool> updateUserInfo(
+    String currentUsername, {
+    String? newUsername,
+    String? newCountry,
+    String? newPassword,
+  }) async {
     try {
       final updates = <String, dynamic>{};
       if (newUsername != null) updates['username'] = newUsername.toLowerCase();
       if (newCountry != null) updates['country'] = newCountry;
-      if (newPassword != null) updates['password'] = newPassword;
-
+      if (newPassword != null) {
+        updates['password'] = SecurityService.hashPassword(newPassword);
+        await SecurityService.storeSecure('current_password', newPassword);
+      }
       if (updates.isNotEmpty) {
-        // Update users table
-        await _supabaseClient.from('users').update(updates).eq('username', currentUsername.toLowerCase());
-        
-        // Also update user_data table if username changed and didn't cascade
+        await _supabaseClient
+            .from('users')
+            .update(updates)
+            .eq('username', currentUsername.toLowerCase());
         if (newUsername != null) {
           try {
-            await _supabaseClient.from('user_data').update({'username': newUsername.toLowerCase()}).eq('username', currentUsername.toLowerCase());
+            await _supabaseClient
+                .from('user_data')
+                .update({'username': newUsername.toLowerCase()})
+                .eq('username', currentUsername.toLowerCase());
           } catch (_) {}
           await Storage.saveData('current_user', newUsername.toLowerCase());
         }
@@ -262,22 +225,26 @@ class AuthService {
         }
       }
       return true;
-    } catch (e) {
-      print('Update error: $e');
+    } catch (_) {
       return false;
     }
   }
 
-  // Get account creation time
+  // ── Account creation time ─────────────────────────────────────
   Future<String?> getAccountCreatedAt(String username) async {
     try {
-      final response = await _supabaseClient.from('users').select('created_at').eq('username', username.toLowerCase()).maybeSingle();
-      if (response != null && response['created_at'] != null) {
-        return response['created_at'].toString();
-      }
-    } catch (e) {
-      print('Get created_at error: $e');
+      final r = await _supabaseClient
+          .from('users')
+          .select('created_at')
+          .eq('username', username.toLowerCase())
+          .maybeSingle();
+      return r?['created_at']?.toString();
+    } catch (_) {
+      return null;
     }
-    return null;
   }
+
+  // ── Helper ────────────────────────────────────────────────────
+  Map<String, dynamic> _fail(String msg) =>
+      {'success': false, 'message': msg};
 }
