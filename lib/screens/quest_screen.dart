@@ -464,7 +464,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.line),
+                      border: Border.all(color: AppTheme.line, width: 1.5),
                     ),
                     padding: const EdgeInsets.all(12),
                     onChanged: (v) => name = v,
@@ -528,7 +528,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.line),
+                                border: Border.all(color: AppTheme.line, width: 1.5),
                               ),
                               padding: const EdgeInsets.all(12),
                               onChanged: (v) => goal = int.tryParse(v) ?? 10,
@@ -695,18 +695,23 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(2), // Space for the border
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.silver, width: 1.5),
+                    ),
                     child: CupertinoSlidingSegmentedControl<int>(
                       backgroundColor: AppTheme.surface,
-                      thumbColor: AppTheme.elevated,
+                      thumbColor: AppTheme.accent, // Make the selector green
                       groupValue: _tab,
                       onValueChanged: (v) {
                         if (v != null) setState(() => _tab = v);
                       },
                       children: {
-                        0: _buildTab('Daily Quests'),
-                        1: _buildTab('Custom Quests'),
+                        0: _buildTab('Daily Quests', _tab == 0),
+                        1: _buildTab('Custom Quests', _tab == 1),
                       },
                     ),
                   ),
@@ -723,10 +728,15 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTab(String label) {
+  Widget _buildTab(String label, bool isSelected) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Text(label, style: AppTheme.label().copyWith(fontSize: 13)),
+      child: Text(
+        label,
+        style: AppTheme.label(
+          color: isSelected ? Colors.black : AppTheme.text2,
+        ).copyWith(fontSize: 13),
+      ),
     );
   }
 
@@ -793,7 +803,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.line),
+                  border: Border.all(color: AppTheme.line, width: 1.5),
                 ),
                 child: Icon(
                   Icons.add_task,
@@ -817,7 +827,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.line),
+                    border: Border.all(color: AppTheme.line, width: 1.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -873,7 +883,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.line, width: 1.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1086,7 +1096,7 @@ class _QuestCardState extends State<_QuestCard> {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.line, width: 1.5),
               ),
               child: Column(
                 children: [

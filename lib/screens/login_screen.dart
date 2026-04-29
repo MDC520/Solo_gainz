@@ -191,8 +191,9 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     if (_signUp) {
-      if (_signUpPassCtrl.text.length < 6)
+      if (_signUpPassCtrl.text.length < 6) {
         return _err('Password must be at least 6 characters');
+      }
       if (_country == null) return _err('Please select your country');
       if (_userStatus != 'ok') return _err('Username is not available');
 
@@ -243,11 +244,12 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _err(String msg) {
-    if (mounted)
+    if (mounted) {
       setState(() {
         _error = msg;
         _loading = false;
       });
+    }
   }
 
   void _showPicker() {
@@ -270,7 +272,8 @@ class _LoginScreenState extends State<LoginScreen>
               color: AppTheme.bg,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: AppTheme.silver.withValues(alpha: 0.4), width: 1),
+              border: Border.all(
+                  color: AppTheme.silver.withValues(alpha: 0.4), width: 1),
             ),
             child: Column(children: [
               const SizedBox(height: 12),
@@ -309,7 +312,8 @@ class _LoginScreenState extends State<LoginScreen>
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: AppTheme.silver.withValues(alpha: 0.3)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Row(children: [
@@ -442,10 +446,13 @@ class _LoginScreenState extends State<LoginScreen>
                                   width: double.infinity,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3)),
+                                    border: Border.all(
+                                        color: AppTheme.silver
+                                            .withValues(alpha: 0.3)),
                                   ),
                                   child: CupertinoSlidingSegmentedControl<int>(
-                                    backgroundColor: AppTheme.bg.withValues(alpha: 0.5),
+                                    backgroundColor:
+                                        AppTheme.bg.withValues(alpha: 0.5),
                                     thumbColor: AppTheme.accent,
                                     groupValue: _tab,
                                     onValueChanged: (v) {
@@ -527,8 +534,9 @@ class _LoginScreenState extends State<LoginScreen>
                                       decoration: BoxDecoration(
                                         color: AppTheme.bg,
                                         borderRadius: BorderRadius.circular(10),
-                                        border:
-                                            Border.all(color: AppTheme.silver.withValues(alpha: 0.3)),
+                                        border: Border.all(
+                                            color: AppTheme.silver
+                                                .withValues(alpha: 0.3)),
                                       ),
                                       child: Row(children: [
                                         Expanded(

@@ -28,7 +28,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _notificationsEnabled = true;
 
   // Step 5 — Level
-  int _levelIndex = 0;
+  final int _levelIndex = 0;
 
   // Step 6 — Loadout
   final List<Exercise> _selected = [];
@@ -68,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // ── Finish ─────────────────────────────────────────────────────
   Future<void> _finish() async {
     setState(() => _isFinishing = true);
-    
+
     // Play success haptic/sound
     AppTheme.success();
 
@@ -219,7 +219,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.bg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.line),
+                  border: Border.all(color: AppTheme.line, width: 2.0),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 height: 44,
@@ -357,7 +357,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 40),
                         Text('SYSTEM INITIALIZED',
-                            style: AppTheme.label(color: AppTheme.accent).copyWith(
+                            style:
+                                AppTheme.label(color: AppTheme.accent).copyWith(
                               letterSpacing: 6,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -390,8 +391,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         minHeight: 2,
                       ),
                       const SizedBox(height: 8),
-                      Text('${(progress * 100).toInt()}%', 
-                        style: AppTheme.caption(color: AppTheme.accent).copyWith(fontFamily: 'monospace')),
+                      Text('${(progress * 100).toInt()}%',
+                          style: AppTheme.caption(color: AppTheme.accent)
+                              .copyWith(fontFamily: 'monospace')),
                     ],
                   ),
                 ),
@@ -509,7 +511,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.line, width: 1.5),
       ),
       child: SliderTheme(
         data: SliderThemeData(
@@ -534,9 +536,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onChanged: (val) {
             AppTheme.tap();
             setState(() {
-              if (val == 0) _dailyGoal = 'light';
-              else if (val == 1) _dailyGoal = 'medium';
-              else _dailyGoal = 'hard';
+              if (val == 0) {
+                _dailyGoal = 'light';
+              } else if (val == 1)
+                _dailyGoal = 'medium';
+              else
+                _dailyGoal = 'hard';
             });
           },
         ),
@@ -671,7 +676,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-
   // ── Slide 6: Loadout ──────────────────────────────────────────
   Widget _loadoutSlide() {
     final exercises = _catIndex == 0
@@ -683,7 +687,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SafeArea(
       child: Column(children: [
         const SizedBox(height: 24),
-        Text('Daily Loadout', style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
+        Text('Daily Loadout',
+            style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -692,14 +697,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: _selected.length == 4 ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
+                color: _selected.length == 4
+                    ? AppTheme.accent.withValues(alpha: 0.15)
+                    : AppTheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _selected.length == 4 ? AppTheme.accent : AppTheme.line),
+                border: Border.all(
+                    color: _selected.length == 4
+                        ? AppTheme.accent
+                        : AppTheme.line),
               ),
-              child: Text('${_selected.length}/4', 
-                style: AppTheme.label(color: _selected.length == 4 ? AppTheme.accent : AppTheme.text1)),
+              child: Text('${_selected.length}/4',
+                  style: AppTheme.label(
+                      color: _selected.length == 4
+                          ? AppTheme.accent
+                          : AppTheme.text1)),
             ),
-            Text(' exercises for your quest.', style: AppTheme.body(color: AppTheme.text2)),
+            Text(' exercises for your quest.',
+                style: AppTheme.body(color: AppTheme.text2)),
           ],
         ),
         const SizedBox(height: 32),
@@ -713,7 +727,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.line),
+              border: Border.all(color: AppTheme.line, width: 1.5),
             ),
             child: Row(children: [
               _catBtn(0, 'Home', Icons.home_rounded),
@@ -755,19 +769,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: sel ? AppTheme.accent.withValues(alpha: 0.1) : AppTheme.surface,
+          color:
+              sel ? AppTheme.accent.withValues(alpha: 0.1) : AppTheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: sel ? AppTheme.accent.withValues(alpha: 0.8) : AppTheme.line,
             width: sel ? 2 : 1,
           ),
-          boxShadow: sel ? [
-            BoxShadow(
-              color: AppTheme.accent.withValues(alpha: 0.15),
-              blurRadius: 20,
-              spreadRadius: -2,
-            )
-          ] : [],
+          boxShadow: sel
+              ? [
+                  BoxShadow(
+                    color: AppTheme.accent.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    spreadRadius: -2,
+                  )
+                ]
+              : [],
         ),
         child: Stack(
           children: [
@@ -777,7 +794,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               bottom: -10,
               child: Opacity(
                 opacity: sel ? 0.15 : 0.05,
-                child: Icon(_icon(ex.type), size: 80, color: sel ? AppTheme.accent : AppTheme.text2),
+                child: Icon(_icon(ex.type),
+                    size: 80, color: sel ? AppTheme.accent : AppTheme.text2),
               ),
             ),
             Padding(
@@ -790,20 +808,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     decoration: BoxDecoration(
                       color: sel ? AppTheme.accent : AppTheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: sel ? AppTheme.accent : AppTheme.line),
+                      border: Border.all(
+                          color: sel ? AppTheme.accent : AppTheme.line),
                     ),
-                    child: Icon(_icon(ex.type), 
-                      color: sel ? AppTheme.black : AppTheme.text2, 
-                      size: 18),
+                    child: Icon(_icon(ex.type),
+                        color: sel ? AppTheme.black : AppTheme.text2, size: 18),
                   ),
                   const Spacer(),
-                  Text(ex.name, 
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTheme.h3(color: sel ? AppTheme.accent : AppTheme.text1).copyWith(
-                      fontSize: 14,
-                      height: 1.2,
-                    )),
+                  Text(ex.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.h3(
+                              color: sel ? AppTheme.accent : AppTheme.text1)
+                          .copyWith(
+                        fontSize: 14,
+                        height: 1.2,
+                      )),
                 ],
               ),
             ),
@@ -826,8 +846,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ],
                   ),
                   child: Center(
-                    child: Text('$selIndex', 
-                      style: AppTheme.label(color: AppTheme.black).copyWith(fontSize: 12)),
+                    child: Text('$selIndex',
+                        style: AppTheme.label(color: AppTheme.black)
+                            .copyWith(fontSize: 12)),
                   ),
                 ),
               ),
@@ -854,7 +875,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.line, width: 1.5),
               ),
               child: Icon(Icons.add_rounded, color: AppTheme.text2, size: 24),
             ),
@@ -877,15 +898,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: active ? AppTheme.accent.withValues(alpha: 0.1) : Colors.transparent,
+            color: active
+                ? AppTheme.accent.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: active ? AppTheme.accent.withValues(alpha: 0.4) : Colors.transparent),
+            border: Border.all(
+                color: active
+                    ? AppTheme.accent.withValues(alpha: 0.4)
+                    : Colors.transparent),
           ),
           alignment: Alignment.center,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: active ? AppTheme.accent : AppTheme.text2),
+              Icon(icon,
+                  size: 16, color: active ? AppTheme.accent : AppTheme.text2),
               const SizedBox(width: 8),
               Text(label,
                   style: AppTheme.label(
@@ -1118,7 +1145,8 @@ class _WavingHandState extends State<WavingHand>
       builder: (context, child) {
         // Subtle waving motion
         return Transform.rotate(
-          angle: (math.pi / 10) * (Curves.easeInOut.transform(_ctrl.value) - 0.5),
+          angle:
+              (math.pi / 10) * (Curves.easeInOut.transform(_ctrl.value) - 0.5),
           alignment: Alignment.bottomCenter,
           child: child,
         );

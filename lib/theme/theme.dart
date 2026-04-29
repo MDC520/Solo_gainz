@@ -26,12 +26,12 @@ class AppTheme {
   static const Color amber     = Color(0xFFFFD500); // Solar Gold
   static const Color red       = Color(0xFFFF3366); // Cyber Crimson
   static const Color purple    = Color(0xFFB52BFF); // Deep Void Purple
-  static const Color silver    = Color(0xFFAEB2B5); // Premium Silver
+  static const Color silver    = Color(0xFFF0F0F0); // Maximum Brightness Silver
 
   // ── Glass Tints (Opacities) ───────────────────────────────────
   static final Color glassLight = Colors.white.withValues(alpha: 0.03);
   static final Color glassMedium = Colors.white.withValues(alpha: 0.05);
-  static final Color glassBorder = Colors.white.withValues(alpha: 0.08);
+  static final Color glassBorder = silver.withValues(alpha: 0.5);
 
   // ── Text ──────────────────────────────────────────────────────
   static const Color text1     = Color(0xFFFFFFFF);
@@ -204,7 +204,7 @@ class SGCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.glassLight,
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: glowColor?.withValues(alpha: 0.3) ?? AppTheme.glassBorder, width: 1),
+            border: Border.all(color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.silver.withValues(alpha: 0.45), width: 1.5),
             boxShadow: glowColor != null ? [
               BoxShadow(color: glowColor!.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: -5)
             ] : null,

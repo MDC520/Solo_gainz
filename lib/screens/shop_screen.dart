@@ -324,6 +324,7 @@ class _ShopPageState extends State<ShopPage> {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: AppTheme.amber.withValues(alpha: 0.25),
+                                width: 1.5,
                               ),
                             ),
                             child: Row(
@@ -537,7 +538,7 @@ class _ShopPageState extends State<ShopPage> {
                           decoration: BoxDecoration(
                             color: AppTheme.elevated,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.line),
+                            border: Border.all(color: AppTheme.line, width: 1.5),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -621,7 +622,7 @@ class _ShopPageState extends State<ShopPage> {
                               borderRadius: BorderRadius.circular(8),
                               border: canTotal && availableSlots >= qty
                                   ? null
-                                  : Border.all(color: AppTheme.line),
+                                  : Border.all(color: AppTheme.line, width: 1.5),
                             ),
                             child: Text(
                               availableSlots == 0 ? 'Full' : 'Buy',
@@ -728,7 +729,7 @@ class _ShopPageState extends State<ShopPage> {
                   decoration: BoxDecoration(
                     color: can ? AppTheme.accent : AppTheme.surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: can ? null : Border.all(color: AppTheme.line),
+                    border: can ? null : Border.all(color: AppTheme.line, width: 1.5),
                   ),
                   child: Text(
                     'Buy',

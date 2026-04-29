@@ -68,7 +68,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(16),
                                 border:
-                                    Border.all(color: AppTheme.line, width: 1),
+                                    Border.all(color: AppTheme.line, width: 1.5),
                                 boxShadow: AppTheme.cardShadow,
                               ),
                               child: Icon(Icons.chevron_left,
@@ -183,7 +183,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           color: AppTheme.black.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
           border:
-              Border.all(color: AppTheme.line.withValues(alpha: 0.5), width: 1),
+              Border.all(color: AppTheme.line.withValues(alpha: 0.5), width: 1.5),
         ),
         child: Center(
           child: Icon(Icons.add,
@@ -495,7 +495,7 @@ class _GameDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.bg,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppTheme.line, width: 1),
+          border: Border.all(color: AppTheme.line, width: 1.5),
           boxShadow: [
             BoxShadow(
                 color: AppTheme.accent.withValues(alpha: 0.1),

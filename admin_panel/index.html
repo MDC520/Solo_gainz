@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo Gainz | Admin Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Background -->
+        <div class="void-bg">
+            <canvas id="waves"></canvas>
+            <div class="stars"></div>
+        </div>
+
+        <!-- Login Overlay -->
+        <div id="login-overlay" class="overlay active">
+            <div class="glass-card login-card">
+                <div class="logo">
+                    <span class="aura-text">SOLO GAINZ</span>
+                    <span class="sub-text">ADMIN PORTAL</span>
+                </div>
+                <div class="sync-status">
+                    <div class="spinner"></div>
+                    <p>SYNCING WITH THE VOID...</p>
+                </div>
+                <p class="hint">Initializing secure connection to the database.</p>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <main id="dashboard" class="hidden">
+            <header>
+                <div class="header-left">
+                    <div class="status-indicator online"></div>
+                    <h1>CONTROL BOARD</h1>
+                </div>
+                <div class="header-right">
+                    <button id="btn-refresh" class="icon-button" title="Refresh Data"><i data-lucide="refresh-cw"></i></button>
+                    <button id="btn-logout" class="icon-button" title="Disconnect"><i data-lucide="log-out"></i></button>
+                </div>
+            </header>
+
+            <section class="stats-grid">
+                <div class="glass-card stat-item">
+                    <span class="stat-label">TOTAL OPERATIVES</span>
+                    <span class="stat-value" id="total-users">0</span>
+                </div>
+                <div class="glass-card stat-item">
+                    <span class="stat-label">SYSTEM STATUS</span>
+                    <span class="stat-value text-accent">ACTIVE</span>
+                </div>
+            </section>
+
+            <section class="user-section">
+                <div class="section-header">
+                    <div class="header-line"></div>
+                    <h2>USER REGISTRY</h2>
+                </div>
+                
+                <div class="glass-card table-container">
+                    <table id="user-table">
+                        <thead>
+                            <tr>
+                                <th>USERNAME</th>
+                                <th>COUNTRY</th>
+                                <th>JOINED</th>
+                                <th class="actions-col">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list">
+                            <!-- Users injected here -->
+                        </tbody>
+                    </table>
+                    <div id="loader" class="hidden">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div id="modal-container" class="overlay hidden">
+            <!-- Edit User Modal -->
+            <div id="edit-modal" class="glass-card modal hidden">
+                <h3>EDIT OPERATIVE</h3>
+                <div class="input-group">
+                    <label>New Username</label>
+                    <input type="text" id="edit-username">
+                </div>
+                <div class="input-group">
+                    <label>New Password</label>
+                    <input type="password" id="edit-password" placeholder="Leave blank to keep current">
+                </div>
+                <div class="input-group">
+                    <label>Verified Badge</label>
+                    <select id="edit-badge">
+                        <option value="none">None</option>
+                        <option value="blue">Blue (Standard)</option>
+                        <option value="gold">Gold (Premium)</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary close-modal">CANCEL</button>
+                    <button id="save-user" class="neon-button small">UPDATE</button>
+                </div>
+            </div>
+
+            <!-- Notify Modal -->
+            <div id="notify-modal" class="glass-card modal hidden">
+                <h3>SEND TRANSMISSION</h3>
+                <div class="input-group">
+                    <label>Message Title</label>
+                    <input type="text" id="notify-title" placeholder="System Alert">
+                </div>
+                <div class="input-group">
+                    <label>Text Content</label>
+                    <textarea id="notify-message" placeholder="Type your message..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Speech Command (TTS)</label>
+                    <input type="text" id="notify-speech" placeholder="What the app will speak aloud...">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary close-modal">CANCEL</button>
+                    <button id="send-notification" class="neon-button small accent-cyan">TRANSMIT</button>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation -->
+            <div id="delete-modal" class="glass-card modal hidden">
+                <h3>TERMINATE OPERATIVE?</h3>
+                <p>This action is irreversible. All user data will be purged from the void.</p>
+                <div class="modal-actions">
+                    <button class="btn-secondary close-modal">CANCEL</button>
+                    <button id="confirm-delete" class="neon-button small accent-red">TERMINATE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

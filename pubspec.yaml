@@ -40,6 +40,9 @@ flutter:
     - Assets/Player Model/Sprint/
     - Assets/Player Model/Jump/
     - Assets/Player Model/Spin/
+    - Assets/Player Model/Hit/
+    - Assets/Player Model/HitUp/
+    - Assets/Player Model/Stunned/
     - Assets/Rank Shields/
     - Assets/Chests/Wooden Chest/Idle/
     - Assets/Chests/Wooden Chest/open/

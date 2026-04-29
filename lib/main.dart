@@ -25,7 +25,7 @@ void main() async {
   await notificationManager.init();
 
   // Edge-to-edge display (better than immersiveSticky — less jank)
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -192,9 +192,9 @@ class _AppShellState extends State<AppShell>
 
   // Pages are built lazily via AutomaticKeepAlive pattern
   static const _icons = [
-    (Icons.space_dashboard_rounded, Icons.space_dashboard_outlined, 'Home'),
+    (Icons.bolt_rounded, Icons.bolt_outlined, 'Home'),
+    (Icons.military_tech_rounded, Icons.military_tech_outlined, 'Quests'),
     (Icons.analytics_rounded, Icons.analytics_outlined, 'Stats'),
-    (Icons.task_rounded, Icons.task_outlined, 'Quests'),
     (Icons.local_mall_rounded, Icons.local_mall_outlined, 'Shop'),
     (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
   ];
@@ -211,8 +211,8 @@ class _AppShellState extends State<AppShell>
     );
     _pages = [
       const RepaintBoundary(child: SGScreenEntrance(child: HomePage())),
-      const RepaintBoundary(child: SGScreenEntrance(child: StatsPage())),
       const RepaintBoundary(child: SGScreenEntrance(child: QuestPage())),
+      const RepaintBoundary(child: SGScreenEntrance(child: StatsPage())),
       const RepaintBoundary(child: SGScreenEntrance(child: ShopPage())),
       RepaintBoundary(
           child:
@@ -248,8 +248,12 @@ class _AppShellState extends State<AppShell>
 
         return Stack(
           children: [
-            const RepaintBoundary(
-                child: LivelyBackground(child: SizedBox.expand())),
+            RepaintBoundary(
+              child: LivelyBackground(
+                isMoving: true,
+                child: const SizedBox.expand(),
+              ),
+            ),
             Scaffold(
               backgroundColor: Colors.transparent,
               extendBody: true,
@@ -289,26 +293,26 @@ class _AppShellState extends State<AppShell>
                             padding: EdgeInsets.only(
                                 bottom: bottomPadding * (1 - t)),
                             decoration: BoxDecoration(
-                              color: AppTheme.glassLight,
+                              color: AppTheme.black,
                               borderRadius: BorderRadius.circular(radius),
                               border: Border(
                                 top: BorderSide(
-                                    color: AppTheme.glassBorder, width: 1),
+                                    color: AppTheme.glassBorder, width: 1.5),
                                 bottom: BorderSide(
                                     color: t > 0.01
                                         ? AppTheme.glassBorder
                                         : Colors.transparent,
-                                    width: t > 0.01 ? 1 : 0),
+                                    width: t > 0.01 ? 1.2 : 0),
                                 left: BorderSide(
                                     color: t > 0.01
                                         ? AppTheme.glassBorder
                                         : Colors.transparent,
-                                    width: t > 0.01 ? 1 : 0),
+                                    width: t > 0.01 ? 1.2 : 0),
                                 right: BorderSide(
                                     color: t > 0.01
                                         ? AppTheme.glassBorder
                                         : Colors.transparent,
-                                    width: t > 0.01 ? 1 : 0),
+                                    width: t > 0.01 ? 1.2 : 0),
                               ),
                             ),
                             child: child,
@@ -330,7 +334,7 @@ class _AppShellState extends State<AppShell>
                               Icon(
                                 sel ? item.$1 : item.$2,
                                 size: 20,
-                                color: sel ? AppTheme.accent : AppTheme.muted,
+                                color: sel ? AppTheme.accent : AppTheme.white,
                               ),
                               const SizedBox(height: 4),
                               Text(item.$3,
@@ -339,7 +343,7 @@ class _AppShellState extends State<AppShell>
                                     fontWeight:
                                         sel ? FontWeight.w600 : FontWeight.w500,
                                     color:
-                                        sel ? AppTheme.accent : AppTheme.muted,
+                                        sel ? AppTheme.accent : AppTheme.white,
                                     letterSpacing: 0.2,
                                   )),
                             ],

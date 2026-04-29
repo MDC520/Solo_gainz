@@ -93,7 +93,7 @@ class _StatsPageState extends State<StatsPage> {
                                 color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(12),
                                 border:
-                                    Border.all(color: AppTheme.line, width: 1),
+                                    Border.all(color: AppTheme.line, width: 1.5),
                               ),
                               child: const Icon(Icons.workspace_premium,
                                   color: AppTheme.amber, size: 20),
@@ -264,7 +264,7 @@ class _XPRoad extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.bg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.line, width: 1),
+        border: Border.all(color: AppTheme.line, width: 1.5),
       ),
       child: Stack(
         children: [

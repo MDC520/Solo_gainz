@@ -94,7 +94,7 @@ class BuyCoinsScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.elevated,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.amber, width: 1),
+                        border: Border.all(color: AppTheme.amber, width: 1.5),
                       ),
                       child: Icon(
                         Icons.storefront_rounded,
@@ -145,7 +145,7 @@ class BuyCoinsScreen extends StatelessWidget {
                             color: isPopular || isBest
                                 ? bundle.color
                                 : AppTheme.line,
-                            width: isPopular || isBest ? 2.5 : 1.5,
+                            width: isPopular || isBest ? 2.5 : 1.2,
                           ),
                         ),
                         child: ClipRRect(
@@ -242,7 +242,7 @@ class BuyCoinsScreen extends StatelessWidget {
                                         border: isPopular || isBest
                                             ? null
                                             : Border.all(
-                                                color: AppTheme.line, width: 1),
+                                                color: AppTheme.line, width: 1.5),
                                       ),
                                       child: Center(
                                         child: Text(

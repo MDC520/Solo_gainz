@@ -359,7 +359,7 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.line, width: 1),
+        border: Border.all(color: AppTheme.line, width: 1.5),
       ),
       child: Column(
         children: [
