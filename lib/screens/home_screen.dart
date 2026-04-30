@@ -21,7 +21,7 @@ class _HomePageState extends State<HomePage> {
     return hour >= 22 || hour < 5;
   }
 
-  bool _flipPlayer = false;
+  final bool _flipPlayer = false;
   int _hitCount = 0;
   double _cardHurtPulse = 0.0;
   String _voiceLine = "Let's get those gains today!";

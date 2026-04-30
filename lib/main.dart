@@ -11,9 +11,7 @@ import 'screens/profile_screen.dart';
 import 'screens/no_connection_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/storage.dart';
-import 'services/auth_service.dart';
 import 'services/security_service.dart';
-import 'services/connectivity_service.dart';
 import 'services/notification_manager.dart';
 import 'theme/theme.dart';
 

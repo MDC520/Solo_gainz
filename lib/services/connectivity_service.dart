@@ -1,5 +1,4 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ConnectivityService — Checks real internet connectivity by
 /// attempting a lightweight Supabase ping. WiFi/mobile connected

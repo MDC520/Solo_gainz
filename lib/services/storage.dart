@@ -1,7 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_stats.dart';
-import 'auth_service.dart';
 
 class Storage {
   static const String boxName = 'solo_gainz_box';

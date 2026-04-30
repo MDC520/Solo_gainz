@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../services/auth_service.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 

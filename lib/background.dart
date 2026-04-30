@@ -1,5 +1,3 @@
-import 'dart:ui';
-import 'dart:math';
 import 'theme/theme.dart';
 
 /// Living Notebook — A creepy, infinite-scrolling notebook background.

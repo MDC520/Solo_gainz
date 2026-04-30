@@ -19,7 +19,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   UserStats? _s;
   String _profileImagePath = '';
-  bool _loading = false;
+  final bool _loading = false;
 
   @override
   void initState() {
