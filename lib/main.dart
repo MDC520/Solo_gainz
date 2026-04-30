@@ -53,7 +53,8 @@ void main() async {
 
   // Init Supabase (auth service)
   try {
-    await AuthService().initialize();
+    // await AuthService().initialize();
+    debugPrint('Supabase initialization bypassed');
   } catch (e) {
     debugPrint('Supabase init error: $e');
   }
@@ -116,29 +117,11 @@ class _AppRootState extends State<_AppRoot> {
 
   // ── Splash done ────────────────────────────────────────────────
   Future<void> _afterSplash() async {
-    // Always check connectivity first
-    final online = await ConnectivityService.isOnline();
-    if (!online) {
-      _setState(_AppState.noConnection);
-      return;
-    }
-
-    // Check auth state
-    if (Storage.isLoggedIn()) {
-      if (Storage.isOnboarded()) {
-        // Returning logged-in user — do daily reward check then go to shell
-        try {
-          await Storage.checkDailyLoginReward();
-          // Sync latest data from cloud
-          await AuthService().syncData();
-        } catch (_) {}
-        _setState(_AppState.shell);
-      } else {
-        _setState(_AppState.onboarding);
-      }
-    } else {
-      _setState(_AppState.login);
-    }
+    // Skip connectivity and auth checks
+    try {
+      await Storage.checkDailyLoginReward();
+    } catch (_) {}
+    _setState(_AppState.shell);
   }
 
   // ── No connection → retry ──────────────────────────────────────
@@ -167,8 +150,9 @@ class _AppRootState extends State<_AppRoot> {
 
   // ── Logout ────────────────────────────────────────────────────
   Future<void> _onLogout() async {
-    await AuthService().logout();
-    _setState(_AppState.login);
+    // await AuthService().logout();
+    // _setState(_AppState.login);
+    debugPrint('Logout disabled');
   }
 
   void _setState(_AppState s) {

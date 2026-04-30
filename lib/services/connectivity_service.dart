@@ -12,22 +12,7 @@ class ConnectivityService {
   // ── Real connectivity check ────────────────────────────────────
   /// Returns true only if device can reach Supabase.
   static Future<bool> isOnline() async {
-    try {
-      // First: cheap check — is any network interface up?
-      final result = await _connectivity.checkConnectivity();
-      if (result == ConnectivityResult.none) return false;
-
-      // Second: verify actual internet by pinging Supabase
-      final client = Supabase.instance.client;
-      await client
-          .from('users')
-          .select('id')
-          .limit(1)
-          .timeout(const Duration(seconds: 5));
-      return true;
-    } catch (_) {
-      return false;
-    }
+    return true; // Supabase ping disabled
   }
 
   /// Stream that emits [true] when online, [false] when offline.

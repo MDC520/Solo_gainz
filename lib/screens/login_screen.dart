@@ -6,14 +6,7 @@ import '../services/data_serializer.dart';
 import '../services/security_service.dart';
 import '../theme/theme.dart';
 
-// ── Country model ──────────────────────────────────────────────────
-class Country {
-  final String name;
-  final String flag;
-  const Country(this.name, this.flag);
-  @override
-  String toString() => '$flag $name';
-}
+import '../utils/countries.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onSignUpSuccess;
@@ -46,115 +39,6 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _ctrl;
   late Animation<double> _fade;
 
-  // Countries list (abbreviated — same full list as before)
-  static const _countries = [
-    Country('Afghanistan', '🇦🇫'),
-    Country('Albania', '🇦🇱'),
-    Country('Algeria', '🇩🇿'),
-    Country('Andorra', '🇦🇩'),
-    Country('Angola', '🇦🇴'),
-    Country('Argentina', '🇦🇷'),
-    Country('Armenia', '🇦🇲'),
-    Country('Australia', '🇦🇺'),
-    Country('Austria', '🇦🇹'),
-    Country('Azerbaijan', '🇦🇿'),
-    Country('Bahrain', '🇧🇭'),
-    Country('Bangladesh', '🇧🇩'),
-    Country('Belarus', '🇧🇾'),
-    Country('Belgium', '🇧🇪'),
-    Country('Bolivia', '🇧🇴'),
-    Country('Bosnia and Herzegovina', '🇧🇦'),
-    Country('Brazil', '🇧🇷'),
-    Country('Bulgaria', '🇧🇬'),
-    Country('Cambodia', '🇰🇭'),
-    Country('Cameroon', '🇨🇲'),
-    Country('Canada', '🇨🇦'),
-    Country('Chile', '🇨🇱'),
-    Country('China', '🇨🇳'),
-    Country('Colombia', '🇨🇴'),
-    Country('Croatia', '🇭🇷'),
-    Country('Cuba', '🇨🇺'),
-    Country('Czech Republic', '🇨🇿'),
-    Country('Denmark', '🇩🇰'),
-    Country('Ecuador', '🇪🇨'),
-    Country('Egypt', '🇪🇬'),
-    Country('Ethiopia', '🇪🇹'),
-    Country('Finland', '🇫🇮'),
-    Country('France', '🇫🇷'),
-    Country('Georgia', '🇬🇪'),
-    Country('Germany', '🇩🇪'),
-    Country('Ghana', '🇬🇭'),
-    Country('Greece', '🇬🇷'),
-    Country('Guatemala', '🇬🇹'),
-    Country('Hungary', '🇭🇺'),
-    Country('India', '🇮🇳'),
-    Country('Indonesia', '🇮🇩'),
-    Country('Iran', '🇮🇷'),
-    Country('Iraq', '🇮🇶'),
-    Country('Ireland', '🇮🇪'),
-    Country('Israel', '🇮🇱'),
-    Country('Italy', '🇮🇹'),
-    Country('Jamaica', '🇯🇲'),
-    Country('Japan', '🇯🇵'),
-    Country('Jordan', '🇯🇴'),
-    Country('Kazakhstan', '🇰🇿'),
-    Country('Kenya', '🇰🇪'),
-    Country('Kuwait', '🇰🇼'),
-    Country('Lebanon', '🇱🇧'),
-    Country('Libya', '🇱🇾'),
-    Country('Malaysia', '🇲🇾'),
-    Country('Mexico', '🇲🇽'),
-    Country('Morocco', '🇲🇦'),
-    Country('Myanmar', '🇲🇲'),
-    Country('Nepal', '🇳🇵'),
-    Country('Netherlands', '🇳🇱'),
-    Country('New Zealand', '🇳🇿'),
-    Country('Nigeria', '🇳🇬'),
-    Country('North Korea', '🇰🇵'),
-    Country('Norway', '🇳🇴'),
-    Country('Oman', '🇴🇲'),
-    Country('Pakistan', '🇵🇰'),
-    Country('Palestine', '🇵🇸'),
-    Country('Panama', '🇵🇦'),
-    Country('Peru', '🇵🇪'),
-    Country('Philippines', '🇵🇭'),
-    Country('Poland', '🇵🇱'),
-    Country('Portugal', '🇵🇹'),
-    Country('Qatar', '🇶🇦'),
-    Country('Romania', '🇷🇴'),
-    Country('Russia', '🇷🇺'),
-    Country('Rwanda', '🇷🇼'),
-    Country('Saudi Arabia', '🇸🇦'),
-    Country('Senegal', '🇸🇳'),
-    Country('Serbia', '🇷🇸'),
-    Country('Singapore', '🇸🇬'),
-    Country('Somalia', '🇸🇴'),
-    Country('South Africa', '🇿🇦'),
-    Country('South Korea', '🇰🇷'),
-    Country('Spain', '🇪🇸'),
-    Country('Sri Lanka', '🇱🇰'),
-    Country('Sudan', '🇸🇩'),
-    Country('Sweden', '🇸🇪'),
-    Country('Switzerland', '🇨🇭'),
-    Country('Syria', '🇸🇾'),
-    Country('Taiwan', '🇹🇼'),
-    Country('Tanzania', '🇹🇿'),
-    Country('Thailand', '🇹🇭'),
-    Country('Tunisia', '🇹🇳'),
-    Country('Turkey', '🇹🇷'),
-    Country('Uganda', '🇺🇬'),
-    Country('Ukraine', '🇺🇦'),
-    Country('United Arab Emirates', '🇦🇪'),
-    Country('United Kingdom', '🇬🇧'),
-    Country('United States', '🇺🇸'),
-    Country('Uruguay', '🇺🇾'),
-    Country('Uzbekistan', '🇺🇿'),
-    Country('Venezuela', '🇻🇪'),
-    Country('Vietnam', '🇻🇳'),
-    Country('Yemen', '🇾🇪'),
-    Country('Zambia', '🇿🇲'),
-    Country('Zimbabwe', '🇿🇼'),
-  ];
 
   bool get _signUp => _tab == 1;
 
@@ -261,8 +145,8 @@ class _LoginScreenState extends State<LoginScreen>
       builder: (_) => StatefulBuilder(
         builder: (context, setModalState) {
           final filtered = searchQuery.isEmpty
-              ? _countries
-              : _countries
+              ? worldCountries
+              : worldCountries
                   .where((c) =>
                       c.name.toLowerCase().contains(searchQuery.toLowerCase()))
                   .toList();

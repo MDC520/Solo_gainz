@@ -48,9 +48,7 @@ class Storage {
   // ── Auto-sync trigger ──────────────────────────────────────────
   /// Schedule a debounced cloud sync after any data change.
   static void _triggerSync() {
-    if (isLoggedIn()) {
-      AuthService().scheduleSyncData();
-    }
+    // Cloud sync disabled
   }
 
   // ── UserStats ──────────────────────────────────────────────────
@@ -65,15 +63,15 @@ class Storage {
 
   // ── Auth state ─────────────────────────────────────────────────
   static bool isLoggedIn() {
-    return _box.get('is_logged_in', defaultValue: false) == true;
+    return true; // Always logged in
   }
 
   static bool isOnboarded() {
-    return _box.get('is_onboarded', defaultValue: false) == true;
+    return true; // Always onboarded
   }
 
   static String? getCurrentUser() {
-    return getData('current_user');
+    return 'Player';
   }
 
   // ── Daily reward ───────────────────────────────────────────────
