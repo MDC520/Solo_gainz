@@ -28,7 +28,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _notificationsEnabled = true;
 
   // Step 5 — Level
-  final int _levelIndex = 0;
 
   // Step 6 — Loadout
   final List<Exercise> _selected = [];
@@ -538,10 +537,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             setState(() {
               if (val == 0) {
                 _dailyGoal = 'light';
-              } else if (val == 1)
+              } else if (val == 1) {
                 _dailyGoal = 'medium';
-              else
+              } else {
                 _dailyGoal = 'hard';
+              }
             });
           },
         ),
@@ -643,7 +643,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       }
                       setState(() => _notificationsEnabled = v);
                     },
-                    activeColor: AppTheme.cyan,
+                    activeThumbColor: AppTheme.cyan,
                     activeTrackColor: AppTheme.cyan.withValues(alpha: 0.3),
                     inactiveTrackColor: AppTheme.surface,
                     inactiveThumbColor: AppTheme.text2,

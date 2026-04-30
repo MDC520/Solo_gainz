@@ -6,8 +6,6 @@ import '../models/user_stats.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import 'settings_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:ui';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onLogout;
@@ -19,7 +17,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   UserStats? _s;
   String _profileImagePath = '';
-  final bool _loading = false;
 
   @override
   void initState() {

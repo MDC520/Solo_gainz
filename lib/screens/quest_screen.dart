@@ -311,7 +311,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 
   void _handleChestDrop() {
     // 35% chance to drop a chest
-    final r = Timer.run(() async {
+    Timer.run(() async {
       final rand = DateTime.now().millisecond % 100;
       if (rand < 35) {
         final type = (rand < 10) ? 'iron_chest' : 'wooden_chest';
@@ -350,15 +350,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
         ],
       ),
     );
-  }
-
-  void _deleteCustomQuest(int i) {
-    setState(() {
-      _customAnims[i].dispose();
-      _customAnims.removeAt(i);
-      _customQuests.removeAt(i);
-    });
-    Storage.saveCustomQuests(_customQuests);
   }
 
   void _levelUp() {
@@ -1456,8 +1447,7 @@ class _ShatterWidgetState extends State<ShatterWidget>
         final rotation = rot * t;
 
         return Transform(
-          transform: Matrix4.identity()
-            ..translate(flyX, flyY)
+          transform: Matrix4.translationValues(flyX, flyY, 0.0)
             ..rotateZ(rotation),
           alignment: align,
           child: Opacity(

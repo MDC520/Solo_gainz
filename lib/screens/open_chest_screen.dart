@@ -40,7 +40,6 @@ class _OpenChestScreenState extends State<OpenChestScreen>
   late Animation<Alignment> _dropAlign;
 
   late Animation<double> _flashOpacity;
-  late Animation<double> _glowScale;
   late Animation<double> _rewardScale;
   late Animation<double> _rewardSlide;
   late Animation<double> _floatAnim;
@@ -62,26 +61,28 @@ class _OpenChestScreenState extends State<OpenChestScreen>
       final roll = rng.nextDouble();
       if (roll < 0.60) {
         _rewardCoins = 6 + rng.nextInt(45);
-      } else if (roll < 0.85)
+      } else if (roll < 0.85) {
         _rewardCoins = 51 + rng.nextInt(50);
-      else if (roll < 0.96)
+      } else if (roll < 0.96) {
         _rewardCoins = 101 + rng.nextInt(150);
-      else if (roll < 0.995)
+      } else if (roll < 0.995) {
         _rewardCoins = 251 + rng.nextInt(148);
-      else
+      } else {
         _rewardCoins = 399;
+      }
     } else {
       final roll = rng.nextDouble();
       if (roll < 0.45) {
         _rewardCoins = 6 + rng.nextInt(45);
-      } else if (roll < 0.75)
+      } else if (roll < 0.75) {
         _rewardCoins = 51 + rng.nextInt(50);
-      else if (roll < 0.92)
+      } else if (roll < 0.92) {
         _rewardCoins = 101 + rng.nextInt(150);
-      else if (roll < 0.99)
+      } else if (roll < 0.99) {
         _rewardCoins = 251 + rng.nextInt(148);
-      else
+      } else {
         _rewardCoins = 399;
+      }
     }
     _isMaxReward = _rewardCoins == 399;
   }
@@ -122,11 +123,6 @@ class _OpenChestScreenState extends State<OpenChestScreen>
           weight: 20),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 70),
     ]).animate(_burstCtrl);
-
-    _glowScale = TweenSequence([
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 4.0), weight: 30),
-      TweenSequenceItem(tween: ConstantTween<double>(4.0), weight: 70),
-    ]).animate(CurvedAnimation(parent: _burstCtrl, curve: Curves.easeOut));
 
     _rewardScale = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
         parent: _burstCtrl,
@@ -207,8 +203,6 @@ class _OpenChestScreenState extends State<OpenChestScreen>
     final spriteType = widget.chestType == 'wooden_chest' ? 'wooden' : 'iron';
     final isWooden = widget.chestType == 'wooden_chest';
 
-    final Color baseGlow =
-        isWooden ? const Color(0xFFD4A373) : const Color(0xFF90E0EF);
     final Color intenseGlow = isWooden ? AppTheme.amber : AppTheme.cyan;
 
     // ignore: deprecated_member_use

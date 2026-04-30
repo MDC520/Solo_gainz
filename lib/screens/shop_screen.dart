@@ -141,6 +141,7 @@ class _ShopPageState extends State<ShopPage> {
                 _s.coins -= item.price;
                 await Storage.saveUserStats(_s);
                 await AuthService().syncData();
+                if (!context.mounted) return;
                 Navigator.pop(ctx);
                 _load();
                 _ok(item.name);
@@ -260,6 +261,7 @@ class _ShopPageState extends State<ShopPage> {
               for (int i = 0; i < qty; i++) {
                 await Storage.addChestToInventory(chestType);
               }
+              if (!context.mounted) return;
               Navigator.pop(ctx);
               _load();
               // Show chest arrival animation
@@ -463,7 +465,6 @@ class _ShopPageState extends State<ShopPage> {
     required int qty,
     required ValueChanged<int> onQtyChanged,
   }) {
-    final canSingle = _s.coins >= price;
     final totalCost = price * qty;
     final canTotal = _s.coins >= totalCost;
     final chestTypeKey = chestType == 'wooden' ? 'wooden_chest' : 'iron_chest';

@@ -59,6 +59,8 @@ class BuyCoinsScreen extends StatelessWidget {
     await Storage.saveData('coins', stats.coins);
     await AuthService().syncData();
 
+    if (!context.mounted) return;
+
     AppTheme.showSnackBar(
       context,
       'Purchased ${bundle.title} for ${bundle.price}.',

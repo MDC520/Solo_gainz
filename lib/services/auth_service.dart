@@ -12,9 +12,6 @@ class AuthService {
   AuthService._internal();
 
   // ── Supabase credentials ───────────────────────────────────────
-  static const _supabaseUrl = 'https://xelqafpkriikivviasfm.supabase.co';
-  static const _anonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlbHFhZnBrcmlpa2l2dmlhc2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMDMxNDAsImV4cCI6MjA5Mjc3OTE0MH0.roRtHxgAzM2h9lhQjQ2zCjYQnWbT4NRN7NpzQ3nhqBs';
 
   Future<void> initialize() async {
     // await Supabase.initialize(url: _supabaseUrl, anonKey: _anonKey);
@@ -84,7 +81,4 @@ class AuthService {
     return DateTime.now().toIso8601String();
   }
 
-  // ── Helper ────────────────────────────────────────────────────
-  Map<String, dynamic> _fail(String msg) =>
-      {'success': false, 'message': msg};
 }

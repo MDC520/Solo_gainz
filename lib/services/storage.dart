@@ -75,7 +75,6 @@ class Storage {
 
   // ── Daily reward ───────────────────────────────────────────────
   static Future<void> checkDailyLoginReward() async {
-    final stats = getUserStats();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final lastStr = getData('last_daily_reward_date');
