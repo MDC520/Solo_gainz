@@ -27,6 +27,16 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
   bool _isJumping = false;
   double _playerY = 0.0;
   double _velocityY = 0.0;
+  double _stamina = 1.0; // 0.0 to 1.0
+  bool _showColliders = true;
+
+  // Grabbing State
+  bool _isGrabbing = false;
+  bool _canGrab = false;
+  _Box? _grabbedBox;
+  int _grabSide = 0; 
+  bool _isPushingBox = false;
+  bool _isPullingBox = false;
 
   // Box Physics
   final List<_Box> _boxes = [
@@ -75,8 +85,43 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
     setState(() {
       // 1. Horizontal Physics (Player)
       double targetVel = _joystickInputX * (_isRunning ? _maxRunSpeed : _maxWalkSpeed);
+      if (_grabbedBox != null) {
+        double weight = _grabbedBox!.weight;
+        double speedMod = (1.0 / weight).clamp(0.2, 0.9); // Heavy = slow, max 0.9
+        targetVel = _joystickInputX * (_maxWalkSpeed * speedMod);
+        
+        // Extra stamina drain when moving heavy objects
+        if (_velocityX.abs() > 0.1) {
+            _stamina -= (0.001 * weight);
+        }
+      }
       _velocityX = lerpDouble(_velocityX, targetVel, 0.3)!;
       _playerWorldX += _velocityX;
+
+      // Update Grabbed Box
+      if (_grabbedBox != null) {
+        if (_grabSide == 1) {
+          _grabbedBox!.x = _playerWorldX + 20; // playerW/2
+          _flip = false; // face the box
+        } else {
+          _grabbedBox!.x = _playerWorldX - 20 - _grabbedBox!.width;
+          _flip = true;
+        }
+        _grabbedBox!.velX = _velocityX;
+
+        _isPushingBox = false;
+        _isPullingBox = false;
+        if (_velocityX.abs() > 0.1) {
+          if ((_grabSide == 1 && _velocityX > 0) || (_grabSide == -1 && _velocityX < 0)) {
+            _isPushingBox = true;
+          } else {
+            _isPullingBox = true;
+          }
+        }
+      } else {
+        _isPushingBox = false;
+        _isPullingBox = false;
+      }
 
       // 2. Vertical Physics (Gravity & Jump)
       if (_isJumping || _playerY > 0) {
@@ -100,10 +145,14 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
         }
 
         // Box Friction
-        box.velX *= 0.9;
-        box.x += box.velX;
+        if (box != _grabbedBox) {
+          box.velX *= 0.9;
+          box.x += box.velX;
+        }
 
-        // Player vs Box Collision (Synced with visible White Collider)
+        if (box == _grabbedBox) continue; // Skip physical block check for the grabbed box
+
+        // Player vs Box Collision (Solid Wall)
         double playerW = 40; 
         double playerH = 110; 
         
@@ -117,15 +166,14 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
             _velocityY = 0;
             _isJumping = false;
           } 
-          // Side Pushing
+          // Solid Block (No auto-push)
           else {
             if (_playerWorldX < box.x) {
               _playerWorldX = box.x - playerW/2;
-              box.velX = _velocityX.clamp(0, _maxRunSpeed);
             } else {
               _playerWorldX = box.x + box.width + playerW/2;
-              box.velX = _velocityX.clamp(-_maxRunSpeed, 0);
             }
+            _velocityX = 0;
           }
         }
       }
@@ -161,12 +209,52 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
         }
       }
 
-      // 5. Movement states
+      // Enforce grabbed box connection
+      if (_grabbedBox != null) {
+        if (_grabSide == 1) {
+          _playerWorldX = _grabbedBox!.x - 20;
+        } else {
+          _playerWorldX = _grabbedBox!.x + _grabbedBox!.width + 20;
+        }
+      }
+
+      // 5. Stamina Logic
+      if (_isRunning && _isMoving) {
+        _stamina -= 0.006; // Drains in ~3 seconds of sprinting
+        if (_stamina <= 0) {
+          _stamina = 0;
+          _isRunning = false; // Forced walk
+        }
+      } else {
+        _stamina += 0.004; // Recovers in ~4 seconds
+        if (_stamina > 1.0) _stamina = 1.0;
+      }
+
+      // 6. Movement states
       _isMoving = _velocityX.abs() > 0.1;
       if (_joystickInputX < 0) _flip = true;
       if (_joystickInputX > 0) _flip = false;
 
-      // 5. Constraints
+      // 7. Check Grab Proximity
+      _canGrab = false;
+      if (!_isGrabbing && _playerY == 0) {
+        double playerW = 40;
+        double playerH = 110;
+        for (var box in _boxes) {
+          bool overlapY = (_playerY + playerH > box.y) && (_playerY < box.y + box.height);
+          if (!overlapY) continue;
+          
+          if ((_playerWorldX + playerW/2) >= box.x - 15 && (_playerWorldX + playerW/2) <= box.x + box.width/2) {
+              _canGrab = true;
+              break;
+          } else if ((_playerWorldX - playerW/2) <= box.x + box.width + 15 && (_playerWorldX - playerW/2) >= box.x + box.width/2) {
+              _canGrab = true;
+              break;
+          }
+        }
+      }
+
+      // 8. Constraints
       if (_playerWorldX < 20) {
         _playerWorldX = 20;
         _velocityX = 0;
@@ -186,6 +274,21 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
     });
   }
 
+  String _getCurrentAnimation() {
+    if (_isJumping || _playerY > 0) {
+      return _velocityY > 0 ? 'Jump' : 'Jump Fall';
+    }
+    if (_grabbedBox != null) {
+      if (_isPushingBox) return 'Push';
+      if (_isPullingBox) return 'Pull';
+      return 'PushIdle';
+    }
+    if (_isMoving) {
+      return _isRunning ? 'Run' : 'Walk';
+    }
+    return 'Idle';
+  }
+
   void _jump() {
     if (!_isJumping) {
       setState(() {
@@ -193,6 +296,42 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
         _velocityY = _jumpForce;
       });
     }
+  }
+
+  void _startGrab() {
+    if (_playerY > 0) return; // Only grab on ground
+    setState(() {
+      _isGrabbing = true;
+      double playerW = 40;
+      double playerH = 110;
+      
+      for (var box in _boxes) {
+        bool overlapY = (_playerY + playerH > box.y) && (_playerY < box.y + box.height);
+        if (!overlapY) continue;
+        
+        // Is player touching left side? (Within 10px tolerance)
+        if ((_playerWorldX + playerW/2) >= box.x - 10 && (_playerWorldX + playerW/2) <= box.x + box.width/2) {
+            _grabbedBox = box;
+            _grabSide = 1;
+            break;
+        }
+        // Is player touching right side?
+        else if ((_playerWorldX - playerW/2) <= box.x + box.width + 10 && (_playerWorldX - playerW/2) >= box.x + box.width/2) {
+            _grabbedBox = box;
+            _grabSide = -1;
+            break;
+        }
+      }
+    });
+  }
+
+  void _endGrab() {
+    setState(() {
+      _isGrabbing = false;
+      _grabbedBox = null;
+      _isPushingBox = false;
+      _isPullingBox = false;
+    });
   }
 
   Future<void> _setupGameMode() async {
@@ -280,26 +419,23 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
                   ),
                 ),
 
-                // Ground Line (Full width)
+                // Ground Floor (Grey area below the line)
                 Positioned(
-                  bottom: _groundY,
+                  bottom: 0,
                   left: 0,
                   right: 0,
                   child: Container(
-                    height: 3,
+                    height: _groundY,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.accent,
-                          AppTheme.cyan,
-                          AppTheme.accent,
-                        ],
+                      color: AppTheme.surface.withValues(alpha: 0.9), // Dark Grey/Surface
+                      border: Border(
+                        top: BorderSide(color: AppTheme.accent, width: 3),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.accent.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          spreadRadius: 2,
+                          color: AppTheme.accent.withValues(alpha: 0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, -5),
                         ),
                       ],
                     ),
@@ -315,13 +451,33 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
                       width: box.width,
                       height: box.height,
                       decoration: BoxDecoration(
-                        color: Colors.yellow.withValues(alpha: 0.3),
-                        border: Border.all(color: Colors.yellow, width: 3),
+                        color: const Color(0xFF5D4037), // Dark Wood Brown
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFF3E2723), width: 3), // Reinforced Edge
                         boxShadow: [
-                          BoxShadow(color: Colors.yellow.withValues(alpha: 0.2), blurRadius: 10),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(2, 2)),
                         ],
                       ),
-                      child: const SizedBox.shrink(),
+                      child: Stack(
+                        children: [
+                          // Crate Cross Beams
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _CratePainter(),
+                            ),
+                          ),
+                          // The Yellow Collider (Visible only if toggled)
+                          if (_showColliders)
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.yellow, width: 3),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.yellow.withValues(alpha: 0.3), blurRadius: 10),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   );
                 }),
@@ -329,28 +485,29 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
                 // Player
                 Positioned(
                   bottom: _groundY + _playerY, 
-                  left: playerScreenX - 20, // Centered for 40 width
+                  left: playerScreenX - 20, 
                   child: Container(
                     width: 40,
                     height: 110,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2),
-                      boxShadow: [
-                        BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 10),
-                      ],
+                      border: _showColliders 
+                          ? Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2)
+                          : null,
+                      boxShadow: _showColliders 
+                          ? [BoxShadow(color: Colors.white.withValues(alpha: 0.3), blurRadius: 10)]
+                          : null,
                     ),
                     child: OverflowBox(
                       maxWidth: 240,
                       maxHeight: 240,
-                      alignment: Alignment.bottomCenter, // ENSURE FEET ARE ON GROUND
+                      alignment: Alignment.bottomCenter,
                       child: Transform.scale(
                         scaleX: _flip ? -1 : 1,
                         child: Player(
-                          animation: _isJumping 
-                              ? (_velocityY > 0 ? 'Jump' : 'Jump Fall') 
-                              : (_isMoving ? (_isRunning ? 'Sprint' : 'Run') : 'Idle'),
+                          animation: _getCurrentAnimation(),
                           size: 240,
-                          fps: _isRunning ? 14 : 10,
+                          fps: _isRunning ? 14 : (_isPushingBox || _isPullingBox ? 8 : 10),
+                          loop: !_isJumping,
                         ),
                       ),
                     ),
@@ -415,89 +572,220 @@ class _TrainingScreenState extends State<TrainingScreen> with SingleTickerProvid
                   ),
                 ),
                 
-                // Exit Button
+                // UI - Top Left (Exit & Stamina)
                 Positioned(
                   top: 30,
                   left: 30,
-                  child: SGTouchable(
-                    onTap: () {
-                       SystemChrome.setPreferredOrientations([
-                        DeviceOrientation.portraitUp,
-                      ]);
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.line),
+                  child: Row(
+                    children: [
+                      SGTouchable(
+                        onTap: () {
+                           SystemChrome.setPreferredOrientations([
+                            DeviceOrientation.portraitUp,
+                          ]);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.line),
+                          ),
+                          child: const Icon(Icons.close_rounded, color: AppTheme.white, size: 24),
+                        ),
                       ),
-                      child: const Icon(Icons.close_rounded, color: AppTheme.white, size: 24),
-                    ),
-                  ),
-                ),
-
-                // UI - Run Button (Held to the end of stack for touch priority)
-                Positioned(
-                  bottom: 60,
-                  right: 170, // Moved to make room for jump
-                  child: GestureDetector(
-                    onTapDown: (_) => setState(() => _isRunning = true),
-                    onTapUp: (_) => setState(() => _isRunning = false),
-                    onTapCancel: () => setState(() => _isRunning = false),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: _isRunning ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.8),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.accent, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.accent.withValues(alpha: _isRunning ? 0.6 : 0.2),
-                            blurRadius: _isRunning ? 25 : 10,
+                      const SizedBox(width: 16),
+                      // Stamina Bar
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('STAMINA', style: AppTheme.label(color: AppTheme.text2).copyWith(fontSize: 10)),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 120,
+                            height: 10,
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(color: AppTheme.line),
+                            ),
+                            child: Stack(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 100),
+                                  width: 116 * _stamina,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        _stamina < 0.25 ? AppTheme.red : AppTheme.accent,
+                                        _stamina < 0.25 ? AppTheme.red.withValues(alpha: 0.7) : AppTheme.accent.withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (_stamina < 0.25 ? AppTheme.red : AppTheme.accent).withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Icon(
-                          Icons.bolt_rounded,
-                          color: _isRunning ? Colors.black : AppTheme.accent,
-                          size: 30,
+                    ],
+                  ),
+                ),
+
+                // UI - Debug Toggle (Top Center)
+                Positioned(
+                  top: 30,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: SGTouchable(
+                      onTap: () => setState(() => _showColliders = !_showColliders),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showColliders ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                              color: _showColliders ? AppTheme.accent : AppTheme.text2,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'COLLIDERS',
+                              style: AppTheme.label(color: _showColliders ? AppTheme.accent : AppTheme.text2),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                // UI - Jump Button
+                // UI - Grab Button (Action)
                 Positioned(
-                  bottom: 90,
+                  bottom: 140, // Moved above Jump button
+                  right: 60,   // Aligned right
+                  child: AnimatedOpacity(
+                    opacity: (_canGrab || _isGrabbing) ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: IgnorePointer(
+                      ignoring: !(_canGrab || _isGrabbing),
+                      child: GestureDetector(
+                        onTapDown: (_) => _startGrab(),
+                        onTapUp: (_) => _endGrab(),
+                        onTapCancel: () => _endGrab(),
+                        child: AnimatedScale(
+                          scale: _isGrabbing ? 0.9 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: _isGrabbing ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.8), width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.accent.withValues(alpha: _isGrabbing ? 0.4 : 0.05),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.pan_tool_rounded,
+                                color: _isGrabbing ? Colors.black : AppTheme.accent,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // UI - Run Button (Secondary)
+                Positioned(
+                  bottom: 110,
+                  right: 140,
+                  child: GestureDetector(
+                    onTapDown: (_) => setState(() => _isRunning = true),
+                    onTapUp: (_) => setState(() => _isRunning = false),
+                    onTapCancel: () => setState(() => _isRunning = false),
+                    child: AnimatedScale(
+                      scale: _isRunning ? 0.9 : 1.0,
+                      duration: const Duration(milliseconds: 100),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: _isRunning ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.accent.withValues(alpha: 0.8), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.accent.withValues(alpha: _isRunning ? 0.4 : 0.05),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.directions_run_rounded,
+                            color: _isRunning ? Colors.black : AppTheme.accent,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // UI - Jump Button (Primary)
+                Positioned(
+                  bottom: 50,
                   right: 60,
                   child: GestureDetector(
                     onTapDown: (_) => _jump(),
-                    child: AnimatedContainer(
+                    child: AnimatedScale(
+                      scale: _isJumping ? 0.85 : 1.0,
                       duration: const Duration(milliseconds: 100),
-                      width: 86,
-                      height: 86,
-                      decoration: BoxDecoration(
-                        color: _isJumping ? AppTheme.cyan : AppTheme.surface.withValues(alpha: 0.8),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.cyan, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.cyan.withValues(alpha: 0.4),
-                            blurRadius: _isJumping ? 30 : 15,
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: _isJumping ? AppTheme.cyan : AppTheme.surface.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.8), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.cyan.withValues(alpha: 0.3),
+                              blurRadius: _isJumping ? 20 : 10,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.keyboard_double_arrow_up_rounded,
+                            color: _isJumping ? Colors.black : AppTheme.cyan,
+                            size: 36,
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.arrow_upward_rounded,
-                          color: _isJumping ? Colors.black : AppTheme.cyan,
-                          size: 36,
                         ),
                       ),
                     ),
@@ -569,6 +857,8 @@ class _Box {
   double velX;
   double velY;
 
+  double get weight => (width * height) / 6400.0; // 80x80 is weight 1.0
+
   _Box({
     required this.x,
     this.y = 0.0,
@@ -603,4 +893,21 @@ class _GridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GridPainter oldDelegate) => oldDelegate.cameraX != cameraX;
+}
+
+class _CratePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF3E2723).withValues(alpha: 0.5)
+      ..strokeWidth = 4.0
+      ..style = PaintingStyle.stroke;
+
+    // Draw X cross-beams
+    canvas.drawLine(Offset.zero, Offset(size.width, size.height), paint);
+    canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

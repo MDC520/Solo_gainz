@@ -40,9 +40,14 @@ class _PlayerState extends State<Player> {
   // Frame counts per animation folder
   static const Map<String, int> _frameCounts = {
     'Idle': 7,
+    'Walk': 8,
     'Run': 8,
     'Sprint': 6,
+    'Push': 6,
+    'Pull': 6,
+    'PushIdle': 6,
     'Jump': 3,
+    'Jump Fall': 1,
     'Hit': 3,
     'HitUp': 3,
     'Stunned': 7,
@@ -70,6 +75,10 @@ class _PlayerState extends State<Player> {
   }
 
   void _buildFrameList() {
+    if (widget.animation == 'Jump Fall') {
+      _frames = ['Assets/Player Model/Jump/Jump03.png'];
+      return;
+    }
     final count = _frameCounts[widget.animation] ?? 7;
     _frames = List.generate(count, (i) {
       final idx = (i + 1).toString().padLeft(2, '0');

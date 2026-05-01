@@ -37,10 +37,14 @@ flutter:
   uses-material-design: true
   assets:
     - Assets/Player Model/Idle/
+    - Assets/Player Model/Walk/
     - Assets/Player Model/Run/
     - Assets/Player Model/Sprint/
     - Assets/Player Model/Jump/
     - Assets/Player Model/Jump Fall/
+    - Assets/Player Model/Push/
+    - Assets/Player Model/Pull/
+    - Assets/Player Model/PushIdle/
     - Assets/Player Model/Spin/
     - Assets/Player Model/Hit/
     - Assets/Player Model/HitUp/
