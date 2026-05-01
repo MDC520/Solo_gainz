@@ -412,7 +412,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     String system = 'reps';
     String recur = 'Daily';
     int goal = 10;
-    int selectedIcon = 0;
+    int selectedIcon = 1;
 
     showModalBottomSheet(
       context: context,
@@ -426,76 +426,81 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             ),
             decoration: BoxDecoration(
               color: AppTheme.bg,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border(top: BorderSide(color: AppTheme.line)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: Border(top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5)),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.line,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Create Mission', style: AppTheme.h2()),
-                      IconButton(
-                          icon: Icon(Icons.close, color: AppTheme.text2),
-                          onPressed: () => Navigator.pop(ctx)),
+                      Text('Forge Mission', style: AppTheme.h1()),
+                      SGTouchable(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: AppTheme.text2, size: 20),
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text('Mission Name', style: AppTheme.label()),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
+                  Text('MISSION NAME', style: AppTheme.label(color: AppTheme.accent)),
+                  const SizedBox(height: 10),
                   CupertinoTextField(
                     style: AppTheme.body(color: Colors.white),
-                    placeholder: 'e.g., 100 Pull-ups',
+                    placeholder: 'e.g., Heavy Deadlifts',
                     placeholderStyle: AppTheme.body(color: AppTheme.muted),
+                    cursorColor: AppTheme.accent,
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppTheme.line, width: 1.5),
                     ),
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     onChanged: (v) => name = v,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
-                        flex: 4,
+                        flex: 3,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Type', style: AppTheme.label()),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: CupertinoSlidingSegmentedControl<String>(
-                                backgroundColor: AppTheme.surface,
-                                thumbColor: AppTheme.elevated,
-                                groupValue: system,
-                                onValueChanged: (v) =>
-                                    setModalState(() => system = v!),
-                                children: {
-                                  'reps': Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      child: Text('Reps',
-                                          style: AppTheme.caption(
-                                              color: system == 'reps'
-                                                  ? AppTheme.text1
-                                                  : AppTheme.text2))),
-                                  'timer': Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      child: Text('Timer',
-                                          style: AppTheme.caption(
-                                              color: system == 'timer'
-                                                  ? AppTheme.text1
-                                                  : AppTheme.text2))),
-                                },
+                            Text('TYPE', style: AppTheme.label(color: AppTheme.accent)),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.line),
+                              ),
+                              child: Row(
+                                children: [
+                                  _typeBtn('reps', 'Reps', system == 'reps', () => setModalState(() => system = 'reps')),
+                                  _typeBtn('timer', 'Timer', system == 'timer', () => setModalState(() => system = 'timer')),
+                                ],
                               ),
                             ),
                           ],
@@ -503,19 +508,18 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        flex: 3,
+                        flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(system == 'reps' ? 'Amount' : 'Seconds',
-                                style: AppTheme.label()),
-                            const SizedBox(height: 8),
+                            Text(system == 'reps' ? 'GOAL' : 'SECONDS', style: AppTheme.label(color: AppTheme.accent)),
+                            const SizedBox(height: 10),
                             CupertinoTextField(
                               style: AppTheme.body(color: Colors.white),
                               keyboardType: TextInputType.number,
-                              placeholder: 'e.g., 10',
-                              placeholderStyle:
-                                  AppTheme.body(color: AppTheme.muted),
+                              placeholder: '10',
+                              placeholderStyle: AppTheme.body(color: AppTheme.muted),
+                              cursorColor: AppTheme.accent,
                               decoration: BoxDecoration(
                                 color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(12),
@@ -529,72 +533,52 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text('Recurrence', style: AppTheme.label()),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<String>(
-                      backgroundColor: AppTheme.surface,
-                      thumbColor: AppTheme.elevated,
-                      groupValue: recur,
-                      onValueChanged: (v) => setModalState(() => recur = v!),
-                      children: {
-                        'Daily': Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text('Everyday',
-                                style: AppTheme.caption(
-                                    color: recur == 'Daily'
-                                        ? AppTheme.text1
-                                        : AppTheme.text2))),
-                        'One Time': Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text('One Time Only',
-                                style: AppTheme.caption(
-                                    color: recur == 'One Time'
-                                        ? AppTheme.text1
-                                        : AppTheme.text2))),
-                      },
+                  const SizedBox(height: 24),
+                  Text('RECURRENCE', style: AppTheme.label(color: AppTheme.accent)),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.line),
+                    ),
+                    child: Row(
+                      children: [
+                        _typeBtn('Daily', 'Daily', recur == 'Daily', () => setModalState(() => recur = 'Daily')),
+                        _typeBtn('One Time', 'One Time', recur == 'One Time', () => setModalState(() => recur = 'One Time')),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text('Icon', style: AppTheme.label()),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
+                  Text('ICON', style: AppTheme.label(color: AppTheme.accent)),
+                  const SizedBox(height: 12),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: List.generate(6, (i) {
-                        final isSelected = selectedIcon == i;
+                        final idx = i + 1;
+                        final isSelected = selectedIcon == idx;
                         return SGTouchable(
-                          onTap: () => setModalState(() => selectedIcon = i),
-                          child: Container(
+                          onTap: () => setModalState(() => selectedIcon = idx),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
                             margin: const EdgeInsets.only(right: 12),
-                            width: 48,
-                            height: 48,
+                            width: 52,
+                            height: 52,
                             decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(12),
+                              color: isSelected ? AppTheme.accent : AppTheme.surface,
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.accent
-                                      : AppTheme.line,
-                                  width: isSelected ? 2 : 1),
+                                color: isSelected ? AppTheme.accent : AppTheme.line,
+                                width: 2,
+                              ),
+                              boxShadow: isSelected ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)] : null,
                             ),
-                            child: Center(
-                              child: i == 0
-                                  ? Text('123',
-                                      style: AppTheme.h3(
-                                              color: isSelected
-                                                  ? AppTheme.accent
-                                                  : AppTheme.text2)
-                                          .copyWith(fontSize: 14))
-                                  : Icon(
-                                      _getCustomQuestIcon(i),
-                                      color: isSelected
-                                          ? AppTheme.accent
-                                          : AppTheme.text2,
-                                      size: 24,
-                                    ),
+                            child: Icon(
+                              _getCustomQuestIcon(idx),
+                              color: isSelected ? Colors.black : AppTheme.text2,
+                              size: 24,
                             ),
                           ),
                         );
@@ -606,19 +590,22 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                     onTap: () {
                       if (name.trim().isEmpty) return;
                       Navigator.pop(ctx);
-                      _addCustomQuest(
-                          name.trim(), system, goal, recur, selectedIcon);
+                      _addCustomQuest(name.trim(), system, goal, recur, selectedIcon);
                     },
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 18),
                       decoration: BoxDecoration(
-                          color: AppTheme.accent,
-                          borderRadius: BorderRadius.circular(16)),
+                        gradient: LinearGradient(colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.8)]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 12)],
+                      ),
                       child: Center(
-                          child: Text('CREATE MISSION',
-                              style: AppTheme.label(color: Colors.white)
-                                  .copyWith(letterSpacing: 1))),
+                        child: Text(
+                          'FORGE MISSION',
+                          style: AppTheme.label(color: Colors.black).copyWith(letterSpacing: 2, fontWeight: FontWeight.w900),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -626,6 +613,58 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _typeBtn(String id, String label, bool active, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: active ? AppTheme.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: AppTheme.label(color: active ? Colors.black : AppTheme.text2).copyWith(fontSize: 12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _removeCustomQuest(int i) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text('Delete Mission?', style: AppTheme.h3()),
+        content: Text('This action cannot be undone.', style: AppTheme.body()),
+        actions: [
+          CupertinoDialogAction(
+            child: Text('Cancel', style: AppTheme.body(color: AppTheme.text2)),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: Text('Delete', style: AppTheme.label(color: AppTheme.red)),
+            onPressed: () {
+              setState(() {
+                _customQuests.removeAt(i);
+                if (i < _customAnims.length) {
+                  _customAnims[i].dispose();
+                  _customAnims.removeAt(i);
+                }
+              });
+              Storage.saveCustomQuests(_customQuests);
+              Navigator.pop(ctx);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -788,45 +827,83 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.line, width: 1.5),
-                ),
-                child: Icon(
-                  Icons.add_task,
-                  color: AppTheme.muted,
-                  size: 32,
-                ),
+              // Large blurred background icon for premium feel
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Icon(
+                    Icons.auto_awesome,
+                    color: AppTheme.accent.withValues(alpha: 0.3),
+                    size: 80,
+                  ),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.accent, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.accent.withValues(alpha: 0.2),
+                          blurRadius: 15,
+                        )
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.add_task_rounded,
+                      color: AppTheme.accent,
+                      size: 32,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Text('No Custom Missions', style: AppTheme.h3()),
+              const SizedBox(height: 24),
+              Text('Forge Your Path', style: AppTheme.h2()),
               const SizedBox(height: 8),
-              Text(
-                'Create your own training targets.',
-                style: AppTheme.caption(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  'Create custom missions tailored to your unique training style.',
+                  style: AppTheme.caption(),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               SGTouchable(
                 onTap: _showCreateCustomQuestSheet,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.8)],
+                    ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.line, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.accent.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add, color: AppTheme.text1, size: 20),
+                      const Icon(Icons.add, color: Colors.black, size: 20),
                       const SizedBox(width: 8),
-                      Text('CREATE FIRST MISSION',
-                          style: AppTheme.label().copyWith(letterSpacing: 1)),
+                      Text(
+                        'CREATE MISSION',
+                        style: AppTheme.label(color: Colors.black).copyWith(letterSpacing: 1),
+                      ),
                     ],
                   ),
                 ),
@@ -854,12 +931,33 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
               ),
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: _QuestCard(
-                  questIndex: i,
-                  quest: _customQuests[i],
-                  color: AppTheme.cyan,
-                  onUpdate: (delta) => _updateCustomReps(i, delta),
-                  onComplete: () => _completeCustomQuest(i),
+                child: Stack(
+                  children: [
+                    _QuestCard(
+                      questIndex: i,
+                      quest: _customQuests[i],
+                      color: AppTheme.cyan,
+                      onUpdate: (delta) => _updateCustomReps(i, delta),
+                      onComplete: () => _completeCustomQuest(i),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => _removeCustomQuest(i),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.delete_outline,
+                              color: AppTheme.red.withValues(alpha: 0.8),
+                              size: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -1097,8 +1195,12 @@ class _QuestCardState extends State<_QuestCard> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: AppTheme.elevated,
-                          borderRadius: BorderRadius.circular(10),
+                          color: widget.color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: widget.color.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
                         ),
                         child: Center(
                           child: iconIndex > 0
@@ -1159,27 +1261,41 @@ class _QuestCardState extends State<_QuestCard> {
                       ),
                       if (quest.currentProgress >= quest.maxGoal) ...[
                         const SizedBox(width: 16),
-                        SGTouchable(
-                          onTap: _confirmCompletion,
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppTheme.accent,
-                                width: 2,
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutBack,
+                          builder: (context, value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(20 * (1 - value), 0),
+                                child: child,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.accent.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                )
-                              ],
+                            );
+                          },
+                          child: SGTouchable(
+                            onTap: _confirmCompletion,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppTheme.accent,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.accent.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                  )
+                                ],
+                              ),
+                              child: const Icon(Icons.check,
+                                  color: AppTheme.accent, size: 18),
                             ),
-                            child: const Icon(Icons.check,
-                                color: AppTheme.accent, size: 18),
                           ),
                         ),
                       ],
@@ -1237,7 +1353,7 @@ class _LinearProgress extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _ActionButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool disabled;
@@ -1251,28 +1367,62 @@ class _ActionButton extends StatelessWidget {
   });
 
   @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton> {
+  Timer? _timer;
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 80), (t) {
+      if (!widget.disabled) {
+        widget.onTap();
+      } else {
+        _stopTimer();
+      }
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopTimer();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SGTouchable(
-      onTap: onTap,
-      disabled: disabled,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: active ? AppTheme.accent : AppTheme.elevated,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: active
-                ? AppTheme.accent
-                : (disabled ? AppTheme.line : AppTheme.muted),
+    return GestureDetector(
+      onLongPressStart: (_) => _startTimer(),
+      onLongPressEnd: (_) => _stopTimer(),
+      onLongPressCancel: () => _stopTimer(),
+      child: SGTouchable(
+        onTap: widget.onTap,
+        disabled: widget.disabled,
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: widget.active ? AppTheme.accent : AppTheme.elevated,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: widget.active
+                  ? AppTheme.accent
+                  : (widget.disabled ? AppTheme.line : AppTheme.muted),
+            ),
           ),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: active
-              ? Colors.white
-              : (disabled ? AppTheme.muted : AppTheme.text1),
+          child: Icon(
+            widget.icon,
+            size: 20,
+            color: widget.active
+                ? Colors.white
+                : (widget.disabled ? AppTheme.muted : AppTheme.text1),
+          ),
         ),
       ),
     );

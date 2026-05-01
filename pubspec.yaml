@@ -24,6 +24,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   encrypt: ^5.0.3
   crypto: ^3.0.3
+  flutter_joystick: ^0.2.1
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +40,7 @@ flutter:
     - Assets/Player Model/Run/
     - Assets/Player Model/Sprint/
     - Assets/Player Model/Jump/
+    - Assets/Player Model/Jump Fall/
     - Assets/Player Model/Spin/
     - Assets/Player Model/Hit/
     - Assets/Player Model/HitUp/

@@ -6,21 +6,6 @@ import '../services/auth_service.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
 
-class _Item {
-  final int id, price, tab;
-  final String name, desc;
-  final IconData icon;
-  final Color color;
-  const _Item({
-    required this.id,
-    required this.name,
-    required this.desc,
-    required this.price,
-    required this.icon,
-    required this.color,
-    required this.tab,
-  });
-}
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -34,62 +19,6 @@ class _ShopPageState extends State<ShopPage> {
   int _woodenQty = 1;
   int _ironQty = 1;
 
-  static final _items = [
-    _Item(
-      id: 1,
-      name: 'Energy Boost',
-      desc: '1.5× XP multiplier for one session.',
-      price: 100,
-      icon: Icons.electric_bolt,
-      color: AppTheme.accent,
-      tab: 0,
-    ),
-    _Item(
-      id: 2,
-      name: 'Double XP',
-      desc: '2× XP for the next 24 hours.',
-      price: 250,
-      icon: Icons.refresh,
-      color: AppTheme.cyan,
-      tab: 0,
-    ),
-    _Item(
-      id: 5,
-      name: 'Coin Multiplier',
-      desc: '2× coins earned for 7 days.',
-      price: 200,
-      icon: Icons.generating_tokens_rounded,
-      color: AppTheme.amber,
-      tab: 0,
-    ),
-    _Item(
-      id: 3,
-      name: 'Level Skip',
-      desc: 'Advance to the next level instantly.',
-      price: 500,
-      icon: Icons.arrow_circle_up,
-      color: AppTheme.green,
-      tab: 1,
-    ),
-    _Item(
-      id: 4,
-      name: 'Perfect Day',
-      desc: 'Auto-complete all quests today.',
-      price: 300,
-      icon: Icons.verified,
-      color: AppTheme.accent,
-      tab: 1,
-    ),
-    _Item(
-      id: 6,
-      name: 'Elite Badge',
-      desc: 'Unlock a premium profile cosmetic.',
-      price: 1000,
-      icon: Icons.security,
-      color: AppTheme.amber,
-      tab: 2,
-    ),
-  ];
 
   static const _tabs = ['Boosts', 'Premium', 'Cosmetics', 'Chests'];
 
@@ -113,77 +42,7 @@ class _ShopPageState extends State<ShopPage> {
     });
   }
 
-  void _buy(_Item item) {
-    if (_s.coins >= item.price) {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text(item.name, style: AppTheme.h3()),
-          content: Text(
-            '${item.desc}\n\nCost: ${item.price} coins.',
-            style: AppTheme.body(),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: Text(
-                'Cancel',
-                style: AppTheme.body(color: AppTheme.text2),
-              ),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-            CupertinoDialogAction(
-              isDefaultAction: true,
-              child: Text(
-                'Purchase',
-                style: AppTheme.label(color: AppTheme.accent),
-              ),
-              onPressed: () async {
-                _s.coins -= item.price;
-                await Storage.saveUserStats(_s);
-                await AuthService().syncData();
-                if (!context.mounted) return;
-                Navigator.pop(ctx);
-                _load();
-                _ok(item.name);
-              },
-            ),
-          ],
-        ),
-      );
-    } else {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('Not enough coins', style: AppTheme.h3()),
-          content: Text(
-            'You need ${item.price - _s.coins} more coins.',
-            style: AppTheme.body(),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: Text('OK', style: AppTheme.label(color: AppTheme.accent)),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
-    }
-  }
 
-  void _ok(String name) => showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('Purchased', style: AppTheme.h3()),
-          content: Text('$name activated.', style: AppTheme.body()),
-          actions: [
-            CupertinoDialogAction(
-              child:
-                  Text('Done', style: AppTheme.label(color: AppTheme.accent)),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
 
   // ── Chest Purchase Flow ──────────────────────────────────────
   void _buyChest(String chestType, String chestName, int unitPrice, int qty) {
@@ -295,7 +154,6 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items.where((i) => i.tab == _tab).toList();
     final isChestTab = _tab == 3;
 
     return CustomScrollView(
@@ -312,7 +170,17 @@ class _ShopPageState extends State<ShopPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Shop', style: AppTheme.h2()),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Gear Shop', style: AppTheme.h1()),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Exchange coins for elite upgrades.',
+                            style: AppTheme.caption(),
+                          ),
+                        ],
+                      ),
                       // Balance chip
                       Row(
                         children: [
@@ -332,15 +200,10 @@ class _ShopPageState extends State<ShopPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.generating_tokens_rounded,
-                                      size: 16,
-                                      color: AppTheme.white,
-                                    ),
-                                  ],
+                                Icon(
+                                  Icons.generating_tokens_rounded,
+                                  size: 16,
+                                  color: AppTheme.white,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -361,8 +224,12 @@ class _ShopPageState extends State<ShopPage> {
                               width: 34,
                               height: 34,
                               decoration: BoxDecoration(
-                                color: AppTheme.accent,
+                                color: Colors.black,
                                 borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppTheme.line,
+                                  width: 1.5,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.add,
@@ -377,11 +244,16 @@ class _ShopPageState extends State<ShopPage> {
                   ),
                   const SizedBox(height: 16),
                   // Segment tabs
-                  SizedBox(
+                  Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.silver, width: 1.5),
+                    ),
                     child: CupertinoSlidingSegmentedControl<int>(
                       backgroundColor: AppTheme.surface,
-                      thumbColor: AppTheme.elevated,
+                      thumbColor: AppTheme.accent,
                       groupValue: _tab,
                       onValueChanged: (v) {
                         if (v != null) setState(() => _tab = v);
@@ -393,8 +265,7 @@ class _ShopPageState extends State<ShopPage> {
                             child: Text(
                               _tabs[i],
                               style: AppTheme.label(
-                                color:
-                                    _tab == i ? AppTheme.text1 : AppTheme.text2,
+                                color: _tab == i ? Colors.black : AppTheme.text2,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -415,23 +286,17 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'wooden',
                   name: 'Wooden Chest',
-                  desc:
-                      'A sturdy wooden chest. Rewards 6–399 T coins. Rare drops above 100.',
+                  desc: 'A sturdy wooden chest. Rewards 6–399 T coins. Rare drops above 100.',
                   price: 900,
-                  borderColor: const Color(0xFF8B6914),
-                  glowColor: const Color(0xFF8B6914),
                   qty: _woodenQty,
                   onQtyChanged: (v) => setState(() => _woodenQty = v),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 _chestCard(
                   chestType: 'iron',
                   name: 'Iron Chest',
-                  desc:
-                      'A reinforced iron chest. Rewards 6–399 T coins. Better drop rates.',
+                  desc: 'A reinforced iron chest. Rewards 6–399 T coins. Better drop rates.',
                   price: 1600,
-                  borderColor: const Color(0xFF7B8794),
-                  glowColor: const Color(0xFF9CA8B7),
                   qty: _ironQty,
                   onQtyChanged: (v) => setState(() => _ironQty = v),
                 ),
@@ -439,15 +304,28 @@ class _ShopPageState extends State<ShopPage> {
             ),
           )
         else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _card(filtered[i]),
-                ),
-                childCount: filtered.length,
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.hourglass_empty_rounded,
+                    size: 64,
+                    color: AppTheme.text2.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'COMING SOON',
+                    style: AppTheme.h2().copyWith(letterSpacing: 4, color: AppTheme.text2),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The blacksmith is still forging these items.',
+                    style: AppTheme.caption(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -460,189 +338,132 @@ class _ShopPageState extends State<ShopPage> {
     required String name,
     required String desc,
     required int price,
-    required Color borderColor,
-    required Color glowColor,
     required int qty,
     required ValueChanged<int> onQtyChanged,
   }) {
     final totalCost = price * qty;
     final canTotal = _s.coins >= totalCost;
     final chestTypeKey = chestType == 'wooden' ? 'wooden_chest' : 'iron_chest';
-    final availableSlots =
-        Storage.getInventorySlots().where((s) => s == null).length;
+    final availableSlots = Storage.getInventorySlots().where((s) => s == null).length;
 
-    return SGTouchable(
-      onTap: () => _buyChest(chestTypeKey, name, price, qty),
-      child: SGCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Animated chest sprite
-            SizedBox(
-              width: 72,
-              height: 72,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                clipBehavior: Clip.none,
-                children: [
-                  // Ground shadow
-                  Container(
-                    width: 44,
-                    height: 8,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(100),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 6,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
+    return SGCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Chest Visual
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppTheme.glassMedium,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.line, width: 1),
+                ),
+                child: Center(
+                  child: ChestSprite(
+                    chestType: chestType,
+                    animation: 'Idle',
+                    fps: 8,
+                    size: 56,
                   ),
-                  // Chest
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: ChestSprite(
-                      chestType: chestType,
-                      animation: 'Idle',
-                      fps: 8,
-                      size: 64,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: AppTheme.label()),
-                  const SizedBox(height: 4),
-                  Text(desc,
+              const SizedBox(width: 16),
+              // Name & Desc
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: AppTheme.h3()),
+                    const SizedBox(height: 4),
+                    Text(
+                      desc,
                       style: AppTheme.caption(),
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Quantity selector
-                      GestureDetector(
-                        onTap: () {}, // Absorb taps
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.elevated,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.line, width: 1.5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _qtyBtn(
-                                icon: Icons.remove,
-                                onTap: qty > 1
-                                    ? () => onQtyChanged(qty - 1)
-                                    : null,
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  '$qty',
-                                  style: AppTheme.mono(
-                                          size: 14, color: AppTheme.white)
-                                      .copyWith(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              _qtyBtn(
-                                icon: Icons.add,
-                                onTap: qty < availableSlots && qty < 99
-                                    ? () => onQtyChanged(qty + 1)
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Quantity Row (Wide Card)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.bg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.line, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('QUANTITY', style: AppTheme.label(color: AppTheme.text2)),
+                Row(
+                  children: [
+                    _qtyBtn(
+                      icon: Icons.remove,
+                      onTap: qty > 1 ? () => onQtyChanged(qty - 1) : null,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        '$qty',
+                        style: AppTheme.mono(size: 18, color: AppTheme.white)
+                            .copyWith(fontWeight: FontWeight.bold),
                       ),
-                      // Price & Buy Button
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Price
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '$totalCost',
-                                style: AppTheme.mono(
-                                  color: canTotal
-                                      ? AppTheme.white
-                                      : AppTheme.text2,
-                                  size: 15,
-                                ).copyWith(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(width: 4),
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.generating_tokens_rounded,
-                                    size: 14,
-                                    color: canTotal
-                                        ? AppTheme.white
-                                        : AppTheme.muted,
-                                  ),
-                                  if (canTotal)
-                                    Positioned.fill(
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          // Removed glow shadow per user request
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 12),
-                          // Buy button
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: canTotal && availableSlots >= qty
-                                  ? AppTheme.accent
-                                  : AppTheme.surface,
-                              borderRadius: BorderRadius.circular(8),
-                              border: canTotal && availableSlots >= qty
-                                  ? null
-                                  : Border.all(color: AppTheme.line, width: 1.5),
-                            ),
-                            child: Text(
-                              availableSlots == 0 ? 'Full' : 'Buy',
-                              style: AppTheme.label(
-                                color: canTotal && availableSlots >= qty
-                                    ? Colors.white
-                                    : AppTheme.muted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
+                    _qtyBtn(
+                      icon: Icons.add,
+                      onTap: qty < availableSlots && qty < 99 ? () => onQtyChanged(qty + 1) : null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Buy Button (Full Width)
+          SGTouchable(
+            onTap: () => _buyChest(chestTypeKey, name, price, qty),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: canTotal && availableSlots >= qty ? null : Border.all(color: AppTheme.line, width: 1.5),
+                boxShadow: canTotal && availableSlots >= qty
+                    ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)]
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    availableSlots == 0 ? 'INVENTORY FULL' : 'BUY FOR ',
+                    style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted),
                   ),
+                  if (availableSlots > 0) ...[
+                    Text(
+                      '$totalCost',
+                      style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted)
+                          .copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.generating_tokens_rounded,
+                      size: 16,
+                      color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted,
+                    ),
+                  ],
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -663,86 +484,6 @@ class _ShopPageState extends State<ShopPage> {
             color: disabled
                 ? AppTheme.muted.withValues(alpha: 0.3)
                 : AppTheme.white),
-      ),
-    );
-  }
-
-  Widget _card(_Item item) {
-    final can = _s.coins >= item.price;
-    return GestureDetector(
-      onTap: () => _buy(item),
-      child: SGCard(
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppTheme.glassMedium,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(item.icon, size: 16, color: item.color),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.name, style: AppTheme.label()),
-                  const SizedBox(height: 3),
-                  Text(item.desc, style: AppTheme.caption()),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${item.price}',
-                      style: AppTheme.mono(
-                        color: can ? AppTheme.white : AppTheme.text2,
-                        size: 15,
-                      ).copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(width: 4),
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Icon(
-                          Icons.generating_tokens_rounded,
-                          size: 14,
-                          color: can ? AppTheme.white : AppTheme.muted,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: can ? AppTheme.accent : AppTheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: can ? null : Border.all(color: AppTheme.line, width: 1.5),
-                  ),
-                  child: Text(
-                    'Buy',
-                    style: AppTheme.label(
-                      color: can ? Colors.white : AppTheme.muted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

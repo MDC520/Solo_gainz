@@ -1,11 +1,12 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'background.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/quest_screen.dart';
-import 'screens/stats_screen.dart';
+import 'screens/dungeon_screen.dart';
 import 'screens/shop_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/no_connection_screen.dart';
@@ -174,9 +175,9 @@ class _AppShellState extends State<AppShell>
 
   // Pages are built lazily via AutomaticKeepAlive pattern
   static const _icons = [
-    (Icons.bolt_rounded, Icons.bolt_outlined, 'Home'),
-    (Icons.military_tech_rounded, Icons.military_tech_outlined, 'Quests'),
-    (Icons.analytics_rounded, Icons.analytics_outlined, 'Stats'),
+    (Icons.space_dashboard_rounded, Icons.space_dashboard_outlined, 'Home'),
+    (Icons.explore_rounded, Icons.explore_outlined, 'Quests'),
+    (Icons.fort_rounded, Icons.fort_outlined, 'Dungeon'),
     (Icons.local_mall_rounded, Icons.local_mall_outlined, 'Shop'),
     (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
   ];
@@ -194,7 +195,7 @@ class _AppShellState extends State<AppShell>
     _pages = [
       const RepaintBoundary(child: SGScreenEntrance(child: HomePage())),
       const RepaintBoundary(child: SGScreenEntrance(child: QuestPage())),
-      const RepaintBoundary(child: SGScreenEntrance(child: StatsPage())),
+      const RepaintBoundary(child: SGScreenEntrance(child: DungeonPage())),
       const RepaintBoundary(child: SGScreenEntrance(child: ShopPage())),
       RepaintBoundary(
           child:
@@ -239,17 +240,9 @@ class _AppShellState extends State<AppShell>
             Scaffold(
               backgroundColor: Colors.transparent,
               extendBody: true,
-              body: AnimatedBuilder(
-                animation: _navAnimCtrl,
-                builder: (context, child) => ClipPath(
-                  clipper: _ProNavClipper(
-                      bottomPadding, isHidden ? 0.0 : _navAnimCtrl.value),
-                  child: child,
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: IndexedStack(index: _idx, children: _pages),
-                ),
+              body: SafeArea(
+                bottom: false,
+                child: IndexedStack(index: _idx, children: _pages),
               ),
               bottomNavigationBar: AnimatedSlide(
                 offset: isHidden ? const Offset(0, 1.5) : Offset.zero,
@@ -269,13 +262,13 @@ class _AppShellState extends State<AppShell>
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(radius),
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                           child: Container(
                             height: currentNavH,
                             padding: EdgeInsets.only(
                                 bottom: bottomPadding * (1 - t)),
                             decoration: BoxDecoration(
-                              color: AppTheme.black,
+                              color: Colors.white.withValues(alpha: 0.01),
                               borderRadius: BorderRadius.circular(radius),
                               border: Border(
                                 top: BorderSide(
@@ -342,42 +335,4 @@ class _AppShellState extends State<AppShell>
       },
     );
   }
-}
-
-// ── Nav Clipper ────────────────────────────────────────────────────
-class _ProNavClipper extends CustomClipper<Path> {
-  final double bottomPadding;
-  final double t;
-  _ProNavClipper(this.bottomPadding, this.t);
-
-  @override
-  Path getClip(Size size) {
-    final fullPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    if (t <= 0.0) return fullPath;
-
-    final gap = bottomPadding > 0 ? bottomPadding : 16.0;
-    const navHeight = 64.0;
-    final currentGap = gap * t;
-    final marginSide = 16.0 * t;
-    final radius = 20.0 * t;
-    final currentNavHeight = navHeight + (bottomPadding * (1 - t));
-    final navTop = size.height - currentNavHeight - currentGap;
-
-    final punchPath = Path();
-    punchPath.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-          marginSide, navTop, size.width - (marginSide * 2), currentNavHeight),
-      Radius.circular(radius),
-    ));
-    if (t > 0) {
-      punchPath.addRect(Rect.fromLTWH(marginSide, navTop + navHeight / 2,
-          size.width - (marginSide * 2), (navHeight / 2) + currentGap + 10));
-    }
-    return Path.combine(PathOperation.difference, fullPath, punchPath);
-  }
-
-  @override
-  bool shouldReclip(_ProNavClipper old) =>
-      bottomPadding != old.bottomPadding || t != old.t;
 }

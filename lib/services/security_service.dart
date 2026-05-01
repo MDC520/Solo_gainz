@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 /// SecurityService — AES-256 encryption + SHA-256 hashing.
 /// The AES key is derived from the user's password so it works
@@ -31,6 +32,29 @@ class SecurityService {
       _cachedSalt = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
       await _storage.write(key: _saltKey, value: _cachedSalt);
     }
+  }
+
+  // ── Hive Hardware-Backed Encryption ─────────────────────────────
+  /// Generates or retrieves a secure AES-256 key to encrypt the entire Hive database.
+  /// The key is stored safely inside the device's hardware KeyStore/Keychain.
+  /// This prevents any external app, even with root access, from reading the database.
+  static Future<HiveAesCipher> getHiveCipher() async {
+    const hiveEncryptionKeyName = 'sg_hive_master_key';
+    String? keyString = await _storage.read(key: hiveEncryptionKeyName);
+    late List<int> encryptionKey;
+    
+    if (keyString == null) {
+      // Generate a new 256-bit secure key
+      encryptionKey = Hive.generateSecureKey();
+      await _storage.write(
+        key: hiveEncryptionKeyName,
+        value: base64UrlEncode(encryptionKey),
+      );
+    } else {
+      encryptionKey = base64Url.decode(keyString);
+    }
+    
+    return HiveAesCipher(encryptionKey);
   }
 
   // ── Key derivation ─────────────────────────────────────────────
