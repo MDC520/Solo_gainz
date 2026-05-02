@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/material.dart';
 import '../theme/theme.dart';
 import '../widgets/player.dart';
 // import '../background.dart'; // Removed as requested

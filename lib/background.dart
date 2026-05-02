@@ -1,10 +1,12 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
 import 'theme/theme.dart';
 
-/// LivelyBackground — High-Density Dual RGB Fan
-/// A premium, high-fidelity animated background featuring dual-layer rotating
-/// neon blades with sword trails and an energy core.
+/// LivelyBackground — "Simple & Alive" Breathing Aura
+/// 
+/// Inspired by modern clean UI:
+/// • Solid, deep background with a rich tint.
+/// • Large, soft "Breathing" radial auras that provide life.
+/// • Extremely subtle moving perspective grid for grounded motion.
 class LivelyBackground extends StatefulWidget {
   final Widget child;
   final bool isMoving;
@@ -24,7 +26,7 @@ class _LivelyBackgroundState extends State<LivelyBackground>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 50),
+      duration: const Duration(seconds: 15),
     )..repeat();
   }
 
@@ -36,38 +38,37 @@ class _LivelyBackgroundState extends State<LivelyBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(color: Colors.black),
-      child: Stack(
+    return Scaffold(
+      backgroundColor: AppTheme.black,
+      body: Stack(
         children: [
-          // RGB Fan Layers
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _ctrl,
-              builder: (context, _) => CustomPaint(
-                painter: _RGBFanPainter(progress: _ctrl.value),
-              ),
-            ),
-          ),
-
-          // Depth & Vignette
+          // ── Base Solid Tint ──
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.4,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.black,
+                    const Color(0xFF0F172A), // Deep Navy
+                    AppTheme.black,
                   ],
-                  stops: const [0.0, 0.6, 1.0],
                 ),
               ),
             ),
           ),
 
+          // ── Breathing Auras ──
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, _) => CustomPaint(
+                painter: _SimpleAlivePainter(t: _ctrl.value),
+              ),
+            ),
+          ),
+
+          // ── Content ──
           widget.child,
         ],
       ),
@@ -75,197 +76,102 @@ class _LivelyBackgroundState extends State<LivelyBackground>
   }
 }
 
-class _RGBFanPainter extends CustomPainter {
-  final double progress;
-
-  _RGBFanPainter({required this.progress});
+class _SimpleAlivePainter extends CustomPainter {
+  final double t;
+  _SimpleAlivePainter({required this.t});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxDim = math.max(size.width, size.height);
-    
-    // ── Layer 1: Outer Layer (70 wings total) ──
-    _drawFanLayer(
-      canvas, 
-      center, 
-      radius: maxDim * 1.3, 
-      bladeCount: 35, 
-      rotation: progress * 2 * math.pi, 
-      reverse: false,
-    );
-
-    // ── Layer 2: Inner Layer (Synchronized) ──
-    _drawFanLayer(
-      canvas, 
-      center, 
-      radius: maxDim * 0.9, 
-      bladeCount: 35, 
-      rotation: progress * 2 * math.pi, 
-      reverse: false,
-    );
-
-    // ── Central Energy Core ──
-    _drawCore(canvas, center);
+    _drawAuras(canvas, size);
+    _drawSubtleGrid(canvas, size);
   }
 
-  void _drawFanLayer(Canvas canvas, Offset center, {
-    required double radius, 
-    required int bladeCount, 
-    required double rotation, 
-    required bool reverse,
-  }) {
-    // Solo Gainz Blue Palette
-    final List<Color> palette = [
-      AppTheme.accent,
-      AppTheme.accent.withValues(alpha: 0.8),
-      const Color(0xFF00E5FF), // Bright Cyan Blue
-      AppTheme.accent.withValues(alpha: 0.6),
-    ];
+  void _drawAuras(Canvas canvas, Size size) {
+    // Large, soft, breathing blobs of color
+    final pulse = (math.sin(t * 2 * math.pi) + 1) / 2;
+    final moveX = math.sin(t * 2 * math.pi) * 50;
+    final moveY = math.cos(t * 2 * math.pi) * 30;
 
-    for (int i = 0; i < bladeCount; i++) {
-      final double offsetAngle = (i * 2 * math.pi / bladeCount);
-      final double currentAngle = rotation + offsetAngle;
-
-      // Smooth interpolation between app colors
-      final double colorValue = (progress + (i / bladeCount)) % 1.0;
-      final int colorIdx = (colorValue * palette.length).floor();
-      final double colorT = (colorValue * palette.length) % 1.0;
-      
-      final Color color = Color.lerp(
-        palette[colorIdx], 
-        palette[(colorIdx + 1) % palette.length], 
-        colorT
-      ) ?? AppTheme.accent;
-      
-      _drawTrail(canvas, center, radius, currentAngle, color, reverse);
-      _drawBlade(canvas, center, radius, currentAngle, color, reverse);
-    }
-  }
-
-  void _drawBlade(Canvas canvas, Offset center, double radius, double angle, Color color, bool reverse) {
-    final Path path = Path();
-    final double startDist = 20.0;
-    final double dir = reverse ? -1 : 1;
-    
-    // Root points - narrowed for extreme density
-    final Offset p1 = center + Offset(math.cos(angle - 0.002 * dir) * startDist, math.sin(angle - 0.002 * dir) * startDist);
-    final Offset p2 = center + Offset(math.cos(angle + 0.002 * dir) * startDist, math.sin(angle + 0.002 * dir) * startDist);
-    final Offset tip = center + Offset(math.cos(angle) * radius, math.sin(angle) * radius);
-    
-    // Control points for sleeker taper - tighter for more blades
-    final Offset cp1 = center + Offset(math.cos(angle + 0.08 * dir) * (radius * 0.4), math.sin(angle + 0.08 * dir) * (radius * 0.4));
-    final Offset cp2 = center + Offset(math.cos(angle - 0.01 * dir) * (radius * 0.3), math.sin(angle - 0.01 * dir) * (radius * 0.3));
-
-    path.moveTo(p1.dx, p1.dy);
-    path.quadraticBezierTo(cp1.dx, cp1.dy, tip.dx, tip.dy);
-    path.quadraticBezierTo(cp2.dx, cp2.dy, p2.dx, p2.dy);
-    path.close();
-
-    final bladePaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.center,
-        end: Alignment(math.cos(angle), math.sin(angle)),
-        colors: [color.withValues(alpha: 0.9), color.withValues(alpha: 0.1), Colors.transparent],
-        stops: const [0.0, 0.7, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(path, bladePaint);
-
-    // Sharp Edge Highlight
-    final edgePaint = Paint()
-      ..color = color.withValues(alpha: 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    final Path edgePath = Path();
-    edgePath.moveTo(p1.dx, p1.dy);
-    edgePath.quadraticBezierTo(cp1.dx, cp1.dy, tip.dx, tip.dy);
-    canvas.drawPath(edgePath, edgePaint);
-  }
-
-  void _drawTrail(Canvas canvas, Offset center, double radius, double angle, Color color, bool reverse) {
-    // Dramatically lengthened trails for a "light cycle" effect
-    final double trailLength = 1.2; 
-    final double dir = reverse ? 1 : -1; 
-    final Path trailPath = Path();
-    
-    final int segments = 15; // Smoother segments for longer trail
-    for (int i = 0; i <= segments; i++) {
-      final double t = i / segments;
-      final double currentTrailAngle = angle + (trailLength * t * dir);
-      final double x = center.dx + math.cos(currentTrailAngle) * radius;
-      final double y = center.dy + math.sin(currentTrailAngle) * radius;
-      if (i == 0) trailPath.moveTo(x, y); else trailPath.lineTo(x, y);
-    }
-    
-    for (int i = segments; i >= 0; i--) {
-      final double t = i / segments;
-      final double currentTrailAngle = angle + (trailLength * t * dir);
-      // Tapering the trail to a sharp point at the end
-      final double innerRadius = radius - (40.0 * (1.0 - t));
-      final double x = center.dx + math.cos(currentTrailAngle) * innerRadius;
-      final double y = center.dy + math.sin(currentTrailAngle) * innerRadius;
-      trailPath.lineTo(x, y);
-    }
-    trailPath.close();
-
-    final trailPaint = Paint()
-      ..shader = SweepGradient(
-        center: Alignment.center,
-        startAngle: reverse ? angle : angle - trailLength,
-        endAngle: reverse ? angle + trailLength : angle,
-        colors: reverse 
-          ? [color.withValues(alpha: 0.6), color.withValues(alpha: 0.2), Colors.transparent]
-          : [Colors.transparent, color.withValues(alpha: 0.2), color.withValues(alpha: 0.6)],
-        stops: const [0.0, 0.4, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(trailPath, trailPaint);
-    
-    // ── Secondary "Inner" Glow Trail for more depth ──
-    final glowPaint = Paint()
-      ..shader = SweepGradient(
-        center: Alignment.center,
-        startAngle: reverse ? angle : angle - trailLength * 0.5,
-        endAngle: reverse ? angle + trailLength * 0.5 : angle,
-        colors: reverse 
-          ? [color.withValues(alpha: 0.3), Colors.transparent]
-          : [Colors.transparent, color.withValues(alpha: 0.3)],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.fill;
-    
-    canvas.drawCircle(center + Offset(math.cos(angle)*radius, math.sin(angle)*radius), 4, Paint()..color = Colors.white.withValues(alpha: 0.5)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
-  }
-
-  void _drawCore(Canvas canvas, Offset center) {
-    // App Themed Energy Hub
-    final corePaint = Paint()
-      ..color = AppTheme.accent.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 15, corePaint);
-
-    final pulse = 0.5 + 0.5 * math.sin(progress * 2 * math.pi * 2);
-    final auraPaint = Paint()
+    // Aura 1: Top Left (Accent Blue)
+    final paint1 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.accent.withValues(alpha: 0.4 * pulse), 
-          AppTheme.purple.withValues(alpha: 0.1),
-          Colors.transparent
+          AppTheme.accent.withValues(alpha: 0.12 + (pulse * 0.05)),
+          Colors.transparent,
         ],
-      ).createShader(Rect.fromCircle(center: center, radius: 60))
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, 60, auraPaint);
-    
-    canvas.drawCircle(center, 15, Paint()
-      ..color = AppTheme.text1.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0);
+      ).createShader(Rect.fromCircle(
+        center: Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY),
+        radius: size.width * 0.8,
+      ))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
+    canvas.drawCircle(Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY), size.width * 0.8, paint1);
+
+    // Aura 2: Center Right (Cyan/Mint)
+    final paint2 = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.cyan.withValues(alpha: 0.08 + ((1-pulse) * 0.04)),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(
+        center: Offset(size.width * 0.8 - moveX, size.height * 0.5 - moveY),
+        radius: size.width * 0.7,
+      ))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
+    canvas.drawCircle(Offset(size.width * 0.8 - moveX, size.height * 0.5 - moveY), size.width * 0.7, paint2);
+
+    // Aura 3: Bottom Left (Purple)
+    final paint3 = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.purple.withValues(alpha: 0.10 + (pulse * 0.03)),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(
+        center: Offset(size.width * 0.1 + moveX, size.height * 0.8 + moveY),
+        radius: size.width * 0.6,
+      ))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
+    canvas.drawCircle(Offset(size.width * 0.1 + moveX, size.height * 0.8 + moveY), size.width * 0.6, paint3);
+  }
+
+  void _drawSubtleGrid(Canvas canvas, Size size) {
+    final horizonY = size.height * 0.75;
+    final gridSpeed = 2.0;
+    final offset = (t * gridSpeed) % 1.0;
+
+    final paint = Paint()
+      ..color = AppTheme.accent.withValues(alpha: 0.03) // EXTREMELY subtle
+      ..strokeWidth = 1.0;
+
+    // Horizontal moving lines
+    for (int i = 0; i < 8; i++) {
+      final frac = (i + offset) / 8;
+      if (frac > 1.0) continue;
+      
+      final yFrac = math.pow(frac, 3.0).toDouble();
+      final y = horizonY + (size.height - horizonY) * yFrac;
+      
+      canvas.drawLine(
+        Offset(0, y), 
+        Offset(size.width, y), 
+        paint..color = AppTheme.accent.withValues(alpha: 0.03 * frac)
+      );
+    }
+
+    // Vertical vanishing lines
+    final vanishX = size.width / 2;
+    for (int i = 0; i <= 10; i++) {
+      final xFrac = i / 10;
+      final bottomX = xFrac * size.width;
+      canvas.drawLine(
+        Offset(vanishX, horizonY),
+        Offset(bottomX, size.height),
+        paint..color = AppTheme.accent.withValues(alpha: 0.02)
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(_RGBFanPainter old) => old.progress != progress;
+  bool shouldRepaint(_SimpleAlivePainter old) => true;
 }
-
-

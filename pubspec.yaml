@@ -49,6 +49,15 @@ flutter:
     - Assets/Player Model/Hit/
     - Assets/Player Model/HitUp/
     - Assets/Player Model/Stunned/
+    - Assets/Player Model/Kick01/
+    - Assets/Player Model/Kick02/
+    - Assets/Player Model/Kick03/
+    - Assets/Player Model/Punch01/
+    - Assets/Player Model/Punch02/
+    - Assets/Player Model/Punch03/
+    - Assets/Player Model/Roll/
+    - Assets/Player Model/Slide/
+    - Assets/Player Model/Land/
     - Assets/Rank Shields/
     - Assets/Chests/Wooden Chest/Idle/
     - Assets/Chests/Wooden Chest/open/

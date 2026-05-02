@@ -62,6 +62,15 @@ class _PlayerState extends State<Player> {
     'JumpDust': 7,
     'LandingDust': 6,
     'Spin': 8,
+    'Kick01': 9,
+    'Kick02': 8,
+    'Kick03': 9,
+    'Punch01': 6,
+    'Punch02': 4,
+    'Punch03': 7,
+    'Roll': 10,
+    'Slide': 4,
+    'Land': 2,
   };
 
   @override

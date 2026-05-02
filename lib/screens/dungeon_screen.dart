@@ -12,6 +12,14 @@ class DungeonPage extends StatefulWidget {
 
 class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStateMixin {
   late AnimationController _bgCtrl;
+  
+  // Combo Animation States
+  int _comboIdx = 0;
+  int _storyProgress = 0; 
+
+  final List<String> _combo0 = ['Kick01', 'Punch01', 'Kick02'];
+  final List<String> _combo1 = ['Kick03', 'Punch02', 'Punch03'];
+  final List<String> _comboAdvanced = ['Roll', 'Jump', 'Jump Fall', 'Roll', 'Jump', 'Jump Fall', 'Roll', 'Sprint', 'Slide'];
 
   @override
   void initState() {
@@ -20,6 +28,31 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
       vsync: this,
       duration: const Duration(seconds: 15),
     )..repeat();
+  }
+
+  void _nextCombo() {
+    if (!mounted) return;
+    
+    final animations = _getCurrentAnimations();
+    setState(() {
+      _comboIdx = (_comboIdx + 1) % animations.length;
+    });
+
+    // Handle special 3-second durations (Sprint and Slide)
+    final nextAnim = animations[_comboIdx];
+    if (nextAnim == 'Sprint' || nextAnim == 'Slide') {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _getCurrentAnimations()[_comboIdx] == nextAnim) {
+          _nextCombo();
+        }
+      });
+    }
+  }
+
+  List<String> _getCurrentAnimations() {
+    if (_storyProgress == 0) return _combo0;
+    if (_storyProgress == 1) return _combo1;
+    return _comboAdvanced;
   }
 
   @override
@@ -57,6 +90,44 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic styling based on progress
+    final Map<int, _CardStyle> styles = {
+      0: _CardStyle(
+        bg: const Color(0xFF1A0B2E), // Purple
+        accent: const Color(0xFFB388FF),
+      ),
+      1: _CardStyle(
+        bg: const Color(0xFF0F051A), // Dark Purple
+        accent: const Color(0xFF7E57C2),
+      ),
+      2: _CardStyle(
+        bg: const Color(0xFF0A1128), // Dark Blue
+        accent: Colors.blue,
+      ),
+      3: _CardStyle(
+        bg: const Color(0xFF1A0505), // Deep Red
+        accent: Colors.redAccent,
+      ),
+      4: _CardStyle(
+        bg: const Color(0xFF051A1A), // Dark Teal
+        accent: Colors.tealAccent,
+      ),
+      5: _CardStyle(
+        bg: const Color(0xFF1A1505), // Dark Gold
+        accent: Colors.orangeAccent,
+      ),
+    };
+
+    final style = styles[_storyProgress] ?? styles[0]!;
+    final Color cardBg = style.bg;
+    final Color accentColor = style.accent;
+    final List<String> currentAnimations = _getCurrentAnimations();
+
+    // Safety check for index out of bounds when switching lists
+    if (_comboIdx >= currentAnimations.length) {
+      _comboIdx = 0;
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -89,7 +160,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                   children: [
                     const SizedBox(height: 12),
                     
-                    // Training Card (Notebook Style)
+                    // 1. Training Card (Full Width)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: SGTouchable(
@@ -119,7 +190,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     animation: _bgCtrl,
                                     builder: (context, child) {
                                       return CustomPaint(
-                                        painter: _NotebookPainter(_bgCtrl.value, isBlueTheme: true),
+                                        painter: _NotebookPainter(_bgCtrl.value, lineColor: Colors.blue.withValues(alpha: 0.05)),
                                       );
                                     },
                                   ),
@@ -235,16 +306,23 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                   ),
                                 ),
 
-                                // Training Title (White on Dark Blue)
+                                // Training Title (Centered Left)
                                 Positioned(
-                                  top: 14,
+                                  top: 0,
+                                  bottom: 0,
                                   left: 20,
-                                  child: Text(
-                                    'TRAINING',
-                                    style: AppTheme.mono(color: Colors.white, size: 11).copyWith(
-                                      letterSpacing: 3,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'TRAINING',
+                                        style: AppTheme.mono(color: Colors.white, size: 11).copyWith(
+                                          letterSpacing: 3,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
 
@@ -280,6 +358,236 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                       ),
                     ),
 
+                    const SizedBox(height: 20),
+
+                    // 2. Story Mode Card (Full Width)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SGTouchable(
+                            onTap: () {
+                              if (_storyProgress == 0) {
+                                AppTheme.showSnackBar(context, 'Story Mode coming soon!');
+                              } else {
+                                AppTheme.showSnackBar(context, 'Level Locked! Reach Progress 0 first.');
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: _storyProgress > 0 ? const Color(0xFF1E1E1E) : cardBg,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white, 
+                                  width: 2,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Stack(
+                                  children: [
+                                    // Animated Background Pattern
+                                    Positioned.fill(
+                                      child: AnimatedBuilder(
+                                        animation: _bgCtrl,
+                                        builder: (context, child) {
+                                          return CustomPaint(
+                                            painter: _NotebookPainter(
+                                              _bgCtrl.value, 
+                                              lineColor: (_storyProgress > 0 ? Colors.white : accentColor).withValues(alpha: 0.08),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+
+                                    // Dynamic Player (Faded when locked)
+                                    Center(
+                                      child: Opacity(
+                                        opacity: _storyProgress > 0 ? 0.05 : 1.0,
+                                        child: OverflowBox(
+                                          maxHeight: 200, 
+                                          child: Transform.translate(
+                                            offset: const Offset(0, -45),
+                                            child: Stack(
+                                              alignment: Alignment.bottomCenter,
+                                              children: [
+                                                Opacity(
+                                                  opacity: 0.1,
+                                                  child: Transform.scale(
+                                                    scaleY: -1,
+                                                    alignment: Alignment.bottomCenter,
+                                                    child: Player(
+                                                      key: ValueKey('Reflect_Story_${_storyProgress}_$_comboIdx'),
+                                                      animation: currentAnimations[_comboIdx],
+                                                      size: 160,
+                                                      loop: currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide',
+                                                    ),
+                                                  ),
+                                                ),
+                                                Player(
+                                                  key: ValueKey('Combo_Story_${_storyProgress}_$_comboIdx'),
+                                                  animation: currentAnimations[_comboIdx],
+                                                  size: 160,
+                                                  loop: currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide',
+                                                  fps: 12,
+                                                  onComplete: (currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide') ? null : _nextCombo,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Center Lock Icon
+                                    if (_storyProgress > 0)
+                                      Center(
+                                        child: Icon(
+                                          Icons.lock_rounded, 
+                                          color: Colors.white.withValues(alpha: 0.2),
+                                          size: 40,
+                                        ),
+                                      ),
+
+                                    // Title Group (Center Left)
+                                    Positioned(
+                                      top: 0,
+                                      bottom: 0,
+                                      left: 20,
+                                      child: Opacity(
+                                        opacity: _storyProgress > 0 ? 0.3 : 1.0,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'STORY MODE',
+                                              style: AppTheme.mono(color: Colors.white, size: 11).copyWith(
+                                                letterSpacing: 3,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Vertical Battery Indicator (Right Side)
+                                    Positioned(
+                                      top: 0,
+                                      bottom: 0,
+                                      right: 20,
+                                      child: Opacity(
+                                        opacity: _storyProgress > 0 ? 0.3 : 1.0,
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              // Battery Tip (Top)
+                                              Container(
+                                                width: 6,
+                                                height: 3,
+                                                decoration: BoxDecoration(
+                                                  color: (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.5),
+                                                  borderRadius: const BorderRadius.only(
+                                                    topLeft: Radius.circular(1.5),
+                                                    topRight: Radius.circular(1.5),
+                                                  ),
+                                                ),
+                                              ),
+                                              // Battery Body
+                                              Container(
+                                                padding: const EdgeInsets.all(3),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(5),
+                                                  border: Border.all(
+                                                    color: (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.5),
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  // Generate segments from bottom (5-1) to top (1-5)
+                                                  children: List.generate(5, (i) {
+                                                    int index = 4 - i; // Reverse for bottom-to-top fill
+                                                    return Container(
+                                                      width: 14,
+                                                      height: 10,
+                                                      margin: EdgeInsets.only(bottom: i == 4 ? 0 : 2),
+                                                      decoration: BoxDecoration(
+                                                        color: index < _storyProgress 
+                                                          ? (_storyProgress > 0 ? Colors.grey : accentColor)
+                                                          : (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.08),
+                                                        borderRadius: BorderRadius.circular(1.5),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          // Bridge & Small Control Card (White Borders Only)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 2,
+                                  height: 8,
+                                  color: Colors.white70,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0D1B2A),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildControlBtn(
+                                        icon: Icons.remove,
+                                        color: Colors.white,
+                                        size: 28,
+                                        onTap: () {
+                                          if (_storyProgress > 0) setState(() => _storyProgress--);
+                                        },
+                                      ),
+                                      const SizedBox(width: 10),
+                                      _buildControlBtn(
+                                        icon: Icons.add,
+                                        color: Colors.white,
+                                        size: 28,
+                                        onTap: () {
+                                          if (_storyProgress < 5) setState(() => _storyProgress++);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     const SizedBox(height: 120), // Bottom padding for navbar
                   ],
                 ),
@@ -290,19 +598,39 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
       ),
     );
   }
+
+  Widget _buildControlBtn({required IconData icon, required VoidCallback onTap, required Color color, double size = 36}) {
+    return SGTouchable(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(size * 0.28),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        ),
+        child: Icon(icon, color: Colors.white, size: size * 0.5),
+      ),
+    );
+  }
+}
+
+class _CardStyle {
+  final Color bg;
+  final Color accent;
+  _CardStyle({required this.bg, required this.accent});
 }
 
 class _NotebookPainter extends CustomPainter {
   final double progress;
-  final bool isBlueTheme;
-  _NotebookPainter(this.progress, {this.isBlueTheme = false});
+  final Color lineColor;
+  _NotebookPainter(this.progress, {required this.lineColor});
 
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
-      ..color = isBlueTheme 
-          ? const Color(0xFF4FC3F7).withValues(alpha: 0.05)
-          : Colors.blue.withValues(alpha: 0.05)
+      ..color = lineColor
       ..strokeWidth = 1.0;
 
     // Static Horizontal Lines (Notebook feel)
@@ -311,9 +639,8 @@ class _NotebookPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
     }
 
-    // Scrolling Vertical Lines (Creates horizontal movement feel)
-    // We scroll them right-to-left to simulate the player running right
-    double xOffset = -(progress * lineSpacing * 2); // Faster horizontal scroll
+    // Scrolling Vertical Lines
+    double xOffset = -(progress * lineSpacing * 2);
     for (double x = -lineSpacing + (xOffset % lineSpacing); x < size.width + lineSpacing; x += lineSpacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
@@ -321,7 +648,7 @@ class _NotebookPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_NotebookPainter oldDelegate) => 
-      oldDelegate.progress != progress || oldDelegate.isBlueTheme != isBlueTheme;
+      oldDelegate.progress != progress || oldDelegate.lineColor != lineColor;
 }
 
 class _CratePainter extends CustomPainter {

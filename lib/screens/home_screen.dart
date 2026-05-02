@@ -186,8 +186,25 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  bool get _isSleeping => _isNight && _playerAnim == 'Stunned';
+
   void _onPlayerTap() async {
+    // If sleeping: play a silent hit and go back to sleep — no voice
+    if (_isSleeping) {
+      setState(() {
+        _cardHurtPulse = 1.0;
+        _playerAnim = ['Hit', 'HitUp'][Random().nextInt(2)];
+      });
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) setState(() => _cardHurtPulse = 0.0);
+      });
+      // The onComplete of the Player widget will return them to Stunned automatically
+      return;
+    }
+
+    // If non-sleep stunned (post-10-hit), do nothing
     if (_playerAnim == 'Stunned') return;
+
     _hitResetTimer?.cancel();
     _showVoiceLine(isHurt: true);
     _hitCount++;

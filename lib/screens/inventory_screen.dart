@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
-import '../background.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../main.dart';
 import '../widgets/chest_sprite.dart';
 import 'open_chest_screen.dart';
+import '../background.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -43,145 +42,87 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF2D1B0D), // Base wood color
-      body: Stack(
-        children: [
-          // Detailed Wooden Wall Background
-          _buildWoodenWall(),
-          
-          CustomScrollView(
-            physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              SliverToBoxAdapter(
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Vault', style: AppTheme.h1(color: const Color(0xFFD7CCC8))),
-                            Text('Your stored treasures', style: AppTheme.caption(color: const Color(0xFFA1887F))),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF5D4037), width: 1.5),
-                            ),
-                            child: const Icon(Icons.close, size: 20, color: Color(0xFFD7CCC8)),
+    return LivelyBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, 
+        body: Stack(
+          children: [
+            CustomScrollView(
+              physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Vault'.toUpperCase(), style: AppTheme.h1(color: AppTheme.white).copyWith(letterSpacing: 2)),
+                              Text('Secure storage for your gains', style: AppTheme.caption(color: AppTheme.text2)),
+                            ],
                           ),
-                        ),
-                      ],
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppTheme.glassBorder, width: 1.5),
+                              ),
+                              child: const Icon(Icons.close, size: 20, color: AppTheme.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 120),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildBench(index * 4),
-                    childCount: 4,
+                
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 40, 20, 120),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildBench(index * 4),
+                      childCount: 4,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWoodenWall() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFF3E2723),
-      ),
-      child: Stack(
-        children: [
-          // Vertical planks
-          Row(
-            children: List.generate(12, (index) => Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(right: BorderSide(color: Colors.black.withValues(alpha: 0.4), width: 1)),
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF4E342E).withValues(alpha: index % 2 == 0 ? 0.8 : 1.0),
-                      const Color(0xFF3E2723),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            )),
-          ),
-          // Wood grain texture (simulated with noise/gradients)
-          Opacity(
-            opacity: 0.05,
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage("https://www.transparenttextures.com/patterns/wood-pattern.png"),
-                  repeat: ImageRepeat.repeat,
-                ),
-              ),
+              ],
             ),
-          ),
-          // Vignette for depth
-          Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
-                center: Alignment.center,
-                radius: 1.2,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBench(int startIndex) {
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 30), // Reduced gap between benches
+      padding: const EdgeInsets.only(bottom: 30),
       child: SizedBox(
         height: 140, 
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Bench/Counter Base (Storage style)
             Positioned(
               bottom: 0,
               left: -15,
               right: -15,
               child: Column(
                 children: [
-                  // Top Surface (Counter)
                   Container(
                     height: 28,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Color(0xFF8D6E63), // Light wood top edge
-                          Color(0xFF5D4037), // Surface
+                          AppTheme.accent.withValues(alpha: 0.1),
+                          AppTheme.glassBorder,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(4),
@@ -194,20 +135,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       ],
                     ),
                   ),
-                  // Counter thickness/Front edge
                   Container(
                     height: 12,
                     margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF3E2723),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.glassBorder.withValues(alpha: 0.5),
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Chest row — sits above counter
             Positioned(
               top: 0,
               left: 0,
@@ -234,8 +173,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (slot == null) {
       return GestureDetector(
         onTap: () {
-          AppShell.navigateTo(3); // Index of Shop
-          Navigator.pop(context); // Close Inventory
+          AppShell.navigateTo(3); 
+          Navigator.pop(context); 
         },
         child: Opacity(
           opacity: 0.15,
@@ -243,7 +182,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             height: 104,
             alignment: Alignment.bottomCenter,
             padding: const EdgeInsets.only(bottom: 25),
-            child: const Icon(Icons.add_circle_outline, color: Color(0xFFD7CCC8), size: 22),
+            child: const Icon(Icons.add_circle_outline, color: AppTheme.text3, size: 22),
           ),
         ),
       );
@@ -268,17 +207,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Status label
           SizedBox(
             height: 20,
             child: Center(
-              child: status == 'locked'
-                ? const SizedBox.shrink()
-                : _buildSlotFooter(status, index, type),
+              child: _buildSlotFooter(status, index, type),
             ),
           ),
           const SizedBox(height: 6),
-          // Sprite & Shadow
           Stack(
             alignment: Alignment.bottomCenter,
             children: [
@@ -310,45 +245,61 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _buildSlotFooter(String status, int index, String type) {
-    if (status == 'ready') {
+    final isUnlocking = status == 'unlocking';
+    final isReady = status == 'ready';
+
+    if (isReady) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50),
-          borderRadius: BorderRadius.circular(8),
+          color: AppTheme.cyan.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2)),
+            BoxShadow(color: AppTheme.cyan.withValues(alpha: 0.3), blurRadius: 8),
           ],
         ),
-        child: Text('READY',
-            style: AppTheme.mono(color: Colors.white, size: 8)
-                .copyWith(fontWeight: FontWeight.w900)),
+        child: Text('COLLECT',
+            style: AppTheme.label(color: Colors.white).copyWith(fontSize: 9)),
       );
     }
 
-    if (status == 'unlocking') {
+    String timeStr = "";
+    if (isUnlocking) {
       final remaining = Storage.getRemainingUnlockTime(index);
-      final timeStr = _formatDuration(remaining);
-
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.amber.withValues(alpha: 0.3), width: 0.5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.timer_outlined, size: 8, color: AppTheme.amber),
-            const SizedBox(width: 3),
-            Text(timeStr, style: AppTheme.mono(color: AppTheme.amber, size: 8)),
-          ],
-        ),
-      );
+      timeStr = _formatDuration(remaining);
+    } else {
+      timeStr = type == 'wooden_chest' ? '2h 00m' : type == 'iron_chest' ? '4h 00m' : '8h 00m';
     }
 
-    return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0A0A),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isUnlocking ? AppTheme.amber : AppTheme.glassBorder, 
+          width: 1.5
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isUnlocking ? Icons.timer : Icons.lock_outline, 
+            size: 11, 
+            color: isUnlocking ? AppTheme.amber : AppTheme.text3
+          ),
+          const SizedBox(width: 5),
+          Text(
+            timeStr, 
+            style: AppTheme.mono(
+              color: isUnlocking ? AppTheme.amber : AppTheme.text3, 
+              size: 10
+            )
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDuration(Duration d) {
