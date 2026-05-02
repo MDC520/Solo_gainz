@@ -54,10 +54,9 @@ class _OpenChestScreenState extends State<OpenChestScreen>
 
   void _generateReward() {
     final rng = Random();
-    final isWooden = widget.chestType == 'wooden_chest';
+    final type = widget.chestType;
 
-    // Same odds as before
-    if (isWooden) {
+    if (type == 'wooden_chest') {
       final roll = rng.nextDouble();
       if (roll < 0.60) {
         _rewardCoins = 6 + rng.nextInt(45);
@@ -70,7 +69,7 @@ class _OpenChestScreenState extends State<OpenChestScreen>
       } else {
         _rewardCoins = 399;
       }
-    } else {
+    } else if (type == 'iron_chest') {
       final roll = rng.nextDouble();
       if (roll < 0.45) {
         _rewardCoins = 6 + rng.nextInt(45);
@@ -83,8 +82,22 @@ class _OpenChestScreenState extends State<OpenChestScreen>
       } else {
         _rewardCoins = 399;
       }
+    } else {
+      // Gold Chest Rewards: 500 to 5000 T-Coins
+      final roll = rng.nextDouble();
+      if (roll < 0.40) {
+        _rewardCoins = 500 + rng.nextInt(500);
+      } else if (roll < 0.70) {
+        _rewardCoins = 1001 + rng.nextInt(1000);
+      } else if (roll < 0.90) {
+        _rewardCoins = 2001 + rng.nextInt(1500);
+      } else if (roll < 0.98) {
+        _rewardCoins = 3501 + rng.nextInt(1498);
+      } else {
+        _rewardCoins = 5000;
+      }
     }
-    _isMaxReward = _rewardCoins == 399;
+    _isMaxReward = (type == 'gold_chest') ? _rewardCoins == 5000 : _rewardCoins == 399;
   }
 
   void _setupAnimations() {
@@ -200,10 +213,19 @@ class _OpenChestScreenState extends State<OpenChestScreen>
 
   @override
   Widget build(BuildContext context) {
-    final spriteType = widget.chestType == 'wooden_chest' ? 'wooden' : 'iron';
+    final spriteType = widget.chestType == 'wooden_chest'
+        ? 'wooden'
+        : widget.chestType == 'iron_chest'
+            ? 'iron'
+            : 'gold';
     final isWooden = widget.chestType == 'wooden_chest';
+    final isIron = widget.chestType == 'iron_chest';
 
-    final Color intenseGlow = isWooden ? AppTheme.amber : AppTheme.cyan;
+    final Color intenseGlow = isWooden
+        ? AppTheme.amber
+        : isIron
+            ? AppTheme.cyan
+            : AppTheme.purple;
 
     // ignore: deprecated_member_use
     return PopScope(

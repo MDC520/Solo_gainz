@@ -12,6 +12,9 @@ class Player extends StatefulWidget {
 
   /// Optional fixed size – defaults to expanding to fill parent.
   final double? size;
+  
+  /// Tint color for the sprite.
+  final Color? color;
 
   /// Whether the animation should loop.
   final bool loop;
@@ -19,13 +22,18 @@ class Player extends StatefulWidget {
   /// Callback when a non-looping animation finishes.
   final VoidCallback? onComplete;
 
+  /// Alignment of the sprite within its box.
+  final Alignment alignment;
+
   const Player({
     super.key,
     this.animation = 'Idle',
     this.fps = 8,
     this.size,
+    this.color,
     this.loop = true,
     this.onComplete,
+    this.alignment = Alignment.bottomCenter,
   });
 
   @override
@@ -118,7 +126,8 @@ class _PlayerState extends State<Player> {
       fit: BoxFit.contain,
       width: widget.size,
       height: widget.size,
-      alignment: Alignment.bottomCenter,
+      color: widget.color,
+      alignment: widget.alignment,
       filterQuality: FilterQuality.none,
       gaplessPlayback: true, // smoother transitions
       excludeFromSemantics: true,

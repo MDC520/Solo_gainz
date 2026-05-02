@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -20,12 +22,11 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   List<AnimationController> _customAnims = [];
   int _tab = 0;
   bool _isShattering = false;
+  bool _isEditing = false;
+  late AnimationController _marchCtrl;
 
   static final _qColors = [
     AppTheme.accent,
-    AppTheme.red,
-    AppTheme.cyan,
-    AppTheme.amber,
   ];
 
   ValueListenable<Box>? _dailyQuestsListenable;
@@ -34,6 +35,10 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _marchCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
     _anims = [];
     _customAnims = [];
     _init(checkNewDay: true);
@@ -96,6 +101,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   void dispose() {
     _dailyQuestsListenable?.removeListener(_onStorageChange);
     _customQuestsListenable?.removeListener(_onStorageChange);
+    _marchCtrl.dispose();
     for (var c in _anims) {
       c.dispose();
     }
@@ -407,12 +413,22 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
         ),
       );
 
-  void _showCreateCustomQuestSheet() {
-    String name = '';
-    String system = 'reps';
-    String recur = 'Daily';
-    int goal = 10;
+  void _showCreateCustomQuestSheet({int? editIndex}) {
+    final isEditingQuest = editIndex != null;
+    final questToEdit = isEditingQuest ? _customQuests[editIndex] : null;
+
+    String name = isEditingQuest ? questToEdit!.questName : '';
+    String system = isEditingQuest ? questToEdit!.system : 'reps';
+    String recur = isEditingQuest ? (questToEdit!.questType.endsWith('_one_time') ? 'One Time' : 'Daily') : 'Daily';
+    int goal = isEditingQuest ? questToEdit!.maxGoal : 10;
+    
     int selectedIcon = 1;
+    if (isEditingQuest) {
+      final parts = questToEdit!.questType.split('_');
+      if (parts.length > 1) {
+        selectedIcon = int.tryParse(parts[1]) ?? 1;
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -467,6 +483,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                   Text('MISSION NAME', style: AppTheme.label(color: AppTheme.accent)),
                   const SizedBox(height: 10),
                   CupertinoTextField(
+                    controller: TextEditingController(text: name),
                     style: AppTheme.body(color: Colors.white),
                     placeholder: 'e.g., Heavy Deadlifts',
                     placeholderStyle: AppTheme.body(color: AppTheme.muted),
@@ -515,6 +532,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             Text(system == 'reps' ? 'GOAL' : 'SECONDS', style: AppTheme.label(color: AppTheme.accent)),
                             const SizedBox(height: 10),
                             CupertinoTextField(
+                              controller: TextEditingController(text: goal.toString()),
                               style: AppTheme.body(color: Colors.white),
                               keyboardType: TextInputType.number,
                               placeholder: '10',
@@ -590,7 +608,11 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                     onTap: () {
                       if (name.trim().isEmpty) return;
                       Navigator.pop(ctx);
-                      _addCustomQuest(name.trim(), system, goal, recur, selectedIcon);
+                      if (isEditingQuest) {
+                        _applyCustomQuestEdit(editIndex, name.trim(), system, goal, recur, selectedIcon);
+                      } else {
+                        _addCustomQuest(name.trim(), system, goal, recur, selectedIcon);
+                      }
                     },
                     child: Container(
                       width: double.infinity,
@@ -602,7 +624,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       ),
                       child: Center(
                         child: Text(
-                          'FORGE MISSION',
+                          isEditingQuest ? 'UPDATE MISSION' : 'FORGE MISSION',
                           style: AppTheme.label(color: Colors.black).copyWith(letterSpacing: 2, fontWeight: FontWeight.w900),
                         ),
                       ),
@@ -636,6 +658,24 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  void _applyCustomQuestEdit(int index, String name, String system, int goal, String recur, int iconIdx) {
+    final oldQuest = _customQuests[index];
+    final questType = 'custom_$iconIdx${recur == 'One Time' ? '_one_time' : ''}';
+    
+    setState(() {
+      _customQuests[index] = DailyQuest(
+        questName: name,
+        questType: questType,
+        maxGoal: goal,
+        currentProgress: oldQuest.currentProgress,
+        completed: oldQuest.completed,
+        xpReward: oldQuest.xpReward,
+        system: system,
+      );
+    });
+    Storage.saveCustomQuests(_customQuests);
   }
 
   void _removeCustomQuest(int i) {
@@ -695,6 +735,265 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   int get _doneCount => _quests.where((q) => q.completed).length;
   bool get _allDone => _doneCount == _quests.length;
 
+  void _toggleEditMode() {
+    setState(() => _isEditing = !_isEditing);
+    Storage.setNavbarHidden(_isEditing);
+    AppTheme.tap();
+  }
+
+  void _showExercisePickerFor(int index) {
+    final allExercises = ExerciseLibrary.all;
+    // Exclude exercises already assigned to other slots
+    final usedTypes = _quests.asMap().entries
+        .where((e) => e.key != index)
+        .map((e) => e.value.questType)
+        .toSet();
+    final available = allExercises
+        .where((e) => !usedTypes.contains(e.type))
+        .toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.65,
+        ),
+        decoration: BoxDecoration(
+          color: AppTheme.bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: Border(
+            top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                        color: AppTheme.line,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Choose Exercise', style: AppTheme.h2()),
+                      SGTouchable(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: AppTheme.text2, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                itemCount: available.length,
+                itemBuilder: (ctx, i) {
+                  final ex = available[i];
+                  final isTimer = ex.system == 'timer';
+                  return SGTouchable(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _applyExerciseChange(index, ex);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.line, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: (isTimer ? AppTheme.amber : AppTheme.accent).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              isTimer ? Icons.timer : Icons.fitness_center,
+                              color: isTimer ? AppTheme.amber : AppTheme.accent,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(ex.name, style: AppTheme.h3()),
+                                Text(
+                                  isTimer ? 'Timer-based' : 'Rep-based',
+                                  style: AppTheme.caption(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, color: AppTheme.text3, size: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyExerciseChange(int index, Exercise ex) {
+    final stats = _stats ?? Storage.getUserStats();
+    final max = RankSystem.getMaxReps(stats.rank, stats.level);
+    final reward = RankSystem.getQuestXpReward(stats.rank);
+
+    setState(() {
+      _quests[index] = DailyQuest(
+        questName: ex.name,
+        questType: ex.type,
+        maxGoal: ex.system == 'timer' ? max * 6 : max,
+        xpReward: reward,
+        system: ex.system,
+      );
+    });
+    Storage.saveDailyQuests(_quests);
+    Storage.saveDailyTemplates(_quests);
+  }
+
+  void _showRunningSystemPicker(int index) {
+    final quest = _quests[index];
+    final systems = ['timer', 'reps', 'km'];
+    final labels = ['Timer (seconds)', 'Reps', 'Kilometers'];
+    final icons = [Icons.timer, Icons.repeat, Icons.straighten];
+    final canUseKm = ['running', 'treadmill', 'elliptical', 'sprints'].contains(quest.questType);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: Border(
+            top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.line,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('Tracking System', style: AppTheme.h2()),
+              const SizedBox(height: 6),
+              Text('How do you want to track this exercise?', style: AppTheme.caption()),
+              const SizedBox(height: 24),
+              ...List.generate(systems.length, (i) {
+                final sys = systems[i];
+                final isSelected = quest.system == sys;
+                final isLocked = sys == 'km' && !canUseKm;
+
+                return SGTouchable(
+                  disabled: isLocked,
+                  onTap: () {
+                    if (isLocked) return;
+                    Navigator.pop(ctx);
+                    _applySystemChange(index, sys);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: isLocked
+                          ? AppTheme.surface.withValues(alpha: 0.5)
+                          : isSelected
+                              ? AppTheme.accent.withValues(alpha: 0.1)
+                              : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isLocked
+                            ? AppTheme.line.withValues(alpha: 0.5)
+                            : isSelected ? AppTheme.accent : AppTheme.line,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(icons[i], color: isLocked ? AppTheme.muted : (isSelected ? AppTheme.accent : AppTheme.text2), size: 22),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(labels[i], style: AppTheme.h3(
+                            color: isLocked ? AppTheme.muted : (isSelected ? AppTheme.accent : AppTheme.text1),
+                          )),
+                        ),
+                        if (isLocked)
+                          Icon(Icons.lock, color: AppTheme.muted, size: 20)
+                        else if (isSelected)
+                          Icon(Icons.check_circle, color: AppTheme.accent, size: 22),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _applySystemChange(int index, String newSystem) {
+    final stats = _stats ?? Storage.getUserStats();
+    final max = RankSystem.getMaxReps(stats.rank, stats.level);
+
+    setState(() {
+      final q = _quests[index];
+      _quests[index] = DailyQuest(
+        questName: q.questName,
+        questType: q.questType,
+        maxGoal: newSystem == 'timer' ? max * 6 : (newSystem == 'km' ? (max ~/ 10).clamp(1, 50) : max),
+        xpReward: q.xpReward,
+        system: newSystem,
+      );
+    });
+    Storage.saveDailyQuests(_quests);
+    Storage.saveDailyTemplates(_quests);
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -717,32 +1016,75 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           Text('Daily Missions', style: AppTheme.h1()),
                           const SizedBox(height: 4),
                           Text(
-                            'Complete your daily grind.',
-                            style: AppTheme.caption(),
+                            _isEditing ? 'Tap a card to customize it.' : 'Complete your daily grind.',
+                            style: AppTheme.caption(color: _isEditing ? AppTheme.accent : null),
                           ),
                         ],
+                      ),
+                      SGTouchable(
+                        onTap: _toggleEditMode,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 110,
+                          height: 38,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _isEditing
+                                ? AppTheme.accent
+                                : AppTheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _isEditing ? AppTheme.accent : Colors.white.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _isEditing ? Icons.check : Icons.tune_rounded,
+                                size: 16,
+                                color: _isEditing ? Colors.black : AppTheme.text2,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _isEditing ? 'Done' : 'Customize',
+                                style: AppTheme.label(
+                                  color: _isEditing ? Colors.black : AppTheme.text2,
+                                ).copyWith(fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(2), // Space for the border
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.silver, width: 1.5),
-                    ),
-                    child: CupertinoSlidingSegmentedControl<int>(
-                      backgroundColor: AppTheme.surface,
-                      thumbColor: AppTheme.accent, // Make the selector green
-                      groupValue: _tab,
-                      onValueChanged: (v) {
-                        if (v != null) setState(() => _tab = v);
-                      },
-                      children: {
-                        0: _buildTab('Daily Quests', _tab == 0),
-                        1: _buildTab('Custom Quests', _tab == 1),
-                      },
+                   AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: _isEditing ? 0.4 : 1.0,
+                    child: AbsorbPointer(
+                      absorbing: _isEditing,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(2), // Space for the border
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.silver, width: 1.5),
+                        ),
+                        child: CupertinoSlidingSegmentedControl<int>(
+                          backgroundColor: AppTheme.surface,
+                          thumbColor: AppTheme.accent, // Make the selector green
+                          groupValue: _tab,
+                          onValueChanged: (v) {
+                            if (v != null) setState(() => _tab = v);
+                          },
+                          children: {
+                            0: _buildTab('Daily Quests', _tab == 0),
+                            1: _buildTab('Custom Quests', _tab == 1),
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -751,8 +1093,14 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           sliver: _tab == 0 ? _buildDailyList() : _buildCustomList(),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+          sliver: SliverToBoxAdapter(
+            child: _tab == 0 ? _buildDailyFooter() : _buildCustomFooter(),
+          ),
         ),
       ],
     );
@@ -770,39 +1118,67 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildDailyList() {
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        ...List.generate(
-          _quests.length,
-          (i) {
-            // Safety check for animation controller to prevent RangeError
-            if (i >= _anims.length) return const SizedBox.shrink();
+  void _onReorderDaily(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    if (oldIndex == newIndex) return;
+    setState(() {
+      final item = _quests.removeAt(oldIndex);
+      _quests.insert(newIndex, item);
+    });
+    Storage.saveDailyQuests(_quests);
+  }
 
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.2, 0),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(
-                  parent: _anims[i],
-                  curve: Curves.easeOutCubic,
-                ),
+  void _onReorderCustom(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    if (oldIndex == newIndex) return;
+    setState(() {
+      final item = _customQuests.removeAt(oldIndex);
+      _customQuests.insert(newIndex, item);
+    });
+    Storage.saveCustomQuests(_customQuests);
+  }
+
+  Widget _buildDailyList() {
+    return SliverReorderableList(
+      itemCount: _quests.length,
+      onReorder: _onReorderDaily,
+      proxyDecorator: _proxyDecorator,
+      itemBuilder: (context, i) {
+        if (i >= _anims.length) return const SizedBox.shrink();
+        final quest = _quests[i];
+
+        return _SoloReorderListener(
+          key: ValueKey('daily_${quest.questType}_${quest.questName}_$i'),
+          index: i,
+          enabled: _isEditing,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero).animate(
+              CurvedAnimation(parent: _anims[i], curve: Curves.easeOutCubic),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _QuestCard(
+                questIndex: i,
+                quest: quest,
+                color: _qColors[i % _qColors.length],
+                onUpdate: (delta) => _updateReps(i, delta),
+                onComplete: () => _completeQuest(i),
+                isShattering: quest.completed && _isShattering,
+                isEditing: _isEditing,
+                marchAnimation: _marchCtrl,
+                onEditName: () => _showExercisePickerFor(i),
+                onEditSystem: () => _showRunningSystemPicker(i),
               ),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _QuestCard(
-                  questIndex: i,
-                  quest: _quests[i],
-                  color: _qColors[i % _qColors.length],
-                  onUpdate: (delta) => _updateReps(i, delta),
-                  onComplete: () => _completeQuest(i),
-                  isShattering: _quests[i].completed && _isShattering,
-                ),
-              ),
-            );
-          },
-        ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDailyFooter() {
+    return Column(
+      children: [
         const SizedBox(height: 8),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
@@ -815,9 +1191,33 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 )
               : _HintCard(),
         ),
-      ]),
+      ],
     );
   }
+
+  Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        final double animValue = Curves.easeOutCubic.transform(animation.value);
+        final double scale = 1.0 + (0.06 * animValue);
+        final double elevation = 12.0 * animValue;
+        return Transform.scale(
+          scale: scale,
+          child: Material(
+            elevation: elevation,
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            shadowColor: AppTheme.accent.withValues(alpha: 0.4),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
+
 
   Widget _buildCustomList() {
     if (_customQuests.isEmpty) {
@@ -827,7 +1227,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Large blurred background icon for premium feel
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -914,78 +1313,84 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       );
     }
 
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        ...List.generate(
-          _customQuests.length,
-          (i) {
-            // Safety check for animation controller to prevent RangeError
-            if (i >= _customAnims.length) return const SizedBox.shrink();
+    return SliverReorderableList(
+      itemCount: _customQuests.length,
+      onReorder: _onReorderCustom,
+      proxyDecorator: _proxyDecorator,
+      itemBuilder: (context, i) {
+        if (i >= _customAnims.length) return const SizedBox.shrink();
+        final quest = _customQuests[i];
 
-            return SlideTransition(
-              position:
-                  Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero)
-                      .animate(
-                CurvedAnimation(
-                    parent: _customAnims[i], curve: Curves.easeOutCubic),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Stack(
-                  children: [
-                    _QuestCard(
-                      questIndex: i,
-                      quest: _customQuests[i],
-                      color: AppTheme.cyan,
-                      onUpdate: (delta) => _updateCustomReps(i, delta),
-                      onComplete: () => _completeCustomQuest(i),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => _removeCustomQuest(i),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.delete_outline,
-                              color: AppTheme.red.withValues(alpha: 0.8),
-                              size: 16),
+        return _SoloReorderListener(
+          key: ValueKey('custom_${quest.questType}_${quest.questName}_$i'),
+          index: i,
+          enabled: true,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero).animate(
+              CurvedAnimation(parent: _customAnims[i], curve: Curves.easeOutCubic),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Stack(
+                children: [
+                  _QuestCard(
+                    questIndex: i,
+                    quest: quest,
+                    color: AppTheme.cyan,
+                    onUpdate: (delta) => _updateCustomReps(i, delta),
+                    onComplete: () => _completeCustomQuest(i),
+                    isEditing: _isEditing,
+                    marchAnimation: _marchCtrl,
+                    onEditName: () => _showCreateCustomQuestSheet(editIndex: i),
+                    onEditSystem: () => _showCreateCustomQuestSheet(editIndex: i),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => _removeCustomQuest(i),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.red.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.3)),
                         ),
+                        child: const Icon(Icons.close, size: 14, color: AppTheme.red),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-        if (_customQuests.length < 3)
-          SGTouchable(
-            onTap: _showCreateCustomQuestSheet,
-            child: Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line, width: 1.5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add, color: AppTheme.text1, size: 20),
-                  const SizedBox(width: 8),
-                  Text('ADD CUSTOM MISSION',
-                      style: AppTheme.label().copyWith(letterSpacing: 1)),
+                  ),
                 ],
               ),
             ),
           ),
-      ]),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomFooter() {
+    if (_customQuests.length >= 3) return const SizedBox.shrink();
+    
+    return SGTouchable(
+      onTap: _showCreateCustomQuestSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.line, width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: AppTheme.text1, size: 20),
+            const SizedBox(width: 8),
+            Text('ADD CUSTOM MISSION',
+                style: AppTheme.label().copyWith(letterSpacing: 1)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1014,6 +1419,10 @@ class _QuestCard extends StatefulWidget {
   final Function(int) onUpdate;
   final VoidCallback onComplete;
   final bool isShattering;
+  final bool isEditing;
+  final Animation<double>? marchAnimation;
+  final VoidCallback? onEditName;
+  final VoidCallback? onEditSystem;
 
   const _QuestCard({
     required this.questIndex,
@@ -1022,6 +1431,10 @@ class _QuestCard extends StatefulWidget {
     required this.onUpdate,
     required this.onComplete,
     this.isShattering = false,
+    this.isEditing = false,
+    this.marchAnimation,
+    this.onEditName,
+    this.onEditSystem,
   });
 
   @override
@@ -1031,10 +1444,19 @@ class _QuestCard extends StatefulWidget {
 class _QuestCardState extends State<_QuestCard> {
   Timer? _timer;
   bool _isRunning = false;
+  bool _isEditingLocal = false;
+  Timer? _staggerTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditingLocal = widget.isEditing;
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _staggerTimer?.cancel();
     super.dispose();
   }
 
@@ -1097,6 +1519,11 @@ class _QuestCardState extends State<_QuestCard> {
     if (widget.quest.completed && _isRunning) {
       _timer?.cancel();
       _isRunning = false;
+    }
+
+    if (oldWidget.isEditing != widget.isEditing) {
+      _staggerTimer?.cancel();
+      setState(() => _isEditingLocal = widget.isEditing);
     }
   }
 
@@ -1179,131 +1606,234 @@ class _QuestCardState extends State<_QuestCard> {
                 ),
               ),
             )
-          : Container(
-              key: const ValueKey('active'),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line, width: 1.5),
-              ),
-              child: Column(
+          : _buildActiveCard(quest, pct, isTimer, iconIndex),
+    );
+  }
+
+  Widget _buildActiveCard(DailyQuest quest, double pct, bool isTimer, int iconIndex) {
+    final isKm = quest.system == 'km';
+
+    return KeyedSubtree(
+      key: const ValueKey('active'),
+      child: AnimatedBuilder(
+        animation: widget.marchAnimation ?? const AlwaysStoppedAnimation(0),
+        builder: (context, child) => CustomPaint(
+          foregroundPainter: _MarchingDashPainter(
+            progress: widget.marchAnimation?.value ?? 0,
+            color: widget.color,
+            radius: 16,
+            opacity: _isEditingLocal ? 1.0 : 0.0,
+          ),
+          child: child,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          height: 110,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _isEditingLocal
+                ? AppTheme.surface.withValues(alpha: 0.92)
+                : AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _isEditingLocal
+                  ? Colors.transparent
+                  : Colors.white.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              // ── Header row (always visible) ──
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: widget.color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: widget.color.withValues(alpha: 0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: iconIndex > 0
-                              ? Icon(
-                                  _getCustomQuestIcon(iconIndex),
-                                  color: widget.color,
-                                  size: 20,
-                                )
-                              : Text(
-                                  '${widget.questIndex + 1}',
-                                  style: AppTheme.h2(color: widget.color),
-                                ),
-                        ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: widget.color.withValues(alpha: _isEditingLocal ? 0.25 : 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: widget.color.withValues(alpha: _isEditingLocal ? 0.7 : 0.4),
+                        width: 1.5,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(quest.questName, style: AppTheme.h3()),
-                            const SizedBox(height: 2),
-                            Text(
-                              isTimer
-                                  ? '${_formatTime(quest.currentProgress)} / ${_formatTime(quest.maxGoal)}'
-                                  : '${quest.currentProgress} / ${quest.maxGoal} reps',
-                              style: AppTheme.caption(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
+                    child: Center(
+                      child: iconIndex > 0
+                          ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 20)
+                          : Text('${widget.questIndex + 1}', style: AppTheme.h2(color: widget.color)),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      if (isTimer)
-                        _ActionButton(
-                          icon: _isRunning ? Icons.pause : Icons.play_arrow,
-                          onTap: _toggleTimer,
-                          active: _isRunning,
-                        )
-                      else ...[
-                        _ActionButton(
-                          icon: Icons.remove,
-                          onTap: () => widget.onUpdate(-1),
-                          disabled: quest.currentProgress == 0,
-                        ),
-                        const SizedBox(width: 8),
-                        _ActionButton(
-                          icon: Icons.add,
-                          onTap: () => widget.onUpdate(1),
-                          disabled: quest.currentProgress == quest.maxGoal,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(quest.questName, style: AppTheme.h3()),
+                        const SizedBox(height: 2),
+                        Text(
+                          isTimer
+                              ? '${_formatTime(quest.currentProgress)} / ${_formatTime(quest.maxGoal)}'
+                              : isKm
+                                  ? '${quest.currentProgress} / ${quest.maxGoal} km'
+                                  : '${quest.currentProgress} / ${quest.maxGoal} reps',
+                          style: AppTheme.caption(),
                         ),
                       ],
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _LinearProgress(pct: pct, color: widget.color),
-                      ),
-                      if (quest.currentProgress >= quest.maxGoal) ...[
-                        const SizedBox(width: 16),
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutBack,
-                          builder: (context, value, child) {
-                            return Opacity(
-                              opacity: value,
-                              child: Transform.translate(
-                                offset: Offset(20 * (1 - value), 0),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: SGTouchable(
-                            onTap: _confirmCompletion,
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppTheme.accent,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.accent.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                  )
-                                ],
-                              ),
-                              child: const Icon(Icons.check,
-                                  color: AppTheme.accent, size: 18),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
                 ],
               ),
+              // ── Bottom section: breaks open ──
+              ClipRect(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 280),
+                  switchInCurve: Curves.easeOutQuart,
+                  switchOutCurve: Curves.easeInQuart,
+                  transitionBuilder: (child, anim) => SlideTransition(
+                    position: Tween<Offset>(
+                      begin: child.key == const ValueKey('edit')
+                          ? const Offset(0, -0.6)   // edit slides in from top
+                          : const Offset(0, 0.6),   // normal slides in from bottom
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutQuart)),
+                    child: FadeTransition(opacity: anim, child: child),
+                  ),
+                  child: _isEditingLocal
+                      ? _buildEditControls(quest)
+                      : _buildNormalControls(quest, pct, isTimer),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNormalControls(DailyQuest quest, double pct, bool isTimer) {
+    return Column(
+      key: const ValueKey('normal'),
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            if (isTimer)
+              _ActionButton(
+                icon: _isRunning ? Icons.pause : Icons.play_arrow,
+                onTap: _toggleTimer,
+                active: _isRunning,
+              )
+            else ...[
+              _ActionButton(
+                icon: Icons.remove,
+                onTap: () => widget.onUpdate(-1),
+                disabled: quest.currentProgress == 0,
+              ),
+              const SizedBox(width: 8),
+              _ActionButton(
+                icon: Icons.add,
+                onTap: () => widget.onUpdate(1),
+                disabled: quest.currentProgress == quest.maxGoal,
+              ),
+            ],
+            const SizedBox(width: 16),
+            Expanded(child: _LinearProgress(pct: pct, color: widget.color)),
+            if (quest.currentProgress >= quest.maxGoal) ...[
+              const SizedBox(width: 16),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutBack,
+                builder: (ctx, val, child) => Opacity(
+                  opacity: val,
+                  child: Transform.translate(
+                    offset: Offset(20 * (1 - val), 0),
+                    child: child,
+                  ),
+                ),
+                child: SGTouchable(
+                  onTap: _confirmCompletion,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.accent, width: 2),
+                      boxShadow: [
+                        BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8),
+                      ],
+                    ),
+                    child: const Icon(Icons.check, color: AppTheme.accent, size: 18),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditControls(DailyQuest quest) {
+    return Column(
+      key: const ValueKey('edit'),
+      children: [
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: SGTouchable(
+                onTap: widget.onEditName,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35), width: 1.2),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.swap_horiz, size: 14, color: AppTheme.accent),
+                      const SizedBox(width: 6),
+                      Text('Change', style: AppTheme.label(color: AppTheme.accent).copyWith(fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SGTouchable(
+                onTap: widget.onEditSystem,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppTheme.amber.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.amber.withValues(alpha: 0.35), width: 1.2),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.tune, size: 14, color: AppTheme.amber),
+                      const SizedBox(width: 6),
+                      Text(
+                        quest.system == 'timer' ? 'Timer' : quest.system == 'km' ? 'KM' : 'Reps',
+                        style: AppTheme.label(color: AppTheme.amber).copyWith(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1628,6 +2158,83 @@ class _ShatterWidgetState extends State<ShatterWidget>
         _buildPiece(Alignment.bottomLeft),
         _buildPiece(Alignment.bottomRight),
       ],
+    );
+  }
+}
+
+// ── Marching Dashed Border Painter ──────────────────────────────────
+class _MarchingDashPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double radius;
+  final double opacity;
+
+  _MarchingDashPainter({
+    required this.progress,
+    required this.color,
+    this.radius = 16,
+    this.opacity = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (opacity <= 0) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: opacity * 0.75)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    // Calculate total perimeter of the rounded rectangle
+    final straightWidth = size.width - 2 * radius;
+    final straightHeight = size.height - 2 * radius;
+    final cornerArc = 2 * math.pi * radius / 4; // quarter circle
+    final perimeter = 2 * straightWidth + 2 * straightHeight + 4 * cornerArc;
+
+    const dashLen = 8.0;
+    const gapLen = 6.0;
+    final totalDash = dashLen + gapLen;
+    final offset = progress * totalDash * 3; // speed multiplier
+
+    // Use a path with dash effect
+    final path = Path()..addRRect(rrect);
+
+    // Create dashes manually by iterating along the path
+    final metrics = path.computeMetrics().toList();
+    for (final metric in metrics) {
+      double distance = offset % totalDash;
+      while (distance < metric.length) {
+        final end = (distance + dashLen).clamp(0.0, metric.length);
+        final extractPath = metric.extractPath(distance, end);
+        canvas.drawPath(extractPath, paint);
+        distance += totalDash;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MarchingDashPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color || oldDelegate.opacity != opacity;
+}
+// ── Custom Delayed Reorder Listener ──────────────────────────────
+class _SoloReorderListener extends ReorderableDragStartListener {
+  const _SoloReorderListener({
+    required super.child,
+    required super.index,
+    super.enabled = true,
+    super.key,
+  });
+
+  @override
+  MultiDragGestureRecognizer createRecognizer() {
+    return DelayedMultiDragGestureRecognizer(
+      delay: const Duration(milliseconds: 150),
+      debugOwner: this,
     );
   }
 }

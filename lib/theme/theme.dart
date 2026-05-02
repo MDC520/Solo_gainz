@@ -15,28 +15,27 @@ import 'dart:ui';
 class AppTheme {
   AppTheme._();
 
-  // ── The Void (Core Colors) ────────────────────────────────────
-  static const Color black     = Color(0xFF000000); // True OLED black
-  static const Color dark      = Color(0xFF0A0A0A); 
+  // ── Core Colors (Solid & Clean) ───────────────────────────────
+  static const Color black     = Color(0xFF15202B); // Premium Dim Blue (Not too dark, not grey)
+  static const Color dark      = Color(0xFF1E2732); // Solid Elevated Surface
   
-  // ── The Auras (Accents) ───────────────────────────────────────
-  // Used purely for glowing effects and semantic highlights
-  static const Color accent    = Color(0xFF00FFA3); // Neon Mint
-  static const Color cyan      = Color(0xFF00E5FF); // Electric Blue
-  static const Color amber     = Color(0xFFFFD500); // Solar Gold
-  static const Color red       = Color(0xFFFF3366); // Cyber Crimson
-  static const Color purple    = Color(0xFFB52BFF); // Deep Void Purple
-  static const Color silver    = Color(0xFFF0F0F0); // Maximum Brightness Silver
+  // ── Accents (Solid, Professional) ─────────────────────────────
+  static const Color accent    = Color(0xFF1D9BF0); // Solid Vibrant Blue
+  static const Color cyan      = Color(0xFF00BA7C); // Solid Mint/Cyan
+  static const Color amber     = Color(0xFFFFD400); // Solid Gold
+  static const Color red       = Color(0xFFF91880); // Solid Red/Pink
+  static const Color purple    = Color(0xFF8224E3); // Solid Purple
+  static const Color silver    = Color(0xFFE1E8ED); // Crisp Bright Silver
 
-  // ── Glass Tints (Opacities) ───────────────────────────────────
-  static final Color glassLight = Colors.white.withValues(alpha: 0.03);
+  // ── Borders ───────────────────────────────────────────────────
+  static final Color glassLight = Colors.white.withValues(alpha: 0.02);
   static final Color glassMedium = Colors.white.withValues(alpha: 0.05);
-  static final Color glassBorder = silver.withValues(alpha: 0.5);
+  static final Color glassBorder = const Color(0xFF38444D); // Solid Clean Border
 
   // ── Text ──────────────────────────────────────────────────────
-  static const Color text1     = Color(0xFFFFFFFF);
-  static const Color text2     = Color(0xFFAAAAAA);
-  static const Color text3     = Color(0xFF555555);
+  static const Color text1     = Color(0xFFF7F9F9); // Crisp Clean White
+  static const Color text2     = Color(0xFF8B98A5); // Solid Secondary Blue-Grey
+  static const Color text3     = Color(0xFF6A7D8C); // Solid Tertiary Blue-Grey
 
   // ── Legacy Getters (Mapped to new system to prevent breaking) ─
   static bool get isDark    => true;
@@ -45,8 +44,8 @@ class AppTheme {
   static Color get elevated => dark;
   static Color get line     => glassBorder;
   static Color get muted    => text3;
-  static Color get accentDim => const Color(0xFF00CC82);
-  static const Color green  = accent;
+  static Color get accentDim => const Color(0xFF1D9BF0); // Matching solid blue
+  static const Color green  = Color(0xFF00BA7C); // Solid Green
   static const Color white  = text1;
   static final List<BoxShadow> cardShadow = [];
 
@@ -204,10 +203,8 @@ class SGCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.glassLight,
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.silver.withValues(alpha: 0.45), width: 1.5),
-            boxShadow: glowColor != null ? [
-              BoxShadow(color: glowColor!.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: -5)
-            ] : null,
+            border: Border.all(color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder, width: 1.5),
+            // Removed glowing effects completely
           ),
           child: child,
         ),
@@ -252,16 +249,14 @@ class SGButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 4)),
-        ],
+        // Removed glowing effects completely
       ),
       child: Center(
         child: loading 
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.black))
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.text1))
           : Row(mainAxisSize: MainAxisSize.min, children: [
-              if (icon != null) ...[Icon(icon, size: 20, color: AppTheme.black), const SizedBox(width: 10)],
-              Text(label, style: AppTheme.label(color: AppTheme.black)),
+              if (icon != null) ...[Icon(icon, size: 20, color: AppTheme.text1), const SizedBox(width: 10)],
+              Text(label, style: AppTheme.label(color: AppTheme.text1)),
             ]),
       ),
     );
@@ -277,7 +272,8 @@ class SGButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+            // Removed any implicit glows
           ),
           child: Center(
             child: loading 

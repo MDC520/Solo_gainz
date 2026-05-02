@@ -36,12 +36,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - Assets/
     - Assets/Player Model/Idle/
     - Assets/Player Model/Walk/
     - Assets/Player Model/Run/
     - Assets/Player Model/Sprint/
     - Assets/Player Model/Jump/
-    - Assets/Player Model/Jump Fall/
     - Assets/Player Model/Push/
     - Assets/Player Model/Pull/
     - Assets/Player Model/PushIdle/
@@ -54,3 +54,5 @@ flutter:
     - Assets/Chests/Wooden Chest/open/
     - Assets/Chests/Iron Chest/Idle/
     - Assets/Chests/Iron Chest/Open/
+    - Assets/Chests/Gold Chest/idle/
+    - Assets/Chests/Gold Chest/oepn/

@@ -18,6 +18,7 @@ class _ShopPageState extends State<ShopPage> {
   int _tab = 0;
   int _woodenQty = 1;
   int _ironQty = 1;
+  int _goldQty = 1;
 
 
   static const _tabs = ['Boosts', 'Premium', 'Cosmetics', 'Chests'];
@@ -193,7 +194,7 @@ class _ShopPageState extends State<ShopPage> {
                               color: AppTheme.surface,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: AppTheme.amber.withValues(alpha: 0.25),
+                                color: AppTheme.white,
                                 width: 1.5,
                               ),
                             ),
@@ -300,6 +301,15 @@ class _ShopPageState extends State<ShopPage> {
                   qty: _ironQty,
                   onQtyChanged: (v) => setState(() => _ironQty = v),
                 ),
+                const SizedBox(height: 16),
+                _chestCard(
+                  chestType: 'gold',
+                  name: 'Gold Chest',
+                  desc: 'The ultimate treasure. Rewards 500–5000 T coins. Guaranteed epic loot.',
+                  price: 4500,
+                  qty: _goldQty,
+                  onQtyChanged: (v) => setState(() => _goldQty = v),
+                ),
               ]),
             ),
           )
@@ -343,31 +353,56 @@ class _ShopPageState extends State<ShopPage> {
   }) {
     final totalCost = price * qty;
     final canTotal = _s.coins >= totalCost;
-    final chestTypeKey = chestType == 'wooden' ? 'wooden_chest' : 'iron_chest';
+    final chestTypeKey = '${chestType}_chest';
     final availableSlots = Storage.getInventorySlots().where((s) => s == null).length;
 
-    return SGCard(
-      padding: const EdgeInsets.all(20),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.white, width: 1.5),
+      ),
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Chest Visual
               Container(
-                width: 80,
-                height: 80,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: AppTheme.glassMedium,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.line, width: 1),
                 ),
-                child: Center(
-                  child: ChestSprite(
-                    chestType: chestType,
-                    animation: 'Idle',
-                    fps: 8,
-                    size: 56,
-                  ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Ground / Shadow
+                    Positioned(
+                      bottom: 8,
+                      child: Container(
+                        width: 40,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          borderRadius: const BorderRadius.all(Radius.elliptical(40, 6)),
+                        ),
+                      ),
+                    ),
+                    // Chest
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ChestSprite(
+                        chestType: chestType,
+                        animation: 'Idle',
+                        fps: 8,
+                        size: 56,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 16),
@@ -382,36 +417,36 @@ class _ShopPageState extends State<ShopPage> {
                       desc,
                       style: AppTheme.caption(),
                       maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Quantity Row (Wide Card)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.bg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.line, width: 1.5),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('QUANTITY', style: AppTheme.label(color: AppTheme.text2)),
-                Row(
+          const SizedBox(height: 16),
+          // Actions Row (Compact)
+          Row(
+            children: [
+              // Quantity selector
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.bg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.line, width: 1),
+                ),
+                child: Row(
                   children: [
                     _qtyBtn(
                       icon: Icons.remove,
                       onTap: qty > 1 ? () => onQtyChanged(qty - 1) : null,
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         '$qty',
-                        style: AppTheme.mono(size: 18, color: AppTheme.white)
+                        style: AppTheme.mono(size: 16, color: AppTheme.white)
                             .copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -421,47 +456,48 @@ class _ShopPageState extends State<ShopPage> {
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Buy Button (Full Width)
-          SGTouchable(
-            onTap: () => _buyChest(chestTypeKey, name, price, qty),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: canTotal && availableSlots >= qty ? null : Border.all(color: AppTheme.line, width: 1.5),
-                boxShadow: canTotal && availableSlots >= qty
-                    ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)]
-                    : null,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    availableSlots == 0 ? 'INVENTORY FULL' : 'BUY FOR ',
-                    style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted),
+              const SizedBox(width: 12),
+              // Buy Button
+              Expanded(
+                child: SGTouchable(
+                  onTap: () => _buyChest(chestTypeKey, name, price, qty),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: canTotal && availableSlots >= qty ? null : Border.all(color: AppTheme.line, width: 1.5),
+                      boxShadow: canTotal && availableSlots >= qty
+                          ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          availableSlots == 0 ? 'FULL' : 'BUY FOR ',
+                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted),
+                        ),
+                        if (availableSlots > 0) ...[
+                          Text(
+                            '$totalCost',
+                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted)
+                                .copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.generating_tokens_rounded,
+                            size: 14,
+                            color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  if (availableSlots > 0) ...[
-                    Text(
-                      '$totalCost',
-                      style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted)
-                          .copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.generating_tokens_rounded,
-                      size: 16,
-                      color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted,
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

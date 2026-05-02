@@ -175,7 +175,7 @@ class Storage {
   }
 
   // ── Inventory System ──────────────────────────────────────────────
-  static int get maxSlots => _box.get(maxSlotsKey, defaultValue: 24);
+  static int get maxSlots => _box.get(maxSlotsKey, defaultValue: 20);
 
   static Future<void> addMaxSlots(int count) async {
     await _box.put(maxSlotsKey, maxSlots + count);
@@ -236,6 +236,7 @@ class Storage {
   static Duration getUnlockDuration(String chestType) {
     if (chestType == 'wooden_chest') return const Duration(hours: 2);
     if (chestType == 'iron_chest') return const Duration(hours: 4);
+    if (chestType == 'gold_chest') return const Duration(hours: 8);
     return const Duration(hours: 2);
   }
 
@@ -284,7 +285,12 @@ class Storage {
   static Future<void> removeFromInventory(int slotIndex) async {
     final slots = getInventorySlots();
     if (slotIndex >= 0 && slotIndex < slots.length) {
-      slots[slotIndex] = null;
+      // Remove the item and shift everything after it to the left
+      slots.removeAt(slotIndex);
+      // Pad back to maxSlots with nulls to keep fixed capacity
+      while (slots.length < maxSlots) {
+        slots.add(null);
+      }
       await saveInventorySlots(slots);
     }
   }

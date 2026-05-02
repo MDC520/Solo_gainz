@@ -72,9 +72,12 @@ class _ChestSpriteState extends State<ChestSprite> {
     if (type.contains('wooden')) {
       folder = 'Wooden Chest';
       animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
-    } else {
+    } else if (type.contains('iron')) {
       folder = 'Iron Chest';
       animFolder = widget.animation == 'Open' ? 'Open' : 'Idle';
+    } else {
+      folder = 'Gold Chest';
+      animFolder = widget.animation == 'Open' ? 'oepn' : 'idle';
     }
 
     // Each animation has 5 frames: 1.png through 5.png

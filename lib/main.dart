@@ -1,5 +1,4 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'background.dart';
 import 'screens/splash_screen.dart';
@@ -109,7 +108,7 @@ class _AppRootState extends State<_AppRoot> {
 
       case _AppState.shell:
         return RepaintBoundary(
-          child: AppShell(onLogout: _onLogout),
+          child: AppShell(key: AppShell.navKey, onLogout: _onLogout),
         );
     }
   }
@@ -162,7 +161,13 @@ class _AppRootState extends State<_AppRoot> {
 // ── App Shell ──────────────────────────────────────────────────────
 class AppShell extends StatefulWidget {
   final VoidCallback onLogout;
+  static final GlobalKey<_AppShellState> navKey = GlobalKey<_AppShellState>();
+  static final ValueNotifier<List<({double b, double r})>> midnightOdds = ValueNotifier([]);
   const AppShell({super.key, required this.onLogout});
+
+  static void navigateTo(int index) {
+    navKey.currentState?.setIndex(index);
+  }
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -171,6 +176,10 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin {
   int _idx = 0;
+
+  void setIndex(int index) {
+    if (mounted) setState(() => _idx = index);
+  }
   late AnimationController _navAnimCtrl;
 
   // Pages are built lazily via AutomaticKeepAlive pattern
@@ -229,8 +238,8 @@ class _AppShellState extends State<AppShell>
           _navAnimCtrl.animateTo(0.0, curve: Curves.easeOutCubic);
         }
 
-        return Stack(
-          children: [
+    return Stack(
+      children: [
             RepaintBoundary(
               child: LivelyBackground(
                 isMoving: true,
@@ -272,20 +281,20 @@ class _AppShellState extends State<AppShell>
                               borderRadius: BorderRadius.circular(radius),
                               border: Border(
                                 top: BorderSide(
-                                    color: AppTheme.glassBorder, width: 1.5),
+                                    color: AppTheme.accent.withValues(alpha: 0.4), width: 1.5),
                                 bottom: BorderSide(
                                     color: t > 0.01
-                                        ? AppTheme.glassBorder
+                                        ? AppTheme.accent.withValues(alpha: 0.4)
                                         : Colors.transparent,
                                     width: t > 0.01 ? 1.2 : 0),
                                 left: BorderSide(
                                     color: t > 0.01
-                                        ? AppTheme.glassBorder
+                                        ? AppTheme.accent.withValues(alpha: 0.4)
                                         : Colors.transparent,
                                     width: t > 0.01 ? 1.2 : 0),
                                 right: BorderSide(
                                     color: t > 0.01
-                                        ? AppTheme.glassBorder
+                                        ? AppTheme.accent.withValues(alpha: 0.4)
                                         : Colors.transparent,
                                     width: t > 0.01 ? 1.2 : 0),
                               ),
@@ -329,6 +338,25 @@ class _AppShellState extends State<AppShell>
                   ),
                 ),
               ),
+            ),
+            ValueListenableBuilder(
+              valueListenable: AppShell.midnightOdds,
+              builder: (context, odds, _) {
+                return IgnorePointer(
+                  ignoring: true,
+                  child: Stack(
+                    children: odds.map((pos) => Positioned(
+                      bottom: pos.b,
+                      right: pos.r,
+                      child: Image.asset(
+                        'Assets/Odds7.png',
+                        width: 250,
+                        fit: BoxFit.contain,
+                      ),
+                    )).toList(),
+                  ),
+                );
+              },
             ),
           ],
         );
