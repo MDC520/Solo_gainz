@@ -16,8 +16,8 @@ class AppTheme {
   AppTheme._();
 
   // ── Core Colors (Solid & Clean) ───────────────────────────────
-  static const Color black     = Color(0xFF15202B); // Premium Dim Blue (Not too dark, not grey)
-  static const Color dark      = Color(0xFF1E2732); // Solid Elevated Surface
+  static const Color black     = Color(0xFF0A0C10); // Deeper Solid Black
+  static const Color dark      = Color(0xFF14171C); // Deeper Solid Surface
   
   // ── Accents (Solid, Professional) ─────────────────────────────
   static const Color accent    = Color(0xFF1D9BF0); // Solid Vibrant Blue
@@ -270,7 +270,7 @@ class SGButton extends StatelessWidget {
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.05),
+            color: color.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
             // Removed any implicit glows

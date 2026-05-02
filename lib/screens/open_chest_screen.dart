@@ -105,17 +105,15 @@ class _OpenChestScreenState extends State<OpenChestScreen>
     _dropCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1400));
     _dropAlign = AlignmentTween(
-            begin: const Alignment(0, -2.0), end: const Alignment(0, 0.2))
+            begin: const Alignment(0, -2.0), end: const Alignment(0, 0.7))
         .animate(CurvedAnimation(parent: _dropCtrl, curve: Curves.bounceOut));
     _dropScale = Tween<double>(begin: 0.2, end: 1.0)
         .animate(CurvedAnimation(parent: _dropCtrl, curve: Curves.easeOutBack));
 
-    // 2. Float while waiting for tap
+    // 2. Float while waiting for tap (Disabled as per user request for grounded feel)
     _floatCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1500))
-      ..repeat(reverse: true);
-    _floatAnim = Tween<double>(begin: -8.0, end: 8.0).animate(
-        CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOutSine));
+        vsync: this, duration: const Duration(milliseconds: 1500));
+    _floatAnim = ConstantTween<double>(0.0).animate(_floatCtrl);
 
     // 3. Shake per tap
     _shakeCtrl = AnimationController(

@@ -133,6 +133,7 @@ class _ChestSpriteState extends State<ChestSprite> {
       fit: BoxFit.contain,
       width: widget.size,
       height: widget.size,
+      alignment: Alignment.bottomCenter,
       filterQuality: FilterQuality.none,
       gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) {
