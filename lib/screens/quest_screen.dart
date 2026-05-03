@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';

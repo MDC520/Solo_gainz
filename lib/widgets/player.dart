@@ -19,6 +19,9 @@ class Player extends StatefulWidget {
   /// Whether the animation should loop.
   final bool loop;
 
+  /// Whether the animation is paused.
+  final bool paused;
+
   /// Callback when a non-looping animation finishes.
   final VoidCallback? onComplete;
 
@@ -32,6 +35,7 @@ class Player extends StatefulWidget {
     this.size,
     this.color,
     this.loop = true,
+    this.paused = false,
     this.onComplete,
     this.alignment = Alignment.bottomCenter,
   });
@@ -106,7 +110,7 @@ class _PlayerState extends State<Player> {
   void _startTimer() {
     final interval = Duration(milliseconds: (1000 / widget.fps).round());
     _timer = Timer.periodic(interval, (_) {
-      if (!mounted || _frames.isEmpty) return;
+      if (!mounted || _frames.isEmpty || widget.paused) return;
       
       final nextFrame = _frame + 1;
       if (nextFrame >= _frames.length) {
