@@ -253,10 +253,8 @@ class _HomePageState extends State<HomePage> {
           slivers: [
             // Header
             SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -311,7 +309,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                ),
               ),
             ),
 
@@ -387,16 +384,20 @@ class _HomePageState extends State<HomePage> {
                         bottom: 30, left: 0, right: 0, height: 260,
                         child: Align(
                           alignment: Alignment.bottomCenter,
-                          child: Transform.scale(
-                            scaleX: _flipPlayer ? -1 : 1,
-                            child: Player(
-                              animation: _playerAnim,
-                              fps: _playerAnim == 'Run' ? 12 : 8,
-                              size: 260,
-                              loop: _playerAnim == 'Run' || _playerAnim == 'Stunned' || _playerAnim == 'Idle',
-                              onComplete: () {
-                                if (mounted) setState(() => _playerAnim = _isNight ? 'Stunned' : 'Run');
-                              },
+                          child: GestureDetector(
+                            onTap: _onPlayerTap,
+                            behavior: HitTestBehavior.opaque,
+                            child: Transform.scale(
+                              scaleX: _flipPlayer ? -1 : 1,
+                              child: Player(
+                                animation: _playerAnim,
+                                fps: _playerAnim == 'Run' ? 12 : 8,
+                                size: 260,
+                                loop: _playerAnim == 'Run' || _playerAnim == 'Stunned' || _playerAnim == 'Idle',
+                                onComplete: () {
+                                  if (mounted) setState(() => _playerAnim = _isNight ? 'Stunned' : 'Run');
+                                },
+                              ),
                             ),
                           ),
                         ),
@@ -406,13 +407,6 @@ class _HomePageState extends State<HomePage> {
                       if (_isNight && _playerAnim == 'Stunned')
                         const Positioned.fill(child: _SleepZs()),
 
-                      // Hitbox
-                      Positioned.fill(
-                        child: GestureDetector(
-                          onTap: _onPlayerTap,
-                          behavior: HitTestBehavior.opaque,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -432,7 +426,7 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.contain,
               ),
             ),
-          ),
+          )
       ],
     );
   }

@@ -38,10 +38,12 @@ class UserStats {
     this.coins = 0,
     this.progress = 0,
     this.lastActiveDate,
-    this.achievements = const [],
-    this.lifetimeStats = const {},
+    List<String>? achievements,
+    Map<String, int>? lifetimeStats,
     DateTime? lastDailyRefresh,
-  }) : lastDailyRefresh = lastDailyRefresh ?? DateTime.now();
+  }) : achievements = achievements ?? [],
+       lifetimeStats = lifetimeStats ?? {},
+       lastDailyRefresh = lastDailyRefresh ?? DateTime.now();
 }
 
 @HiveType(typeId: 1)

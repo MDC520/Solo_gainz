@@ -41,30 +41,45 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
   int _grabSide = 0; 
   bool _isPushingBox = false;
   bool _isPullingBox = false;
+  
+  // Input State (Better multi-touch tracking)
+  bool _leftPressed = false;
+  bool _rightPressed = false;
+  bool _jumpPressed = false;
+  bool _runPressed = false;
+  bool _grabPressed = false;
+  bool _attackPressed = false;
+
+  // Punching System
+  bool _isPunching = false;
+  DateTime? _punchStartTime;
+  Timer? _punchTimer;
+  late _PunchBag _punchBag;
+  final List<_DamageNumber> _damageNumbers = [];
 
   // Box Physics
   final List<_Box> _boxes = [
     _Box(x: 800, width: 90, height: 90),
-    _Box(x: 1400, width: 90, height: 90),
-    _Box(x: 2200, width: 90, height: 90),
-    _Box(x: 2300, width: 90, height: 90),
-    _Box(x: 3500, width: 90, height: 90),
   ];
   
   late Ticker _ticker;
   final Duration _lastElapsed = Duration.zero;
 
-  // Physics constants
-  static const double _acceleration = 0.2;
-  static const double _maxWalkSpeed = 6.0; // Normal move
-  static const double _maxRunSpeed = 12.0; // Normal run
-  static const double _gravity = -0.8;
-  static const double _jumpForce = 15.0;
+  // Physics constants (Retuned for "Heavy & Snappy" feel)
+  static const double _walkAccel = 0.6;
+  static const double _runAccel = 1.2;
+  static const double _friction = 0.82;
+  static const double _airFriction = 0.94;
+  static const double _maxWalkSpeed = 4.5; // Slower walk
+  static const double _maxRunSpeed = 12.0;
+  static const double _gravity = -1.1; 
+  static const double _jumpForce = 20.0;
+  static const double _fallMultiplier = 1.4;
   
   // Camera/World logic
   double _cameraX = 0;
   final double _groundY = 120.0; 
-  final double _mapWidth = 10000.0;
+  final double _mapWidth = 2000.0;
   double _screenW = 800.0;
 
   @override
@@ -86,6 +101,9 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
 
     _ticker = createTicker(_tick)..start();
 
+    // Init Punch Bag
+    _punchBag = _PunchBag(x: 1000); // Put it at 100m
+
     // Animated loading dots
     if (_loading) {
       _dotTimer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
@@ -106,22 +124,56 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
     if (_loading || _isPaused) return;
     
     setState(() {
-      // 1. Horizontal Physics (Player)
-      bool canRun = _isRunning && _isGrounded && _grabbedBox == null;
-      double targetVel = _joystickInputX * (canRun ? _maxRunSpeed : _maxWalkSpeed);
+      // 0. Update Joystick Input from states
+      _joystickInputX = (_rightPressed ? 1.0 : 0.0) - (_leftPressed ? 1.0 : 0.0);
+
+      // 0.1 Update Punch Bag & Damage Numbers
+      _punchBag.update();
+      for (int i = _damageNumbers.length - 1; i >= 0; i--) {
+        _damageNumbers[i].update();
+        if (_damageNumbers[i].opacity <= 0) _damageNumbers.removeAt(i);
+      }
+
+      // 1. Horizontal Physics (Improved Acceleration/Friction)
+      bool canRun = _runPressed && _isGrounded && _grabbedBox == null;
+      double accel = canRun ? _runAccel : _walkAccel;
       
-      if (_grabbedBox != null && _isGrounded) {
-        double weight = _grabbedBox!.weight;
-        double speedMod = (1.0 / weight).clamp(0.2, 0.9); 
-        targetVel = _joystickInputX * (_maxWalkSpeed * speedMod);
+      // Reduce control in air for more weight
+      if (!_isGrounded) accel *= 0.4;
+
+      if (_joystickInputX.abs() > 0.1) {
+        _velocityX += _joystickInputX * accel;
+      } else {
+        // Natural friction stop
+        _velocityX *= (_isGrounded ? _friction : _airFriction);
+      }
+      
+      // Movement speed limits
+      double currentMaxSpeed = canRun ? _maxRunSpeed : _maxWalkSpeed;
+      if (_grabbedBox != null) {
+        // Calculate chain of boxes being pushed/pulled
+        int chainCount = _calculateBoxChain(_grabbedBox!, _velocityX.sign);
         
-        // Extra stamina drain when moving heavy objects
+        // Cumulative penalty: Half speed for the first, half again for each additional
+        double speedMult = 1.0;
+        for (int i = 0; i < chainCount; i++) {
+          speedMult *= 0.5;
+        }
+        
+        currentMaxSpeed *= speedMult;
+        
+        // Stamina drain based on mass (10kg per box)
         if (_velocityX.abs() > 0.1) {
-            _stamina -= (0.001 * weight);
+            _stamina -= (0.002 * chainCount);
             if (_stamina < 0) _stamina = 0;
         }
       }
-      _velocityX = lerpDouble(_velocityX, targetVel, 0.3)!;
+
+      // Hard cap speed
+      if (_velocityX.abs() > currentMaxSpeed) {
+        _velocityX = _velocityX.sign * currentMaxSpeed;
+      }
+
       _playerWorldX += _velocityX;
 
       // Update Grabbed Box
@@ -151,7 +203,11 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
 
       // 2. Vertical Physics (Gravity & Jump)
       if (_isJumping || _playerY > 0) {
-        _velocityY += _gravity;
+        // Apply stronger gravity when falling for that "punchy" landing
+        double currentGravity = _gravity;
+        if (_velocityY < 0) currentGravity *= _fallMultiplier;
+        
+        _velocityY += currentGravity;
         _playerY += _velocityY;
         
         if (_playerY <= 0) {
@@ -295,10 +351,44 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
         _velocityX = 0;
       }
 
-      // 6. Smooth Camera follow
+      // 6. Smooth Camera follow with boundaries
       double targetCameraX = _playerWorldX - (_screenW * 0.4);
+      
+      // Left boundary
       if (targetCameraX < 0) targetCameraX = 0;
+      
+      // Right boundary (Match the left side behavior)
+      if (targetCameraX > _mapWidth - _screenW) {
+        targetCameraX = _mapWidth - _screenW;
+      }
+      
       _cameraX = lerpDouble(_cameraX, targetCameraX, 0.12)!;
+
+      // 7. Hit Detection (Only on the last frame of the punch)
+      if (_isPunching && _punchStartTime != null) {
+        final elapsed = DateTime.now().difference(_punchStartTime!).inMilliseconds;
+        // Last frame (frame 6) starts at roughly 420ms (500ms / 6 frames)
+        if (elapsed > 420) {
+          // Attack Box check
+          double playerW = 40;
+          double attackReach = 60;
+          double attackX = _flip 
+              ? _playerWorldX - playerW/2 - attackReach 
+              : _playerWorldX + playerW/2;
+          
+          Rect attackRect = Rect.fromLTWH(attackX, _playerY + 40, attackReach, 40);
+          Rect bagRect = Rect.fromLTWH(_punchBag.x, _punchBag.y, 60, 140);
+          
+          if (attackRect.overlaps(bagRect) && !_punchBag.isHit) {
+             _punchBag.hit(_flip ? -1 : 1);
+             _damageNumbers.add(_DamageNumber(
+               x: _punchBag.x + 30, 
+               y: _punchBag.y + 100, 
+               damage: 10 + (canRun ? 15 : 0) // Extra damage if running
+             ));
+          }
+        }
+      }
     });
   }
 
@@ -314,18 +404,35 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
     if (_isMoving) {
       return _isRunning ? 'Run' : 'Walk';
     }
+    if (_isPunching) return 'Punch01';
     return 'Idle';
   }
 
   void _jump() {
-    if (!_isJumping && _isGrounded) {
+    if (!_isJumping && _isGrounded && _stamina >= 0.1) {
       _endGrab(); // Release anything being held
       setState(() {
+        _stamina -= 0.1;
         _isJumping = true;
         _velocityY = _jumpForce;
         _isRunning = false; // Stop running
       });
     }
+  }
+
+  void _punch() {
+    if (_isPunching || _grabbedBox != null) return;
+    
+    setState(() {
+      _isPunching = true;
+      _punchStartTime = DateTime.now();
+      _punchBag.isHit = false; // Reset hit flag for this punch
+    });
+
+    _punchTimer?.cancel();
+    _punchTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) setState(() => _isPunching = false);
+    });
   }
 
   void _startGrab() {
@@ -392,6 +499,39 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
     super.dispose();
   }
 
+  int _calculateBoxChain(_Box startBox, double direction) {
+    int count = 1;
+    _Box current = startBox;
+    List<_Box> visited = [startBox];
+
+    bool foundNext = true;
+    while (foundNext) {
+      foundNext = false;
+      for (var other in _boxes) {
+        if (visited.contains(other)) continue;
+        
+        // Check horizontal adjacency in direction
+        bool overlapY = (current.y + current.height > other.y) && (current.y < other.y + other.height);
+        if (!overlapY) continue;
+
+        bool touching = false;
+        if (direction >= 0) { // Moving right
+           touching = (current.x + current.width >= other.x - 10) && (current.x < other.x + 5);
+        } else { // Moving left
+           touching = (other.x + other.width >= current.x - 10) && (other.x < current.x + 5);
+        }
+
+        if (touching) {
+          visited.add(other);
+          current = other;
+          count++;
+          foundNext = true;
+          break;
+        }
+      }
+    }
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -417,15 +557,8 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
             backgroundColor: const Color(0xFF0D1B2A), 
             body: Builder(builder: (context) {
               double playerScreenX = _playerWorldX - _cameraX;
-              return ColorFiltered(
-                colorFilter: const ColorFilter.matrix([
-                  1.15, 0.0, 0.0, 0.0, 5.0,
-                  0.0, 1.15, 0.0, 0.0, 5.0,
-                  0.0, 0.0, 1.25, 0.0, 15.0,
-                  0.0, 0.0, 0.0, 1.0, 0.0,
-                ]),
-                child: Stack(
-                  children: [
+              return Stack(
+                children: [
                   // Animated Notebook Background
                 Positioned.fill(
                   child: AnimatedBuilder(
@@ -613,6 +746,122 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                   );
                 }),
 
+
+                // Punch Bag
+                Positioned(
+                  bottom: _groundY + _punchBag.y,
+                  left: _punchBag.x - _cameraX,
+                  child: Transform.rotate(
+                    angle: _punchBag.rotation,
+                    alignment: Alignment.topCenter,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Detailed Chain
+                        Positioned(
+                          top: -30,
+                          left: 20,
+                          child: Column(
+                            children: [
+                              Container(width: 6, height: 12, decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(2))),
+                              Container(width: 4, height: 20, color: Colors.grey[700]),
+                            ],
+                          ),
+                        ),
+                        // The Bag
+                        Container(
+                          width: 46,
+                          height: 105,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                const Color(0xFFD32F2F), 
+                                const Color(0xFFB71C1C),
+                                const Color(0xFF8E0000),
+                              ],
+                              stops: const [0.0, 0.6, 1.0],
+                            ),
+                            borderRadius: BorderRadius.circular(23),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.8), width: 3),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(3, 6)),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              // Leather Highlights
+                              Positioned(
+                                left: 6, top: 10,
+                                child: Container(
+                                  width: 4, height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                              // Bottom Weight Cap
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  height: 15,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
+                                  ),
+                                ),
+                              ),
+                              // Label
+                              const Center(
+                                child: RotatedBox(
+                                  quarterTurns: 1,
+                                  child: Text('GAINZ', style: TextStyle(color: Colors.black38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                ),
+                              ),
+                              if (_showColliders)
+                                Container(
+                                  decoration: BoxDecoration(border: Border.all(color: Colors.yellow, width: 2)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Damage Numbers
+                ..._damageNumbers.map((dn) => Positioned(
+                  bottom: _groundY + dn.y,
+                  left: dn.x - _cameraX,
+                  child: Opacity(
+                    opacity: dn.opacity,
+                    child: Text(
+                      dn.damage.toString(),
+                      style: AppTheme.mono(color: Colors.yellow, size: 24).copyWith(
+                        fontWeight: FontWeight.bold,
+                        shadows: [const Shadow(color: Colors.black, blurRadius: 4)],
+                      ),
+                    ),
+                  ),
+                )),
+
+                // Player Attack Box (Debug Only)
+                if (_showColliders && _isPunching)
+                  Positioned(
+                    bottom: _groundY + _playerY + 40,
+                    left: (_flip 
+                        ? _playerWorldX - 20 - 60 
+                        : _playerWorldX + 20) - _cameraX,
+                    child: Container(
+                      width: 60,
+                      height: 40,
+                      color: Colors.red.withValues(alpha: 0.4),
+                    ),
+                  ),
+
                 // Player
                 Positioned(
                   bottom: _groundY + _playerY, 
@@ -645,91 +894,195 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                   ),
                 ),
 
+                // Height Rope & Meter Label (Only in Collider Mode)
+                if (_showColliders)
+                  Positioned(
+                    bottom: _groundY,
+                    left: playerScreenX,
+                    child: SizedBox(
+                      width: 100,
+                      height: _playerY + 55,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Vertical Rope
+                          Positioned(
+                            left: 0,
+                            bottom: 0,
+                            top: 0,
+                            child: Container(
+                              width: 2,
+                              decoration: BoxDecoration(
+                                color: AppTheme.accent,
+                                boxShadow: [
+                                  BoxShadow(color: AppTheme.accent.withValues(alpha: 0.5), blurRadius: 4),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Ground Point
+                          Positioned(
+                            left: -4,
+                            bottom: -4,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                            ),
+                          ),
+                          // Center of Gravity Point
+                          Positioned(
+                            left: -4,
+                            top: -4,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: const BoxDecoration(color: Colors.yellow, shape: BoxShape.circle),
+                            ),
+                          ),
+                          // Meter Label
+                          Positioned(
+                            left: 12,
+                            top: (_playerY + 55) / 2 - 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppTheme.accent, width: 1),
+                              ),
+                              child: Text(
+                                '${(_playerY / 10).toStringAsFixed(1)}m',
+                                style: AppTheme.mono(color: AppTheme.accent, size: 10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
-                // Minimap (Scrolling Radar Style)
+
+                // UI - Minimap & Collider Toggle (Top Right)
                 Positioned(
                   top: 30,
                   right: 30,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('SURROUNDINGS', style: AppTheme.label(color: AppTheme.text2).copyWith(fontSize: 10, letterSpacing: 2)),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 220,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.line, width: 2),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Stack(
-                            children: [
-                              // Grid line for tech look
-                              Positioned(
-                                left: 0, right: 0, bottom: 8,
-                                child: Container(height: 1, color: AppTheme.accent.withValues(alpha: 0.1)),
-                              ),
-                              
-                              // Map objects (Boxes)
-                              ..._boxes.map((box) {
-                                double rx = (box.x - _playerWorldX) * 0.12 + 110; 
-                                return Positioned(
-                                  left: rx - (box.width * 0.06),
-                                  bottom: 8,
-                                  child: Container(
-                                    width: box.width * 0.12,
-                                    height: box.height * 0.12,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.accent.withValues(alpha: 0.4),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                );
-                              }),
-
-                              // World boundaries
-                              Positioned(
-                                left: (0 - _playerWorldX) * 0.12 + 110,
-                                top: 0, bottom: 0,
-                                child: Container(width: 4, color: AppTheme.red.withValues(alpha: 0.5)),
-                              ),
-                              Positioned(
-                                left: (_mapWidth - _playerWorldX) * 0.12 + 110,
-                                top: 0, bottom: 0,
-                                child: Container(width: 4, color: AppTheme.cyan.withValues(alpha: 0.5)),
-                              ),
-
-                              // Center static player indicator (On ground)
-                              Positioned(
-                                left: 110 - 16,
-                                bottom: 8,
-                                child: SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: Center(
-                                    child: Transform.scale(
-                                      scaleX: _flip ? -1 : 1,
-                                      child: Player(
-                                        animation: _getCurrentAnimation(),
-                                        size: 30,
-                                        fps: 8,
-                                        loop: true,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                      // Collider Toggle (Square Icon Only)
+                      SGTouchable(
+                        onTap: () => setState(() => _showColliders = !_showColliders),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line, width: 2),
+                          ),
+                          child: Icon(
+                            _showColliders ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                            color: _showColliders ? AppTheme.accent : AppTheme.text2,
+                            size: 20,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${(_playerWorldX / 10).floor()}m',
-                        style: AppTheme.mono(color: AppTheme.accent, size: 12),
+                      const SizedBox(width: 12),
+                      // Minimap Column
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            width: 220,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.line, width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                children: [
+                                  // 1. Playable World Area (The actual map background)
+                                  Positioned(
+                                    left: (0 - _playerWorldX) * 0.12 + 110,
+                                    width: _mapWidth * 0.12,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      color: AppTheme.surface.withValues(alpha: 0.4),
+                                      child: Stack(
+                                        children: [
+                                          // Grid line (Only inside the world)
+                                          Positioned(
+                                            left: 0, right: 0, bottom: 8,
+                                            child: Container(height: 1, color: AppTheme.accent.withValues(alpha: 0.1)),
+                                          ),
+                                          
+                                          // Map objects (Boxes - positioned relative to world start)
+                                          ..._boxes.map((box) {
+                                            return Positioned(
+                                              left: box.x * 0.12 - (box.width * 0.06),
+                                              bottom: 8,
+                                              child: Container(
+                                                width: box.width * 0.12,
+                                                height: box.height * 0.12,
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.accent.withValues(alpha: 0.4),
+                                                  borderRadius: BorderRadius.circular(2),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                  // 2. Boundary Walls
+                                  Positioned(
+                                    left: (0 - _playerWorldX) * 0.12 + 110 - 2,
+                                    top: 0, bottom: 0,
+                                    child: Container(width: 4, color: AppTheme.red.withValues(alpha: 0.8)),
+                                  ),
+                                  Positioned(
+                                    left: (_mapWidth - _playerWorldX) * 0.12 + 110 - 2,
+                                    top: 0, bottom: 0,
+                                    child: Container(width: 4, color: AppTheme.cyan.withValues(alpha: 0.8)),
+                                  ),
+
+                                  // 3. Player indicator (Static at center)
+                                  Positioned(
+                                    left: 110 - 16,
+                                    bottom: 8,
+                                    child: SizedBox(
+                                      width: 32,
+                                      height: 32,
+                                      child: Center(
+                                        child: Transform.scale(
+                                          scaleX: _flip ? -1 : 1,
+                                          child: Player(
+                                            animation: _getCurrentAnimation(),
+                                            size: 30,
+                                            fps: 8,
+                                            loop: true,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${(_playerWorldX / 10).floor()}m',
+                            style: AppTheme.mono(color: AppTheme.accent, size: 12),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -793,40 +1146,6 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                   ),
                 ),
 
-                // UI - Debug Toggle (Top Center)
-                Positioned(
-                  top: 30,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: SGTouchable(
-                      onTap: () => setState(() => _showColliders = !_showColliders),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _showColliders ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                              color: _showColliders ? AppTheme.accent : AppTheme.text2,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'COLLIDERS',
-                              style: AppTheme.label(color: _showColliders ? AppTheme.accent : AppTheme.text2),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
 
                 // UI - Grab Button (Action)
                 Positioned(
@@ -837,12 +1156,19 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                     duration: const Duration(milliseconds: 200),
                     child: IgnorePointer(
                       ignoring: !(_canGrab || _isGrabbing),
-                      child: GestureDetector(
-                        onTapDown: (_) {
+                      child: Listener(
+                        onPointerDown: (_) {
+                          _grabPressed = true;
                           if (_isGrounded) _startGrab();
                         },
-                        onTapUp: (_) => _endGrab(),
-                        onTapCancel: () => _endGrab(),
+                        onPointerUp: (_) {
+                          _grabPressed = false;
+                          _endGrab();
+                        },
+                        onPointerCancel: (_) {
+                          _grabPressed = false;
+                          _endGrab();
+                        },
                         child: AnimatedScale(
                           scale: _isGrabbing ? 0.9 : 1.0,
                           duration: const Duration(milliseconds: 100),
@@ -878,14 +1204,21 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                 Positioned(
                   bottom: 30,
                   right: 124,
-                  child: GestureDetector(
-                    onTapDown: (_) {
+                  child: Listener(
+                    onPointerDown: (_) {
+                      _runPressed = true;
                       if (_isGrounded && _grabbedBox == null) setState(() => _isRunning = true);
                     },
-                    onTapUp: (_) => setState(() => _isRunning = false),
-                    onTapCancel: () => setState(() => _isRunning = false),
+                    onPointerUp: (_) {
+                      _runPressed = false;
+                      setState(() => _isRunning = false);
+                    },
+                    onPointerCancel: (_) {
+                      _runPressed = false;
+                      setState(() => _isRunning = false);
+                    },
                     child: AnimatedScale(
-                      scale: _isRunning ? 0.9 : 1.0,
+                      scale: _runPressed ? 0.9 : 1.0,
                       duration: const Duration(milliseconds: 100),
                       child: Container(
                         width: 64,
@@ -932,14 +1265,78 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                   ),
                 ),
 
-                // UI - Jump Button (Primary)
                 Positioned(
                   bottom: 30,
                   right: 40,
-                  child: GestureDetector(
-                    onTapDown: (_) => _jump(),
+                  child: Listener(
+                    onPointerDown: (_) {
+                      _attackPressed = true;
+                      _punch();
+                    },
+                    onPointerUp: (_) => _attackPressed = false,
+                    onPointerCancel: (_) => _attackPressed = false,
                     child: AnimatedScale(
-                      scale: _isJumping ? 0.85 : 1.0,
+                      scale: _attackPressed ? 0.85 : 1.0,
+                      duration: const Duration(milliseconds: 100),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: _attackPressed ? AppTheme.red : AppTheme.surface.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.8), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.red.withValues(alpha: 0.3),
+                              blurRadius: _attackPressed ? 20 : 10,
+                            ),
+                          ],
+                        ),
+                        child: OverflowBox(
+                          maxWidth: 240,
+                          maxHeight: 240,
+                          child: Transform.translate(
+                            offset: const Offset(0, -36), 
+                            child: Transform.scale(
+                              scale: 1.5,
+                              child: _isPunching
+                                ? Player(
+                                    animation: 'Punch01',
+                                    fps: 12,
+                                    size: 140,
+                                    alignment: Alignment.center,
+                                    loop: false,
+                                  )
+                                : Image.asset(
+                                    'Assets/Player Model/Punch01/Punch0101.png',
+                                    width: 140,
+                                    height: 140,
+                                    alignment: Alignment.center,
+                                    fit: BoxFit.contain,
+                                    filterQuality: FilterQuality.none,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // UI - Jump Button (Primary)
+                Positioned(
+                  bottom: 110,
+                  right: 40,
+                  child: Listener(
+                    onPointerDown: (_) {
+                      _jumpPressed = true;
+                      _jump();
+                    },
+                    onPointerUp: (_) => _jumpPressed = false,
+                    onPointerCancel: (_) => _jumpPressed = false,
+                    child: AnimatedScale(
+                      scale: _jumpPressed ? 0.85 : 1.0,
                       duration: const Duration(milliseconds: 100),
                       child: Container(
                         width: 64,
@@ -994,54 +1391,54 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                   child: Row(
                     children: [
                       // Left Button
-                      GestureDetector(
-                        onTapDown: (_) => setState(() => _joystickInputX = -1.0),
-                        onTapUp: (_) => setState(() => _joystickInputX = 0.0),
-                        onTapCancel: () => setState(() => _joystickInputX = 0.0),
+                      Listener(
+                        onPointerDown: (_) => setState(() => _leftPressed = true),
+                        onPointerUp: (_) => setState(() => _leftPressed = false),
+                        onPointerCancel: (_) => setState(() => _leftPressed = false),
                         child: Container(
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: _joystickInputX < 0 ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
+                            color: _leftPressed ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: _joystickInputX < 0 ? 0.3 : 0.05),
+                                color: AppTheme.accent.withValues(alpha: _leftPressed ? 0.3 : 0.05),
                                 blurRadius: 10,
                               ),
                             ],
                           ),
                           child: Icon(
                             Icons.arrow_back_rounded,
-                            color: _joystickInputX < 0 ? Colors.black : AppTheme.accent,
+                            color: _leftPressed ? Colors.black : AppTheme.accent,
                             size: 32,
                           ),
                         ),
                       ),
                       const SizedBox(width: 20),
                       // Right Button
-                      GestureDetector(
-                        onTapDown: (_) => setState(() => _joystickInputX = 1.0),
-                        onTapUp: (_) => setState(() => _joystickInputX = 0.0),
-                        onTapCancel: () => setState(() => _joystickInputX = 0.0),
+                      Listener(
+                        onPointerDown: (_) => setState(() => _rightPressed = true),
+                        onPointerUp: (_) => setState(() => _rightPressed = false),
+                        onPointerCancel: (_) => setState(() => _rightPressed = false),
                         child: Container(
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: _joystickInputX > 0 ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
+                            color: _rightPressed ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.accent.withValues(alpha: _joystickInputX > 0 ? 0.3 : 0.05),
+                                color: AppTheme.accent.withValues(alpha: _rightPressed ? 0.3 : 0.05),
                                 blurRadius: 10,
                               ),
                             ],
                           ),
                           child: Icon(
                             Icons.arrow_forward_rounded,
-                            color: _joystickInputX > 0 ? Colors.black : AppTheme.accent,
+                            color: _rightPressed ? Colors.black : AppTheme.accent,
                             size: 32,
                           ),
                         ),
@@ -1134,7 +1531,7 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                     ),
                   ),
                 ],
-              ));
+              );
             }),
           ),
         );
@@ -1258,13 +1655,52 @@ class _Box {
   double velX = 0.0;
   double velY = 0.0;
 
-  double get weight => (width * height) / 6400.0; // 80x80 is weight 1.0
+  double get weight => 10.0; // Standard 10kg weight as requested
 
   _Box({
     required this.x,
     required this.width,
     required this.height,
   });
+}
+
+class _PunchBag {
+  double x;
+  double y = 15.0; // Lowered as requested
+  double rotation = 0.0;
+  double rotationVel = 0.0;
+  bool isHit = false;
+
+  _PunchBag({required this.x});
+
+  void hit(double dir) {
+    rotationVel = dir * 0.4;
+    isHit = true;
+  }
+
+  void update() {
+    // Pendulum physics (Wobble)
+    double gravity = 0.015;
+    rotationVel -= rotation * gravity;
+    rotationVel *= 0.98; // Friction
+    rotation += rotationVel;
+  }
+}
+
+class _DamageNumber {
+  double x;
+  double y;
+  int damage;
+  double opacity = 1.0;
+  double velY = 2.0;
+
+  _DamageNumber({required this.x, required this.y, required this.damage});
+
+  void update() {
+    y += velY;
+    velY *= 0.95;
+    opacity -= 0.02;
+  }
 }
 
 class _GridPainter extends CustomPainter {

@@ -161,10 +161,8 @@ class _ShopPageState extends State<ShopPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -278,7 +276,6 @@ class _ShopPageState extends State<ShopPage> {
               ),
             ),
           ),
-        ),
         if (isChestTab)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
@@ -313,6 +310,7 @@ class _ShopPageState extends State<ShopPage> {
               ]),
             ),
           )
+        
         else
           SliverFillRemaining(
             hasScrollBody: false,

@@ -130,14 +130,12 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header Section ───────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header Section ───────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -361,11 +359,14 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                     const SizedBox(height: 20),
 
                     // 2. Story Mode Card (Full Width)
-                    Padding(
+                    Container(
+                      height: 116,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.topCenter,
                         children: [
+                          // Main Story Card
                           SGTouchable(
                             onTap: () {
                               if (_storyProgress == 0) {
@@ -538,50 +539,78 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                               ),
                             ),
                           ),
-                          
-                          // Bridge & Small Control Card (White Borders Only)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 2,
-                                  height: 8,
-                                  color: Colors.white70,
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF0D1B2A),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: Colors.white, width: 1.5),
+
+                          // +/- Controls (Floating at the bottom edge)
+                          Positioned(
+                            top: 84,
+                            left: 20,
+                            child: Container(
+                              width: 80,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _storyProgress > 0 ? const Color(0xFF1E1E1E) : cardBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _buildControlBtn(
-                                        icon: Icons.remove,
-                                        color: Colors.white,
-                                        size: 28,
-                                        onTap: () {
-                                          if (_storyProgress > 0) setState(() => _storyProgress--);
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Stack(
+                                  children: [
+                                    // Matching Animated Background
+                                    Positioned.fill(
+                                      child: AnimatedBuilder(
+                                        animation: _bgCtrl,
+                                        builder: (context, child) {
+                                          return CustomPaint(
+                                            painter: _NotebookPainter(
+                                              _bgCtrl.value, 
+                                              lineColor: (_storyProgress > 0 ? Colors.white : accentColor).withValues(alpha: 0.08),
+                                            ),
+                                          );
                                         },
                                       ),
-                                      const SizedBox(width: 10),
-                                      _buildControlBtn(
-                                        icon: Icons.add,
-                                        color: Colors.white,
-                                        size: 28,
-                                        onTap: () {
-                                          if (_storyProgress < 5) setState(() => _storyProgress++);
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    
+                                    // Split Controls
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: SGTouchable(
+                                            onTap: () {
+                                              if (_storyProgress > 0) setState(() => _storyProgress--);
+                                            },
+                                            child: const Center(
+                                              child: Icon(Icons.remove, color: Colors.white, size: 18),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1.5,
+                                          height: double.infinity,
+                                          color: Colors.white.withValues(alpha: 0.3),
+                                        ),
+                                        Expanded(
+                                          child: SGTouchable(
+                                            onTap: () {
+                                              if (_storyProgress < 5) setState(() => _storyProgress++);
+                                            },
+                                            child: const Center(
+                                              child: Icon(Icons.add, color: Colors.white, size: 18),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ],
@@ -595,25 +624,9 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
-  Widget _buildControlBtn({required IconData icon, required VoidCallback onTap, required Color color, double size = 36}) {
-    return SGTouchable(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(size * 0.28),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        ),
-        child: Icon(icon, color: Colors.white, size: size * 0.5),
-      ),
-    );
-  }
 }
 
 class _CardStyle {

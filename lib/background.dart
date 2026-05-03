@@ -38,40 +38,42 @@ class _LivelyBackgroundState extends State<LivelyBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.black,
-      body: Stack(
-        children: [
-          // ── Base Solid Tint ──
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF0F172A), // Deep Navy
-                    AppTheme.black,
-                  ],
-                ),
+    return Stack(
+      children: [
+        // ── Base Solid Tint ──
+        Positioned.fill(
+          child: Container(
+            color: AppTheme.black,
+          ),
+        ),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF0F172A), // Deep Navy
+                  AppTheme.black,
+                ],
               ),
             ),
           ),
+        ),
 
-          // ── Breathing Auras ──
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _ctrl,
-              builder: (context, _) => CustomPaint(
-                painter: _SimpleAlivePainter(t: _ctrl.value),
-              ),
+        // ── Breathing Auras ──
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _ctrl,
+            builder: (context, _) => CustomPaint(
+              painter: _SimpleAlivePainter(t: _ctrl.value),
             ),
           ),
+        ),
 
-          // ── Content ──
-          widget.child,
-        ],
-      ),
+        // ── Content ──
+        widget.child,
+      ],
     );
   }
 }

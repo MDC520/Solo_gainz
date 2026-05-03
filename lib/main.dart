@@ -12,25 +12,24 @@ import 'screens/no_connection_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/storage.dart';
 import 'services/security_service.dart';
-import 'services/notification_manager.dart';
 import 'theme/theme.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Notification Manager
-  final notificationManager = NotificationManager();
-  await notificationManager.init();
-
-  // Edge-to-edge display (better than immersiveSticky — less jank)
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // Set system UI to transparent and edge-to-edge for immersive feel
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarContrastEnforced: false,
+    systemStatusBarContrastEnforced: false,
   ));
+
+  // Enable full immersive display
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   // Lock to portrait
   await SystemChrome.setPreferredOrientations([
@@ -238,8 +237,8 @@ class _AppShellState extends State<AppShell>
           _navAnimCtrl.animateTo(0.0, curve: Curves.easeOutCubic);
         }
 
-    return Stack(
-      children: [
+        return Stack(
+          children: [
             RepaintBoundary(
               child: LivelyBackground(
                 isMoving: true,
@@ -249,10 +248,7 @@ class _AppShellState extends State<AppShell>
             Scaffold(
               backgroundColor: Colors.transparent,
               extendBody: true,
-              body: SafeArea(
-                bottom: false,
-                child: IndexedStack(index: _idx, children: _pages),
-              ),
+              body: IndexedStack(index: _idx, children: _pages),
               bottomNavigationBar: AnimatedSlide(
                 offset: isHidden ? const Offset(0, 1.5) : Offset.zero,
                 duration: const Duration(milliseconds: 500),

@@ -69,7 +69,12 @@ class Storage {
 
   // ── User Stats ────────────────────────────────────────────────────
   static UserStats getUserStats() {
-    return _box.get(userStatsKey) ?? UserStats();
+    final stats = _box.get(userStatsKey) ?? UserStats();
+    // Ensure collections are mutable to prevent UnsupportedError crashes
+    // on older data that might have been saved as unmodifiable.
+    stats.achievements = List<String>.from(stats.achievements);
+    stats.lifetimeStats = Map<String, int>.from(stats.lifetimeStats);
+    return stats;
   }
 
   static Future<void> saveUserStats(UserStats stats) => _box.put(userStatsKey, stats);

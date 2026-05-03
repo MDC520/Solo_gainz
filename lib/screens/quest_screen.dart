@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
@@ -220,33 +222,49 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   }
 
   Future<void> _updateReps(int i, int delta) async {
-    final q = _quests[i];
-    if (q.completed) return;
-    q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
-    await Storage.updateDailyQuest(i, q);
+    try {
+      if (i < 0 || i >= _quests.length) return;
+      final q = _quests[i];
+      if (q.completed) return;
+      
+      q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
+      await Storage.updateDailyQuest(i, q);
 
-    if (delta > 0) {
-      await Storage.addLifetimeStat(q.questType, delta);
-      _checkAchievements();
+      if (delta > 0) {
+        await Storage.addLifetimeStat(q.questType, delta);
+        _checkAchievements();
+      }
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error updating reps: $e');
     }
-
-    setState(() {});
   }
 
   Future<void> _completeQuest(int i) async {
-    final q = _quests[i];
-    if (q.completed || q.currentProgress < q.maxGoal) return;
-    q.completed = true;
-    await Storage.updateDailyQuest(i, q);
-    if (_stats != null) {
-      _stats!.xp += q.xpReward;
-      _levelUp();
-      _handleChestDrop();
-      await Storage.addLifetimeStat('total_completed', 1);
-      _checkAchievements();
+    try {
+      if (i < 0 || i >= _quests.length) return;
+      final q = _quests[i];
+      if (q.completed || q.currentProgress < q.maxGoal) return;
+      
+      q.completed = true;
+      await Storage.updateDailyQuest(i, q);
+      
+      if (_stats != null) {
+        _stats!.xp += q.xpReward;
+        _levelUp();
+        _handleChestDrop();
+        await Storage.addLifetimeStat('total_completed', 1);
+        _checkAchievements();
+      }
+      
+      if (mounted) {
+        setState(() {});
+        _xpDialog(q.xpReward);
+      }
+    } catch (e) {
+      debugPrint('Error completing quest: $e');
     }
-    setState(() {});
-    _xpDialog(q.xpReward);
   }
 
   void _checkAchievements() async {
@@ -292,27 +310,43 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   }
 
   Future<void> _updateCustomReps(int i, int delta) async {
-    final q = _customQuests[i];
-    if (q.completed) return;
-    q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
-    await Storage.updateCustomQuest(i, q);
-    setState(() {});
+    try {
+      if (i < 0 || i >= _customQuests.length) return;
+      final q = _customQuests[i];
+      if (q.completed) return;
+      
+      q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
+      await Storage.updateCustomQuest(i, q);
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error updating custom reps: $e');
+    }
   }
 
   Future<void> _completeCustomQuest(int i) async {
-    final q = _customQuests[i];
-    if (q.completed || q.currentProgress < q.maxGoal) return;
-    q.completed = true;
-    await Storage.updateCustomQuest(i, q);
-    if (_stats != null) {
-      _stats!.xp += q.xpReward;
-      _levelUp();
-      _handleChestDrop();
-      await Storage.addLifetimeStat('total_completed', 1);
-      _checkAchievements();
+    try {
+      if (i < 0 || i >= _customQuests.length) return;
+      final q = _customQuests[i];
+      if (q.completed || q.currentProgress < q.maxGoal) return;
+      
+      q.completed = true;
+      await Storage.updateCustomQuest(i, q);
+      
+      if (_stats != null) {
+        _stats!.xp += q.xpReward;
+        _levelUp();
+        _handleChestDrop();
+        await Storage.addLifetimeStat('total_completed', 1);
+        _checkAchievements();
+      }
+      
+      if (mounted) {
+        setState(() {});
+        _xpDialog(q.xpReward);
+      }
+    } catch (e) {
+      debugPrint('Error completing custom quest: $e');
     }
-    setState(() {});
-    _xpDialog(q.xpReward);
   }
 
   void _handleChestDrop() {
@@ -376,57 +410,63 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     Storage.saveUserStats(_stats!);
   }
 
-  void _xpDialog(int xp) => showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('+$xp XP', style: AppTheme.h2(color: AppTheme.amber)),
-          content: Text('Mission accomplished.', style: AppTheme.body()),
-          actions: [
-            CupertinoDialogAction(
-              child: Text(
-                'Continue',
-                style: AppTheme.label(color: AppTheme.accent),
-              ),
-              onPressed: () => Navigator.pop(ctx),
+  void _xpDialog(int xp) {
+    if (!mounted) return;
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text('+$xp XP', style: AppTheme.h2(color: AppTheme.amber)),
+        content: Text('Mission accomplished.', style: AppTheme.body()),
+        actions: [
+          CupertinoDialogAction(
+            child: Text(
+              'Continue',
+              style: AppTheme.label(color: AppTheme.accent),
             ),
-          ],
-        ),
-      );
-
-  void _rankDialog() => showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('Promotion', style: AppTheme.h3()),
-          content: Text(
-            'You have achieved Rank ${_stats?.rank ?? "E"}!\nYour training goals have increased.',
-            style: AppTheme.body(),
+            onPressed: () => Navigator.pop(ctx),
           ),
-          actions: [
-            CupertinoDialogAction(
-              child: Text(
-                'Understood',
-                style: AppTheme.label(color: AppTheme.accent),
-              ),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
+        ],
+      ),
+    );
+  }
+
+  void _rankDialog() {
+    if (!mounted) return;
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text('Promotion', style: AppTheme.h3()),
+        content: Text(
+          'You have achieved Rank ${_stats?.rank ?? "E"}!\nYour training goals have increased.',
+          style: AppTheme.body(),
         ),
-      );
+        actions: [
+          CupertinoDialogAction(
+            child: Text(
+              'Understood',
+              style: AppTheme.label(color: AppTheme.accent),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showCreateCustomQuestSheet({int? editIndex}) {
     final isEditingQuest = editIndex != null;
     final questToEdit = isEditingQuest ? _customQuests[editIndex] : null;
 
-    String name = isEditingQuest ? questToEdit!.questName : '';
+    final nameCtrl = TextEditingController(text: isEditingQuest ? questToEdit!.questName : '');
     String system = isEditingQuest ? questToEdit!.system : 'reps';
-    String recur = isEditingQuest ? (questToEdit!.questType.endsWith('_one_time') ? 'One Time' : 'Daily') : 'Daily';
-    int goal = isEditingQuest ? questToEdit!.maxGoal : 10;
-    
+    String recur = isEditingQuest ? (questToEdit!.questType.contains('_onetime') ? 'One Time' : 'Daily') : 'Daily';
+    final goalCtrl = TextEditingController(text: isEditingQuest ? questToEdit!.maxGoal.toString() : '10');
     int selectedIcon = 1;
+
     if (isEditingQuest) {
       final parts = questToEdit!.questType.split('_');
-      if (parts.length > 1) {
-        selectedIcon = int.tryParse(parts[1]) ?? 1;
+      if (parts.length > 2) {
+        selectedIcon = int.tryParse(parts[2]) ?? 1;
       }
     }
 
@@ -436,201 +476,180 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          return Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            ),
-            decoration: BoxDecoration(
-              color: AppTheme.bg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border(top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.line,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Forge Mission', style: AppTheme.h1()),
-                      SGTouchable(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            shape: BoxShape.circle,
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+              child: Container(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+                decoration: BoxDecoration(
+                  color: AppTheme.black.withValues(alpha: 0.8),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.5), width: 1.5),
+                ),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 32, height: 3.5,
+                            decoration: BoxDecoration(
+                              color: AppTheme.glassBorder,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                          child: const Icon(Icons.close, color: AppTheme.text2, size: 20),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text('MISSION NAME', style: AppTheme.label(color: AppTheme.accent)),
-                  const SizedBox(height: 10),
-                  CupertinoTextField(
-                    controller: TextEditingController(text: name),
-                    style: AppTheme.body(color: Colors.white),
-                    placeholder: 'e.g., Heavy Deadlifts',
-                    placeholderStyle: AppTheme.body(color: AppTheme.muted),
-                    cursorColor: AppTheme.accent,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.line, width: 1.5),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    onChanged: (v) => name = v,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Column(
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Text(
+                              isEditingQuest ? 'Refine Mission' : 'Forge Mission',
+                              style: AppTheme.h1().copyWith(fontSize: 22, letterSpacing: -0.5),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        _sheetLabel('MISSION NAME'),
+                        const SizedBox(height: 10),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.glassMedium,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.3)),
+                          ),
+                          child: CupertinoTextField(
+                            controller: nameCtrl,
+                            style: AppTheme.body(color: Colors.white).copyWith(fontSize: 14),
+                            placeholder: 'e.g., Diamond Pushups',
+                            placeholderStyle: AppTheme.body(color: AppTheme.text3).copyWith(fontSize: 14),
+                            cursorColor: AppTheme.accent,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: null,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('TYPE', style: AppTheme.label(color: AppTheme.accent)),
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.line),
-                              ),
-                              child: Row(
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _typeBtn('reps', 'Reps', system == 'reps', () => setModalState(() => system = 'reps')),
-                                  _typeBtn('timer', 'Timer', system == 'timer', () => setModalState(() => system = 'timer')),
+                                  _sheetLabel('TRACKING'),
+                                  const SizedBox(height: 10),
+                                  _buildSlidingToggle(
+                                    options: ['Reps', 'Timer'],
+                                    selected: system == 'reps' ? 'Reps' : 'Timer',
+                                    onSelect: (v) => setModalState(() => system = v.toLowerCase()),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _sheetLabel(system == 'reps' ? 'GOAL' : 'SEC'),
+                                  const SizedBox(height: 10),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.glassMedium,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.3)),
+                                    ),
+                                    child: CupertinoTextField(
+                                      controller: goalCtrl,
+                                      style: AppTheme.mono(color: AppTheme.accent, size: 14),
+                                      placeholder: '10',
+                                      placeholderStyle: AppTheme.mono(color: AppTheme.text3, size: 14),
+                                      keyboardType: TextInputType.number,
+                                      cursorColor: AppTheme.accent,
+                                      textAlign: TextAlign.center,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      decoration: null,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(system == 'reps' ? 'GOAL' : 'SECONDS', style: AppTheme.label(color: AppTheme.accent)),
-                            const SizedBox(height: 10),
-                            CupertinoTextField(
-                              controller: TextEditingController(text: goal.toString()),
-                              style: AppTheme.body(color: Colors.white),
-                              keyboardType: TextInputType.number,
-                              placeholder: '10',
-                              placeholderStyle: AppTheme.body(color: AppTheme.muted),
-                              cursorColor: AppTheme.accent,
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.line, width: 1.5),
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              onChanged: (v) => goal = int.tryParse(v) ?? 10,
-                            ),
-                          ],
+
+                        const SizedBox(height: 20),
+                        _sheetLabel('FREQUENCY'),
+                        const SizedBox(height: 10),
+                        _buildSlidingToggle(
+                          options: ['Daily', 'One Time'],
+                          selected: recur,
+                          onSelect: (v) => setModalState(() => recur = v),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text('RECURRENCE', style: AppTheme.label(color: AppTheme.accent)),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.line),
-                    ),
-                    child: Row(
-                      children: [
-                        _typeBtn('Daily', 'Daily', recur == 'Daily', () => setModalState(() => recur = 'Daily')),
-                        _typeBtn('One Time', 'One Time', recur == 'One Time', () => setModalState(() => recur = 'One Time')),
+
+                        const SizedBox(height: 20),
+                        _sheetLabel('ICON'),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 52,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 6,
+                            itemBuilder: (ctx, i) {
+                              final idx = i + 1;
+                              final isSelected = selectedIcon == idx;
+                              return SGTouchable(
+                                onTap: () => setModalState(() => selectedIcon = idx),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin: const EdgeInsets.only(right: 12),
+                                  width: 52, height: 52,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? AppTheme.accent : AppTheme.glassMedium,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected ? AppTheme.accent : AppTheme.glassBorder.withValues(alpha: 0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    _getCustomQuestIcon(idx),
+                                    color: isSelected ? Colors.black : AppTheme.text2,
+                                    size: 22,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        SGButton(
+                          label: isEditingQuest ? 'UPDATE MISSION' : 'FORGE MISSION',
+                          height: 50,
+                          onTap: () {
+                            final name = nameCtrl.text.trim();
+                            final goal = int.tryParse(goalCtrl.text) ?? 10;
+                            if (name.isEmpty) return;
+                            Navigator.pop(ctx);
+                            if (isEditingQuest) {
+                              _applyCustomQuestEdit(editIndex, name, system, goal, recur, selectedIcon);
+                            } else {
+                              _addCustomQuest(name, system, goal, recur, selectedIcon);
+                            }
+                          },
+                          customColor: AppTheme.accent,
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text('ICON', style: AppTheme.label(color: AppTheme.accent)),
-                  const SizedBox(height: 12),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(6, (i) {
-                        final idx = i + 1;
-                        final isSelected = selectedIcon == idx;
-                        return SGTouchable(
-                          onTap: () => setModalState(() => selectedIcon = idx),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.only(right: 12),
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.accent : AppTheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? AppTheme.accent : AppTheme.line,
-                                width: 2,
-                              ),
-                              boxShadow: isSelected ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)] : null,
-                            ),
-                            child: Icon(
-                              _getCustomQuestIcon(idx),
-                              color: isSelected ? Colors.black : AppTheme.text2,
-                              size: 24,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  SGTouchable(
-                    onTap: () {
-                      if (name.trim().isEmpty) return;
-                      Navigator.pop(ctx);
-                      if (isEditingQuest) {
-                        _applyCustomQuestEdit(editIndex, name.trim(), system, goal, recur, selectedIcon);
-                      } else {
-                        _addCustomQuest(name.trim(), system, goal, recur, selectedIcon);
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.8)]),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 12)],
-                      ),
-                      child: Center(
-                        child: Text(
-                          isEditingQuest ? 'UPDATE MISSION' : 'FORGE MISSION',
-                          style: AppTheme.label(color: Colors.black).copyWith(letterSpacing: 2, fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           );
@@ -639,23 +658,66 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _typeBtn(String id, String label, bool active, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: active ? AppTheme.accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: AppTheme.label(color: active ? Colors.black : AppTheme.text2).copyWith(fontSize: 12),
-          ),
-        ),
+  Widget _sheetLabel(String t) => Text(t, style: AppTheme.label(color: AppTheme.text3).copyWith(fontSize: 10, letterSpacing: 1.2));
+
+  Widget _buildSlidingToggle({
+    required List<String> options,
+    required String selected,
+    required Function(String) onSelect,
+  }) {
+    int index = options.indexOf(selected);
+    if (index == -1) index = 0;
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppTheme.glassMedium,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.3)),
+      ),
+      child: LayoutBuilder(
+        builder: (ctx, constraints) {
+          final itemWidth = (constraints.maxWidth / options.length);
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                left: index * itemWidth,
+                top: 0,
+                bottom: 0,
+                width: itemWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                ),
+              ),
+              Row(
+                children: options.map((opt) {
+                  final active = opt == selected;
+                  return Expanded(
+                    child: SGTouchable(
+                      onTap: () => onSelect(opt),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: const BoxDecoration(color: Colors.transparent),
+                        child: Text(
+                          opt,
+                          textAlign: TextAlign.center,
+                          style: AppTheme.label(
+                            color: active ? Colors.black : AppTheme.text2,
+                          ).copyWith(fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1000,11 +1062,9 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       physics: ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverToBoxAdapter(
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              child: Column(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -1022,19 +1082,26 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                         ],
                       ),
                       SGTouchable(
-                        onTap: _toggleEditMode,
+                        onTap: _allDone ? null : _toggleEditMode,
+                        disabled: _allDone,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           width: 110,
                           height: 38,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _isEditing
-                                ? AppTheme.accent
-                                : AppTheme.surface,
+                            color: _allDone
+                                ? AppTheme.surface.withValues(alpha: 0.5)
+                                : _isEditing
+                                    ? AppTheme.accent
+                                    : AppTheme.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _isEditing ? AppTheme.accent : Colors.white.withValues(alpha: 0.3),
+                              color: _allDone
+                                  ? AppTheme.line
+                                  : _isEditing
+                                      ? AppTheme.accent
+                                      : Colors.white,
                               width: 1.5,
                             ),
                           ),
@@ -1044,13 +1111,21 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               Icon(
                                 _isEditing ? Icons.check : Icons.tune_rounded,
                                 size: 16,
-                                color: _isEditing ? Colors.black : AppTheme.text2,
+                                color: _allDone
+                                    ? AppTheme.muted
+                                    : _isEditing
+                                        ? Colors.black
+                                        : AppTheme.text2,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 _isEditing ? 'Done' : 'Customize',
                                 style: AppTheme.label(
-                                  color: _isEditing ? Colors.black : AppTheme.text2,
+                                  color: _allDone
+                                      ? AppTheme.muted
+                                      : _isEditing
+                                          ? Colors.black
+                                          : AppTheme.text2,
                                 ).copyWith(fontSize: 11),
                               ),
                             ],
@@ -1091,7 +1166,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
               ),
             ),
           ),
-        ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           sliver: _tab == 0 ? _buildDailyList() : _buildCustomList(),
@@ -1223,89 +1297,45 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     if (_customQuests.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
+              Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [AppTheme.accent.withValues(alpha: 0.15), Colors.transparent],
                   ),
-                  Icon(
-                    Icons.auto_awesome,
-                    color: AppTheme.accent.withValues(alpha: 0.3),
-                    size: 80,
-                  ),
-                  Container(
-                    width: 64,
-                    height: 64,
+                ),
+                child: Center(
+                  child: Container(
+                    width: 60, height: 60,
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.glassMedium,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.accent, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.accent.withValues(alpha: 0.2),
-                          blurRadius: 15,
-                        )
-                      ],
+                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.2),
                     ),
-                    child: const Icon(
-                      Icons.add_task_rounded,
-                      color: AppTheme.accent,
-                      size: 32,
-                    ),
+                    child: Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: 28),
                   ),
-                ],
+                ),
               ),
               const SizedBox(height: 24),
-              Text('Forge Your Path', style: AppTheme.h2()),
+              Text('Uncharted Territory', style: AppTheme.h1().copyWith(fontSize: 22)),
               const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  'Create custom missions tailored to your unique training style.',
-                  style: AppTheme.caption(),
-                  textAlign: TextAlign.center,
-                ),
+              Text(
+                'Forge custom missions to define your own path and push beyond limits.',
+                style: AppTheme.body().copyWith(fontSize: 14),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
-              SGTouchable(
+              const SizedBox(height: 32),
+              SGButton(
+                label: 'FORGE MISSION',
+                height: 48,
+                icon: Icons.add_rounded,
                 onTap: _showCreateCustomQuestSheet,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.8)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.accent.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.add, color: Colors.black, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'CREATE MISSION',
-                        style: AppTheme.label(color: Colors.black).copyWith(letterSpacing: 1),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -1326,41 +1356,22 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           index: i,
           enabled: true,
           child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero).animate(
+            position: Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
               CurvedAnimation(parent: _customAnims[i], curve: Curves.easeOutCubic),
             ),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: Stack(
-                children: [
-                  _QuestCard(
-                    questIndex: i,
-                    quest: quest,
-                    color: AppTheme.cyan,
-                    onUpdate: (delta) => _updateCustomReps(i, delta),
-                    onComplete: () => _completeCustomQuest(i),
-                    isEditing: _isEditing,
-                    marchAnimation: _marchCtrl,
-                    onEditName: () => _showCreateCustomQuestSheet(editIndex: i),
-                    onEditSystem: () => _showCreateCustomQuestSheet(editIndex: i),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: () => _removeCustomQuest(i),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.red.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.3)),
-                        ),
-                        child: const Icon(Icons.close, size: 14, color: AppTheme.red),
-                      ),
-                    ),
-                  ),
-                ],
+              child: _QuestCard(
+                questIndex: i,
+                quest: quest,
+                color: AppTheme.purple, // Custom quests get a distinct purple aura
+                onUpdate: (delta) => _updateCustomReps(i, delta),
+                onComplete: () => _completeCustomQuest(i),
+                isEditing: _isEditing,
+                marchAnimation: _marchCtrl,
+                onEditName: () => _showCreateCustomQuestSheet(editIndex: i),
+                onEditSystem: () => _showCreateCustomQuestSheet(editIndex: i),
+                onDelete: () => _removeCustomQuest(i),
               ),
             ),
           ),
@@ -1398,17 +1409,19 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 IconData _getCustomQuestIcon(int idx) {
   switch (idx) {
     case 1:
-      return Icons.fitness_center;
+      return Icons.fitness_center_rounded;
     case 2:
-      return Icons.directions_run;
+      return Icons.monitor_heart_rounded;
     case 3:
-      return Icons.local_fire_department;
+      return Icons.whatshot_rounded;
     case 4:
-      return Icons.sports_martial_arts;
+      return Icons.shield_rounded;
     case 5:
-      return Icons.bolt;
+      return Icons.bolt_rounded;
+    case 6:
+      return Icons.rocket_launch_rounded;
     default:
-      return Icons.star;
+      return Icons.auto_awesome_rounded;
   }
 }
 
@@ -1423,6 +1436,7 @@ class _QuestCard extends StatefulWidget {
   final Animation<double>? marchAnimation;
   final VoidCallback? onEditName;
   final VoidCallback? onEditSystem;
+  final VoidCallback? onDelete;
 
   const _QuestCard({
     required this.questIndex,
@@ -1435,6 +1449,7 @@ class _QuestCard extends StatefulWidget {
     this.marchAnimation,
     this.onEditName,
     this.onEditSystem,
+    this.onDelete,
   });
 
   @override
@@ -1549,21 +1564,27 @@ class _QuestCardState extends State<_QuestCard> {
       switchInCurve: Curves.easeOutBack,
       switchOutCurve: Curves.easeIn,
       transitionBuilder: (child, anim) {
-        return FadeTransition(
-          opacity: anim,
-          child: ScaleTransition(
-            scale: anim,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.05),
-                end: Offset.zero,
-              ).animate(anim),
-              child: child,
-            ),
-          ),
+        return AnimatedBuilder(
+          animation: anim,
+          builder: (ctx, _) {
+            final clampedValue = anim.value.clamp(0.0, 1.0);
+            return FadeTransition(
+              opacity: AlwaysStoppedAnimation(clampedValue),
+              child: ScaleTransition(
+                scale: anim,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.05),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: child,
+                ),
+              ),
+            );
+          },
         );
       },
-      child: done
+      child: widget.quest.completed
           ? ShatterWidget(
               isShattered: widget.isShattering,
               child: Container(
@@ -1577,13 +1598,6 @@ class _QuestCardState extends State<_QuestCard> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.green.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Stack(
                   children: [
@@ -1648,30 +1662,15 @@ class _QuestCardState extends State<_QuestCard> {
               // ── Header row (always visible) ──
               Row(
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: widget.color.withValues(alpha: _isEditingLocal ? 0.25 : 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: widget.color.withValues(alpha: _isEditingLocal ? 0.7 : 0.4),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: iconIndex > 0
-                          ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 20)
-                          : Text('${widget.questIndex + 1}', style: AppTheme.h2(color: widget.color)),
-                    ),
-                  ),
+                  iconIndex > 0
+                      ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 24)
+                      : Text('${widget.questIndex + 1}', style: AppTheme.h2(color: widget.color)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(quest.questName, style: AppTheme.h3()),
+                        Text(quest.questName, style: AppTheme.h3().copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                         const SizedBox(height: 2),
                         Text(
                           isTimer
@@ -1679,11 +1678,24 @@ class _QuestCardState extends State<_QuestCard> {
                               : isKm
                                   ? '${quest.currentProgress} / ${quest.maxGoal} km'
                                   : '${quest.currentProgress} / ${quest.maxGoal} reps',
-                          style: AppTheme.caption(),
+                          style: AppTheme.caption(color: AppTheme.text3),
                         ),
                       ],
                     ),
                   ),
+                  if (widget.onDelete != null)
+                    SGTouchable(
+                      onTap: widget.onDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.red.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                        ),
+                        child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.red),
+                      ),
+                    ),
                 ],
               ),
               // ── Bottom section: breaks open ──
@@ -1741,37 +1753,37 @@ class _QuestCardState extends State<_QuestCard> {
             ],
             const SizedBox(width: 16),
             Expanded(child: _LinearProgress(pct: pct, color: widget.color)),
-            if (quest.currentProgress >= quest.maxGoal) ...[
-              const SizedBox(width: 16),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeOutBack,
-                builder: (ctx, val, child) => Opacity(
-                  opacity: val,
-                  child: Transform.translate(
-                    offset: Offset(20 * (1 - val), 0),
-                    child: child,
+            const SizedBox(width: 16),
+            SGTouchable(
+              onTap: quest.currentProgress >= quest.maxGoal ? _confirmCompletion : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: quest.currentProgress >= quest.maxGoal 
+                      ? AppTheme.accent.withValues(alpha: 0.15) 
+                      : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: quest.currentProgress >= quest.maxGoal 
+                        ? AppTheme.accent 
+                        : AppTheme.line,
+                    width: 2,
                   ),
                 ),
-                child: SGTouchable(
-                  onTap: _confirmCompletion,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.accent, width: 2),
-                      boxShadow: [
-                        BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8),
-                      ],
-                    ),
-                    child: const Icon(Icons.check, color: AppTheme.accent, size: 18),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: quest.completed ? 1.0 : 0.0,
+                  child: const Icon(
+                    Icons.check, 
+                    color: AppTheme.accent, 
+                    size: 18
                   ),
                 ),
               ),
-            ],
+            ),
+            const SizedBox(width: 4),
           ],
         ),
       ],
@@ -2009,7 +2021,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.green.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
@@ -2025,7 +2037,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
                 child: child,
               );
             },
-            child: Icon(Icons.emoji_events, size: 28, color: AppTheme.green),
+            child: Icon(Icons.emoji_events, size: 22, color: AppTheme.green),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2045,7 +2057,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
             builder: (context, snapshot) {
               return Text(
                 _getCountdown(),
-                style: AppTheme.mono(color: AppTheme.text1, size: 16),
+                style: AppTheme.mono(color: AppTheme.text1, size: 14),
               );
             },
           ),
@@ -2067,7 +2079,7 @@ class _HintCard extends StatelessWidget {
           Icon(Icons.info_outline, size: 14, color: AppTheme.muted),
           const SizedBox(width: 8),
           Text(
-            'Complete all missions for daily bonus.',
+            'Complete all daily quests to finish your training.',
             style: AppTheme.caption(),
           ),
         ],
