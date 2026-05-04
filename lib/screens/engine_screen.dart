@@ -7,19 +7,18 @@ import 'package:flutter/scheduler.dart';
 import '../theme/theme.dart';
 import '../widgets/player.dart';
 import 'combat_data.dart';
-import 'engine_screen.dart';
 
 // import '../background.dart'; // Removed as requested
 
-class TrainingScreen extends StatefulWidget {
+class EngineScreen extends StatefulWidget {
   final bool isLoading;
-  const TrainingScreen({super.key, this.isLoading = false});
+  const EngineScreen({super.key, this.isLoading = false});
 
   @override
-  State<TrainingScreen> createState() => _TrainingScreenState();
+  State<EngineScreen> createState() => _EngineScreenState();
 }
 
-class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStateMixin {
+class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMixin {
   bool _loading = true;
   double _playerWorldX = 100.0;
   double _velocityX = 0.0;
@@ -31,7 +30,7 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
   double _playerY = 0.0;
   double _velocityY = 0.0;
   double _stamina = 1.0; // 0.0 to 1.0
-  final bool _showColliders = false;
+  bool _showColliders = false;
   ColliderTarget? _selectedCollider = ColliderTarget.player;
   int _selectedBoxIndex = 0;
   double _editorPanelX = 300.0;
@@ -1668,23 +1667,32 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Collider Toggle (Now navigates to Engine Screen)
+                      // Collider Toggle — auto-freezes all animations for frame-by-frame editing
                       SGTouchable(
-                        onTap: () async {
-                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const EngineScreen()));
-                          if (mounted) setState(() {});
+                        onTap: () {
+                          setState(() {
+                            _showColliders = !_showColliders;
+                            if (_showColliders) {
+                              _isFrozen = true;
+                              _bgCtrl.stop();
+                              _currentEditFrame = 0;
+                            } else {
+                              _isFrozen = false;
+                              _bgCtrl.repeat();
+                            }
+                          });
                         },
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.surface.withOpacity(0.8),
+                            color: _showColliders ? AppTheme.accent.withOpacity(0.15) : AppTheme.surface.withOpacity(0.8),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.line, width: 2),
+                            border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line, width: 2),
                           ),
-                          child: const Icon(
-                            Icons.visibility_off_rounded,
-                            color: AppTheme.text2,
+                          child: Icon(
+                            _showColliders ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                            color: _showColliders ? AppTheme.accent : AppTheme.text2,
                             size: 20,
                           ),
                         ),

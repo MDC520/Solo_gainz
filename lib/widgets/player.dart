@@ -87,10 +87,18 @@ class _PlayerState extends State<Player> {
   @override
   void didUpdateWidget(covariant Player old) {
     super.didUpdateWidget(old);
-    if (old.animation != widget.animation || old.fps != widget.fps) {
+    bool animChanged = old.animation != widget.animation;
+    bool fpsChanged = old.fps != widget.fps;
+    bool pauseChanged = old.paused != widget.paused;
+    bool loopChanged = old.loop != widget.loop;
+
+    if (animChanged) {
       _timer.cancel();
       _frame = 0;
       _buildFrameList();
+      _startTimer();
+    } else if (fpsChanged || loopChanged || pauseChanged) {
+      _timer.cancel();
       _startTimer();
     }
   }
