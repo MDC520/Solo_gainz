@@ -12,6 +12,7 @@ import 'screens/no_connection_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/storage.dart';
 import 'services/security_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'theme/theme.dart';
 
 Future<void> main() async {
@@ -48,13 +49,6 @@ Future<void> main() async {
     debugPrint('Init error: $e');
   }
 
-  // Init Supabase (auth service)
-  try {
-    // await AuthService().initialize();
-    debugPrint('Supabase initialization bypassed');
-  } catch (e) {
-    debugPrint('Supabase init error: $e');
-  }
 
   runApp(const SoloGainzApp());
 }
@@ -98,12 +92,12 @@ class _AppRootState extends State<_AppRoot> {
 
       case _AppState.login:
         return LoginScreen(
-          onSignUpSuccess: _goToOnboarding,
-          onSignInSuccess: _goToShell,
+          onSignUpSuccess: _afterLogin,
+          onSignInSuccess: _afterLogin,
         );
 
       case _AppState.onboarding:
-        return OnboardingScreen(onDone: _goToShell);
+        return OnboardingScreen(onDone: _afterOnboarding);
 
       case _AppState.shell:
         return RepaintBoundary(
@@ -114,10 +108,30 @@ class _AppRootState extends State<_AppRoot> {
 
   // ── Splash done ────────────────────────────────────────────────
   Future<void> _afterSplash() async {
-    // Skip connectivity and auth checks
+    // Check for connectivity first
+    final online = await ConnectivityUtils.isOnline();
+    if (!online) {
+      _setState(_AppState.noConnection);
+      return;
+    }
+
     try {
       await Storage.checkDailyLoginReward();
     } catch (_) {}
+
+    // Priority 1: Onboarding (Intro + Quest Setup)
+    if (!Storage.isOnboarded()) {
+      _setState(_AppState.onboarding);
+      return;
+    }
+
+    // Priority 2: Authentication
+    if (!Storage.isLoggedIn()) {
+      _setState(_AppState.login);
+      return;
+    }
+
+    // Priority 3: Main App
     _setState(_AppState.shell);
   }
 
@@ -140,10 +154,23 @@ class _AppRootState extends State<_AppRoot> {
   }
 
   // ── After sign-up ──────────────────────────────────────────────
-  void _goToOnboarding() => _setState(_AppState.onboarding);
+  // ── After onboarding done ─────────────────────────────────────
+  void _afterOnboarding() {
+    if (Storage.isLoggedIn()) {
+      _setState(_AppState.shell);
+    } else {
+      _setState(_AppState.login);
+    }
+  }
 
-  // ── After sign-in or onboarding done ──────────────────────────
-  void _goToShell() => _setState(_AppState.shell);
+  // ── After sign-in or sign-up ───────────────────────────────────
+  void _afterLogin() {
+    if (Storage.isOnboarded()) {
+      _setState(_AppState.shell);
+    } else {
+      _setState(_AppState.onboarding);
+    }
+  }
 
   // ── Logout ────────────────────────────────────────────────────
   Future<void> _onLogout() async {
@@ -160,7 +187,7 @@ class _AppRootState extends State<_AppRoot> {
 // ── App Shell ──────────────────────────────────────────────────────
 class AppShell extends StatefulWidget {
   final VoidCallback onLogout;
-  static final GlobalKey<_AppShellState> navKey = GlobalKey<_AppShellState>();
+  static final GlobalKey<AppShellState> navKey = GlobalKey<AppShellState>();
   static final ValueNotifier<List<({double b, double r})>> midnightOdds = ValueNotifier([]);
   const AppShell({super.key, required this.onLogout});
 
@@ -169,10 +196,10 @@ class AppShell extends StatefulWidget {
   }
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  State<AppShell> createState() => AppShellState();
 }
 
-class _AppShellState extends State<AppShell>
+class AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin {
   int _idx = 0;
 
@@ -358,5 +385,22 @@ class _AppShellState extends State<AppShell>
         );
       },
     );
+  }
+}
+// ── Connectivity Utils ───────────────────────────────────────────
+class ConnectivityUtils {
+  ConnectivityUtils._();
+  static final Connectivity _connectivity = Connectivity();
+
+  static Future<bool> isOnline() async {
+    // Check if we have any kind of network connection
+    final result = await _connectivity.checkConnectivity();
+    return result != ConnectivityResult.none;
+  }
+
+  static Stream<bool> get connectivityStream {
+    return _connectivity.onConnectivityChanged.map((result) {
+      return result != ConnectivityResult.none;
+    });
   }
 }

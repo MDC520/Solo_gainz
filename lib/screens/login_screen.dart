@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import '../background.dart';
-import '../services/auth_service.dart';
 import '../services/storage.dart';
-import '../services/data_serializer.dart';
 import '../services/security_service.dart';
 import '../theme/theme.dart';
 
@@ -23,7 +21,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _auth = AuthService();
+  // AuthService removed
   final _loginNameCtrl = TextEditingController();
   final _loginPassCtrl = TextEditingController();
   final _signUpNameCtrl = TextEditingController();
@@ -56,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _checkUser() async {
     final text = _signUp ? _signUpNameCtrl.text : _loginNameCtrl.text;
     if (text.isNotEmpty) {
-      final exists = await _auth.checkUsernameExists(text);
+      final exists = Storage.getData('current_user') == text;
       if (mounted) {
         setState(() {
           _userStatus =
@@ -81,8 +79,13 @@ class _LoginScreenState extends State<LoginScreen>
       if (_country == null) return _err('Please select your country');
       if (_userStatus != 'ok') return _err('Username is not available');
 
-      final r = await _auth.signUp(
-          _signUpNameCtrl.text, _signUpPassCtrl.text, _country!.name);
+      // Local only sign up
+      final Map<String, dynamic> r = {
+        'success': true,
+        'username': _signUpNameCtrl.text,
+        'country': _country!.name,
+        'message': null,
+      };
       if (r['success'] == true) {
         await Storage.saveData('current_user', r['username']);
         await Storage.saveData('current_country', r['country']);
@@ -90,14 +93,22 @@ class _LoginScreenState extends State<LoginScreen>
         await Storage.saveData('is_onboarded', false);
         if (mounted) widget.onSignUpSuccess();
       } else {
-        _err(r['message'] ?? 'Something went wrong');
+        _err((r['message'] as String?) ?? 'Something went wrong');
       }
     } else {
-      final r = await _auth.signIn(_loginNameCtrl.text, _loginPassCtrl.text);
+      // Local only sign in
+      final storedUser = Storage.getData('current_user');
+      final Map<String, dynamic> r = {
+        'success': _loginNameCtrl.text == storedUser || (storedUser == null && _loginNameCtrl.text.isNotEmpty),
+        'username': _loginNameCtrl.text,
+        'country': Storage.getData('current_country') ?? 'World',
+        'data': '{}',
+        'message': _loginNameCtrl.text != storedUser && storedUser != null ? 'Invalid username' : null,
+      };
       if (r['success'] == true) {
         await _finalizeSignIn(r);
       } else {
-        _err(r['message'] ?? 'Something went wrong');
+        _err((r['message'] as String?) ?? 'Something went wrong');
       }
     }
   }
@@ -111,14 +122,13 @@ class _LoginScreenState extends State<LoginScreen>
       await Storage.saveData('current_user', username);
       await Storage.saveData('current_country', country);
       await Storage.saveData('is_logged_in', true);
-      await Storage.saveData('is_onboarded', true);
 
       // Decrypt + apply all cloud data
       final password = _loginPassCtrl.text;
       final jsonStr = rawData == '{}' || rawData.isEmpty
           ? rawData
           : SecurityService.decrypt(rawData, password);
-      await DataSerializer.decodeAndApplyData(jsonStr);
+      await Storage.decodeAndApplyData(jsonStr);
 
       AppTheme.success();
       if (mounted) widget.onSignInSuccess();

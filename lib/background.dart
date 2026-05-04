@@ -27,7 +27,24 @@ class _LivelyBackgroundState extends State<LivelyBackground>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
-    )..repeat();
+    );
+    if (widget.isMoving) {
+      _ctrl.repeat();
+    } else {
+      _ctrl.value = 0.5; // Static nice state
+    }
+  }
+
+  @override
+  void didUpdateWidget(LivelyBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isMoving != oldWidget.isMoving) {
+      if (widget.isMoving) {
+        _ctrl.repeat();
+      } else {
+        _ctrl.stop();
+      }
+    }
   }
 
   @override
@@ -42,18 +59,18 @@ class _LivelyBackgroundState extends State<LivelyBackground>
       children: [
         // ── Base Solid Tint ──
         Positioned.fill(
-          child: Container(
-            color: AppTheme.black,
+          child: const DecoratedBox(
+            decoration: BoxDecoration(color: AppTheme.black),
           ),
         ),
         Positioned.fill(
-          child: Container(
+          child: const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF0F172A), // Deep Navy
+                  Color(0xFF0F172A), // Deep Navy
                   AppTheme.black,
                 ],
               ),
@@ -63,16 +80,18 @@ class _LivelyBackgroundState extends State<LivelyBackground>
 
         // ── Breathing Auras ──
         Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _ctrl,
-            builder: (context, _) => CustomPaint(
-              painter: _SimpleAlivePainter(t: _ctrl.value),
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, _) => CustomPaint(
+                painter: _SimpleAlivePainter(t: _ctrl.value),
+              ),
             ),
           ),
         ),
 
         // ── Content ──
-        widget.child,
+        RepaintBoundary(child: widget.child),
       ],
     );
   }
@@ -91,50 +110,34 @@ class _SimpleAlivePainter extends CustomPainter {
   void _drawAuras(Canvas canvas, Size size) {
     // Large, soft, breathing blobs of color
     final pulse = (math.sin(t * 2 * math.pi) + 1) / 2;
-    final moveX = math.sin(t * 2 * math.pi) * 50;
-    final moveY = math.cos(t * 2 * math.pi) * 30;
+    final moveX = math.sin(t * 2 * math.pi) * 30;
+    final moveY = math.cos(t * 2 * math.pi) * 20;
 
     // Aura 1: Top Left (Accent Blue)
     final paint1 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.accent.withValues(alpha: 0.12 + (pulse * 0.05)),
+          AppTheme.accent.withValues(alpha: 0.10 + (pulse * 0.05)),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(
         center: Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY),
-        radius: size.width * 0.8,
-      ))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
-    canvas.drawCircle(Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY), size.width * 0.8, paint1);
+        radius: size.width * 0.7,
+      ));
+    canvas.drawCircle(Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY), size.width * 0.7, paint1);
 
-    // Aura 2: Center Right (Cyan/Mint)
+    // Aura 2: Bottom Right (Cyan/Mint)
     final paint2 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.cyan.withValues(alpha: 0.08 + ((1-pulse) * 0.04)),
+          AppTheme.cyan.withValues(alpha: 0.08 + ((1 - pulse) * 0.04)),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.8 - moveX, size.height * 0.5 - moveY),
-        radius: size.width * 0.7,
-      ))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
-    canvas.drawCircle(Offset(size.width * 0.8 - moveX, size.height * 0.5 - moveY), size.width * 0.7, paint2);
-
-    // Aura 3: Bottom Left (Purple)
-    final paint3 = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppTheme.purple.withValues(alpha: 0.10 + (pulse * 0.03)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.1 + moveX, size.height * 0.8 + moveY),
+        center: Offset(size.width * 0.8 - moveX, size.height * 0.8 - moveY),
         radius: size.width * 0.6,
-      ))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
-    canvas.drawCircle(Offset(size.width * 0.1 + moveX, size.height * 0.8 + moveY), size.width * 0.6, paint3);
+      ));
+    canvas.drawCircle(Offset(size.width * 0.8 - moveX, size.height * 0.8 - moveY), size.width * 0.6, paint2);
   }
 
   void _drawSubtleGrid(Canvas canvas, Size size) {
@@ -143,34 +146,22 @@ class _SimpleAlivePainter extends CustomPainter {
     final offset = (t * gridSpeed) % 1.0;
 
     final paint = Paint()
-      ..color = AppTheme.accent.withValues(alpha: 0.03) // EXTREMELY subtle
+      ..color = AppTheme.accent.withValues(alpha: 0.02)
       ..strokeWidth = 1.0;
 
-    // Horizontal moving lines
-    for (int i = 0; i < 8; i++) {
-      final frac = (i + offset) / 8;
-      if (frac > 1.0) continue;
-      
-      final yFrac = math.pow(frac, 3.0).toDouble();
-      final y = horizonY + (size.height - horizonY) * yFrac;
-      
-      canvas.drawLine(
-        Offset(0, y), 
-        Offset(size.width, y), 
-        paint..color = AppTheme.accent.withValues(alpha: 0.03 * frac)
-      );
+    // Horizontal moving lines (Linear for speed, less perspective distortion but faster)
+    for (int i = 0; i < 6; i++) {
+      final frac = (i + offset) / 6;
+      final y = horizonY + (size.height - horizonY) * frac;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
     // Vertical vanishing lines
     final vanishX = size.width / 2;
-    for (int i = 0; i <= 10; i++) {
-      final xFrac = i / 10;
+    for (int i = 0; i <= 8; i++) {
+      final xFrac = i / 8;
       final bottomX = xFrac * size.width;
-      canvas.drawLine(
-        Offset(vanishX, horizonY),
-        Offset(bottomX, size.height),
-        paint..color = AppTheme.accent.withValues(alpha: 0.02)
-      );
+      canvas.drawLine(Offset(vanishX, horizonY), Offset(bottomX, size.height), paint);
     }
   }
 

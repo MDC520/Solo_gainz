@@ -4,7 +4,6 @@ export 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:ui';
 
 /// ═══════════════════════════════════════════════════════════════
 /// Solo Gainz — "Aura & Glass" Design System
@@ -194,21 +193,17 @@ class SGCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppTheme.glassLight,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder, width: 1.5),
-            // Removed glowing effects completely
-          ),
-          child: child,
+    return Container(
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.8), // Rich solid surface
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder, 
+          width: 1.5
         ),
       ),
+      child: child,
     );
   }
 }
@@ -263,27 +258,20 @@ class SGButton extends StatelessWidget {
   }
 
   Widget _buildOutlined(Color color) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.02),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
-            // Removed any implicit glows
-          ),
-          child: Center(
-            child: loading 
-              ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: color))
-              : Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (icon != null) ...[Icon(icon, size: 20, color: color), const SizedBox(width: 10)],
-                  Text(label, style: AppTheme.label(color: color)),
-                ]),
-          ),
-        ),
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: Center(
+        child: loading 
+          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: color))
+          : Row(mainAxisSize: MainAxisSize.min, children: [
+              if (icon != null) ...[Icon(icon, size: 20, color: color), const SizedBox(width: 10)],
+              Text(label, style: AppTheme.label(color: color)),
+            ]),
       ),
     );
   }

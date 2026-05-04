@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/storage.dart';
 import '../theme/theme.dart';
+import '../background.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -57,18 +58,6 @@ class _SettingsPageState extends State<SettingsPage> {
     if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(
-        title,
-        style: AppTheme.caption(color: AppTheme.text2).copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.5,
-        ),
-      ),
-    );
-  }
 
   Widget _buildSettingItem({
     required IconData icon,
@@ -122,54 +111,57 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.bg,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        slivers: [
-          SliverToBoxAdapter(
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        SGTouchable(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.line, width: 1),
+    return LivelyBackground(
+      isMoving: false,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            SliverToBoxAdapter(
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SGTouchable(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.line),
+                              ),
+                              child: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
                             ),
-                            child: Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Settings', style: AppTheme.h2()),
-                            const SizedBox(height: 4),
-                            Text('App preferences & system.', style: AppTheme.caption()),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 20),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Settings', style: AppTheme.h1().copyWith(fontSize: 32)),
+                              const SizedBox(height: 4),
+                              Text('App preferences & system', style: AppTheme.caption(color: AppTheme.text2)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 30, 20, 40),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildSectionHeader('INTERFACE'),
+                const SGSectionHeader(title: 'Interface'),
                 SGCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -193,7 +185,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 
                 const SizedBox(height: 32),
-                _buildSectionHeader('SYSTEM'),
+                const SGSectionHeader(title: 'System'),
                 SGCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -229,7 +221,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ]),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

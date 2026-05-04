@@ -1,4 +1,3 @@
-import '../services/auth_service.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../background.dart';
@@ -71,7 +70,7 @@ class BuyCoinsScreen extends StatelessWidget {
     stats.coins += bundle.coins;
     await Storage.saveUserStats(stats);
     await Storage.saveData('coins', stats.coins);
-    await AuthService().syncData();
+    // await Storage.syncData();
 
     if (!context.mounted) return;
 

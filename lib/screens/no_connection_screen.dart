@@ -1,4 +1,4 @@
-import '../services/connectivity_service.dart';
+import '../main.dart';
 import '../theme/theme.dart';
 
 class NoConnectionScreen extends StatefulWidget {
@@ -39,7 +39,7 @@ class _NoConnectionScreenState extends State<NoConnectionScreen>
     AppTheme.tap();
 
     await Future.delayed(const Duration(milliseconds: 400));
-    final online = await ConnectivityService.isOnline();
+    final online = await ConnectivityUtils.isOnline();
 
     if (!mounted) return;
     if (online) {

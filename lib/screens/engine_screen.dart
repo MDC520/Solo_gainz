@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import '../theme/theme.dart';
 import '../widgets/player.dart';
@@ -41,7 +39,6 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
   Timer? _dotTimer;
   late AnimationController _bgCtrl;
   late AnimationController _doorCtrl;
-  final bool _doorsOpen = false;
 
   // Grabbing State
   bool _isGrabbing = false;
@@ -56,7 +53,6 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
   bool _rightPressed = false;
   bool _jumpPressed = false;
   bool _runPressed = false;
-  bool _grabPressed = false;
   bool _attackPressed = false;
 
   // Double Tap Run tracking
@@ -76,23 +72,22 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
 
   // Debugger / Stop State
   bool _isFrozen = false;
-  double _debugPunchOffsetX = 38.0; // Reach
-  double _debugPunchOffsetY = 41.0; // Height
-  double _debugPunchWidth = 107.0;
-  double _debugPunchHeight = 14.0;
-  double _debugPunchRotation = 0.0;
-  double _debugKickOffsetX = 45.0; // Slightly more reach
-  double _debugKickOffsetY = 30.0; // Slightly lower
-  double _debugKickWidth = 90.0;
-  double _debugKickHeight = 25.0;
-  double _debugKickRotation = 0.0;
-  double _playerHitboxW = 40.0;
-  double _playerHitboxH = 103.0;
-  double _playerHitboxOffsetX = -20.0; // Centered by default
-  double _playerHitboxOffsetY = 0.0;
-  double _playerHitboxRotation = 0.0;
+  final double _debugPunchOffsetX = 38.0; // Reach
+  final double _debugPunchOffsetY = 41.0; // Height
+  final double _debugPunchWidth = 107.0;
+  final double _debugPunchHeight = 14.0;
+  final double _debugPunchRotation = 0.0;
+  final double _debugKickOffsetX = 45.0; // Slightly more reach
+  final double _debugKickOffsetY = 30.0; // Slightly lower
+  final double _debugKickWidth = 90.0;
+  final double _debugKickHeight = 25.0;
+  final double _debugKickRotation = 0.0;
+  final double _playerHitboxW = 40.0;
+  final double _playerHitboxH = 103.0;
+  final double _playerHitboxOffsetX = -20.0; // Centered by default
+  final double _playerHitboxOffsetY = 0.0;
+  final double _playerHitboxRotation = 0.0;
   bool _isPlayerHit = false;
-  DateTime? _playerHitStartTime;
   late _Clone _clone;
   double _cloneAttackOffsetX = 38.0;
   double _cloneAttackOffsetY = 41.0;
@@ -565,7 +560,6 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
           if (cAttackRect.overlaps(pRect) && !_isPlayerHit) {
             _isPlayerHit = true;
             _isPunching = false;
-            _playerHitStartTime = DateTime.now();
             _velocityX = _clone.flip ? -5 : 5; // Knockback
             Timer(const Duration(milliseconds: 400), () {
               if (mounted) setState(() => _isPlayerHit = false);
@@ -826,7 +820,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
         const SizedBox(width: 4),
         GestureDetector(
           onTap: () => onAdjust(-1),
-          child: Container(color: AppTheme.red.withOpacity(0.8), padding: const EdgeInsets.all(4), child: const Icon(Icons.remove, size: 14, color: Colors.white)),
+          child: Container(color: AppTheme.red.withValues(alpha: 0.8), padding: const EdgeInsets.all(4), child: const Icon(Icons.remove, size: 14, color: Colors.white)),
         ),
         Container(
            width: 32,
@@ -835,7 +829,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
         ),
         GestureDetector(
           onTap: () => onAdjust(1),
-          child: Container(color: AppTheme.cyan.withOpacity(0.8), padding: const EdgeInsets.all(4), child: const Icon(Icons.add, size: 14, color: Colors.white)),
+          child: Container(color: AppTheme.cyan.withValues(alpha: 0.8), padding: const EdgeInsets.all(4), child: const Icon(Icons.add, size: 14, color: Colors.white)),
         ),
       ],
     );
@@ -900,7 +894,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
         
         Widget gameView = PopScope(
           canPop: true,
-          onPopInvoked: (didPop) {
+          onPopInvokedWithResult: (didPop, result) {
             if (didPop) {
               SystemChrome.setPreferredOrientations([
                 DeviceOrientation.portraitUp,
@@ -934,9 +928,9 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                   child: Container(
                     height: _groundY,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF08121C).withOpacity(0.95), // Darker ground
+                      color: const Color(0xFF08121C).withValues(alpha: 0.95), // Darker ground
                       border: Border(
-                        top: BorderSide(color: AppTheme.accent.withOpacity(0.5), width: 3),
+                        top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.5), width: 3),
                       ),
                     ),
                   ),
@@ -1041,7 +1035,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  AppTheme.surface.withOpacity(0.9),
+                                  AppTheme.surface.withValues(alpha: 0.9),
                                 ],
                                 stops: const [0.0, 0.9],
                               ),
@@ -1074,12 +1068,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: const Color(0xFF2D1B18), width: 4),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 8, offset: const Offset(4, 4)),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(4, 4)),
                             ],
                           ),
                           child: Stack(
                             children: [
-                              Positioned.fill(child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(border: Border.all(color: Colors.black.withOpacity(0.2), width: 2), color: Colors.black.withOpacity(0.05)))),
+                              Positioned.fill(child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(border: Border.all(color: Colors.black.withValues(alpha: 0.2), width: 2), color: Colors.black.withValues(alpha: 0.05)))),
                               Positioned.fill(child: CustomPaint(painter: _CratePainter())),
                               if (_showColliders)
                                 Center(child: Text('X:${box.x.floor()}\nY:${box.y.floor()}', style: const TextStyle(color: Colors.white70, fontSize: 10))),
@@ -1101,7 +1095,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(color: _selectedCollider == ColliderTarget.box && _selectedBoxIndex == _boxes.indexOf(box) ? AppTheme.accent : Colors.yellow, width: 2),
-                                  color: (_selectedCollider == ColliderTarget.box && _selectedBoxIndex == _boxes.indexOf(box) ? AppTheme.accent : Colors.yellow).withOpacity(0.1),
+                                  color: (_selectedCollider == ColliderTarget.box && _selectedBoxIndex == _boxes.indexOf(box) ? AppTheme.accent : Colors.yellow).withValues(alpha: 0.1),
                                 ),
                                 child: Center(
                                   child: Text(
@@ -1139,13 +1133,13 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               colors: [const Color(0xFFD32F2F), const Color(0xFFB71C1C), const Color(0xFF8E0000)],
                             ),
                             borderRadius: BorderRadius.circular(23),
-                            border: Border.all(color: Colors.black.withOpacity(0.8), width: 3),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(3, 6))],
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.8), width: 3),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(3, 6))],
                           ),
                           child: Stack(
                             children: [
-                              Positioned(left: 6, top: 10, child: Container(width: 4, height: 40, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(2)))),
-                              Align(alignment: Alignment.bottomCenter, child: Container(height: 15, decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20))))),
+                              Positioned(left: 6, top: 10, child: Container(width: 4, height: 40, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2)))),
+                              Align(alignment: Alignment.bottomCenter, child: Container(height: 15, decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20))))),
                               const Center(child: RotatedBox(quarterTurns: 1, child: Text('GAINZ', style: TextStyle(color: Colors.black38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)))),
                               if (_showColliders) Center(child: Text('X:${_punchBag.x.floor()}\nY:${_punchBag.y.floor()}', style: const TextStyle(color: Colors.white70, fontSize: 9))),
                             ],
@@ -1166,7 +1160,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(color: _selectedCollider == ColliderTarget.bag ? AppTheme.accent : Colors.yellow, width: 2),
-                                  color: (_selectedCollider == ColliderTarget.bag ? AppTheme.accent : Colors.yellow).withOpacity(0.1),
+                                  color: (_selectedCollider == ColliderTarget.bag ? AppTheme.accent : Colors.yellow).withValues(alpha: 0.1),
                                 ),
                                 child: Center(
                                   child: Text(
@@ -1222,10 +1216,10 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               width: data.w,
                               height: data.h,
                               decoration: BoxDecoration(
-                                color: (_selectedCollider == ColliderTarget.attack ? AppTheme.accent : Colors.red).withOpacity(0.6),
+                                color: (_selectedCollider == ColliderTarget.attack ? AppTheme.accent : Colors.red).withValues(alpha: 0.6),
                                 border: Border.all(color: Colors.white, width: _selectedCollider == ColliderTarget.attack ? 2 : 1),
                                 boxShadow: [
-                                  BoxShadow(color: Colors.red.withOpacity(0.5), blurRadius: 8),
+                                  BoxShadow(color: Colors.red.withValues(alpha: 0.5), blurRadius: 8),
                                 ],
                               ),
                               child: Center(
@@ -1262,10 +1256,10 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             width: data.w,
                             height: data.h,
                             decoration: BoxDecoration(
-                              color: (_selectedCollider == ColliderTarget.kickAttack ? AppTheme.accent : Colors.orange).withOpacity(0.6),
+                              color: (_selectedCollider == ColliderTarget.kickAttack ? AppTheme.accent : Colors.orange).withValues(alpha: 0.6),
                               border: Border.all(color: Colors.white, width: _selectedCollider == ColliderTarget.kickAttack ? 2 : 1),
                               boxShadow: [
-                                BoxShadow(color: Colors.orange.withOpacity(0.5), blurRadius: 8),
+                                BoxShadow(color: Colors.orange.withValues(alpha: 0.5), blurRadius: 8),
                               ],
                             ),
                             child: Center(
@@ -1338,7 +1332,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                   child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(color: _selectedCollider == ColliderTarget.player ? AppTheme.accent : Colors.white, width: 2),
-                                      color: (_selectedCollider == ColliderTarget.player ? AppTheme.accent : Colors.white).withOpacity(0.1),
+                                      color: (_selectedCollider == ColliderTarget.player ? AppTheme.accent : Colors.white).withValues(alpha: 0.1),
                                     ),
                                     child: Center(
                                       child: Text(
@@ -1371,7 +1365,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                   left: _clone.x - _cameraX - 120, // Offset for 240 size
                   child: ColorFiltered(
                     colorFilter: ColorFilter.mode(
-                      Colors.green.withOpacity(0.4), 
+                      Colors.green.withValues(alpha: 0.4), 
                       BlendMode.srcATop
                     ),
                     child: SizedBox(
@@ -1429,7 +1423,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: _cloneAttackWidth,
                           height: _cloneAttackHeight,
                           decoration: BoxDecoration(
-                            color: (_selectedCollider == ColliderTarget.cloneAttack ? AppTheme.accent : AppTheme.red).withOpacity(0.6),
+                            color: (_selectedCollider == ColliderTarget.cloneAttack ? AppTheme.accent : AppTheme.red).withValues(alpha: 0.6),
                             border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: Center(
@@ -1466,7 +1460,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               decoration: BoxDecoration(
                                 color: AppTheme.accent,
                                 boxShadow: [
-                                  BoxShadow(color: AppTheme.accent.withOpacity(0.5), blurRadius: 4),
+                                  BoxShadow(color: AppTheme.accent.withValues(alpha: 0.5), blurRadius: 4),
                                 ],
                               ),
                             ),
@@ -1498,7 +1492,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.8),
+                                color: Colors.black.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: AppTheme.accent, width: 1),
                               ),
@@ -1529,10 +1523,10 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                        color: AppTheme.surface.withOpacity(0.9),
+                        color: AppTheme.surface.withValues(alpha: 0.9),
                         border: Border.all(color: AppTheme.accent),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)],
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10)],
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -1631,9 +1625,9 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.surface.withOpacity(0.8),
+                            color: AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.red.withOpacity(0.8), width: 2),
+                            border: Border.all(color: AppTheme.red.withValues(alpha: 0.8), width: 2),
                           ),
                           child: const Icon(Icons.bolt, color: Colors.white, size: 20),
                         ),
@@ -1655,7 +1649,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.surface.withOpacity(0.8),
+                            color: AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: _isFrozen ? AppTheme.red : AppTheme.line, width: 2),
                           ),
@@ -1686,7 +1680,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _showColliders ? AppTheme.accent.withOpacity(0.15) : AppTheme.surface.withOpacity(0.8),
+                            color: _showColliders ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line, width: 2),
                           ),
@@ -1706,7 +1700,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             width: 220,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppTheme.surface.withOpacity(0.8),
+                              color: AppTheme.surface.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: AppTheme.line, width: 2),
                             ),
@@ -1721,13 +1715,13 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                     top: 0,
                                     bottom: 0,
                                     child: Container(
-                                      color: AppTheme.surface.withOpacity(0.4),
+                                      color: AppTheme.surface.withValues(alpha: 0.4),
                                       child: Stack(
                                         children: [
                                           // Grid line (Only inside the world)
                                           Positioned(
                                             left: 0, right: 0, bottom: 8,
-                                            child: Container(height: 1, color: AppTheme.accent.withOpacity(0.1)),
+                                            child: Container(height: 1, color: AppTheme.accent.withValues(alpha: 0.1)),
                                           ),
                                           
                                           // Map objects (Boxes - positioned relative to world start)
@@ -1739,7 +1733,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                                 width: 90 * 0.12,
                                                 height: 90 * 0.12,
                                                 decoration: BoxDecoration(
-                                                  color: AppTheme.accent.withOpacity(0.4),
+                                                  color: AppTheme.accent.withValues(alpha: 0.4),
                                                   borderRadius: BorderRadius.circular(2),
                                                 ),
                                               ),
@@ -1754,12 +1748,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                   Positioned(
                                     left: (0 - _playerWorldX) * 0.12 + 110 - 2,
                                     top: 0, bottom: 0,
-                                    child: Container(width: 4, color: AppTheme.red.withOpacity(0.8)),
+                                    child: Container(width: 4, color: AppTheme.red.withValues(alpha: 0.8)),
                                   ),
                                   Positioned(
                                     left: (_mapWidth - _playerWorldX) * 0.12 + 110 - 2,
                                     top: 0, bottom: 0,
-                                    child: Container(width: 4, color: AppTheme.cyan.withOpacity(0.8)),
+                                    child: Container(width: 4, color: AppTheme.cyan.withValues(alpha: 0.8)),
                                   ),
 
                                   // 3. Player indicator (Static at center)
@@ -1809,7 +1803,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppTheme.surface.withOpacity(0.8),
+                            color: AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.line),
                           ),
@@ -1828,7 +1822,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             height: 10,
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: AppTheme.surface.withOpacity(0.7),
+                              color: AppTheme.surface.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(color: AppTheme.line),
                             ),
@@ -1842,7 +1836,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                     gradient: LinearGradient(
                                       colors: [
                                         _stamina < 0.25 ? AppTheme.red : AppTheme.accent,
-                                        _stamina < 0.25 ? AppTheme.red.withOpacity(0.7) : AppTheme.accent.withOpacity(0.7),
+                                        _stamina < 0.25 ? AppTheme.red.withValues(alpha: 0.7) : AppTheme.accent.withValues(alpha: 0.7),
                                       ],
                                     ),
                                   ),
@@ -1868,15 +1862,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                       ignoring: !(_canGrab || _isGrabbing),
                       child: Listener(
                         onPointerDown: (_) {
-                          _grabPressed = true;
                           if (_isGrounded) _startGrab();
                         },
                         onPointerUp: (_) {
-                          _grabPressed = false;
                           _endGrab();
                         },
                         onPointerCancel: (_) {
-                          _grabPressed = false;
                           _endGrab();
                         },
                         child: AnimatedScale(
@@ -1886,12 +1877,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: _isGrabbing ? AppTheme.accent : AppTheme.surface.withOpacity(0.5),
+                              color: _isGrabbing ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.accent.withOpacity(0.8), width: 2),
+                              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.8), width: 2),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.accent.withOpacity(_isGrabbing ? 0.4 : 0.05),
+                                  color: AppTheme.accent.withValues(alpha: _isGrabbing ? 0.4 : 0.05),
                                   blurRadius: 10,
                                 ),
                               ],
@@ -1930,12 +1921,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                         height: 64,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: _attackPressed ? AppTheme.red : AppTheme.surface.withOpacity(0.5),
+                          color: _attackPressed ? AppTheme.red : AppTheme.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.red.withOpacity(0.8), width: 2),
+                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.8), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.red.withOpacity(0.3),
+                              color: AppTheme.red.withValues(alpha: 0.3),
                               blurRadius: _attackPressed ? 20 : 10,
                             ),
                           ],
@@ -1988,12 +1979,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                         height: 64,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: _isKicking ? Colors.orange : AppTheme.surface.withOpacity(0.5),
+                          color: _isKicking ? Colors.orange : AppTheme.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.orange.withOpacity(0.8), width: 2),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.8), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(0.3),
+                              color: Colors.orange.withValues(alpha: 0.3),
                               blurRadius: _isKicking ? 20 : 10,
                             ),
                           ],
@@ -2049,12 +2040,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                         height: 64,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: _isJumping ? AppTheme.cyan : AppTheme.surface.withOpacity(0.5),
+                          color: _isJumping ? AppTheme.cyan : AppTheme.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.cyan.withOpacity(0.8), width: 2),
+                          border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.8), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.cyan.withOpacity(0.3),
+                              color: AppTheme.cyan.withValues(alpha: 0.3),
                               blurRadius: _isJumping ? 20 : 10,
                             ),
                           ],
@@ -2125,12 +2116,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: _leftPressed ? (_runPressed ? AppTheme.cyan : AppTheme.accent) : AppTheme.surface.withOpacity(0.5),
+                            color: _leftPressed ? (_runPressed ? AppTheme.cyan : AppTheme.accent) : AppTheme.surface.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _runPressed ? AppTheme.cyan : AppTheme.accent.withOpacity(0.3), width: 2),
+                            border: Border.all(color: _runPressed ? AppTheme.cyan : AppTheme.accent.withValues(alpha: 0.3), width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: (_runPressed ? AppTheme.cyan : AppTheme.accent).withOpacity(_leftPressed ? 0.3 : 0.05),
+                                color: (_runPressed ? AppTheme.cyan : AppTheme.accent).withValues(alpha: _leftPressed ? 0.3 : 0.05),
                                 blurRadius: 10,
                               ),
                             ],
@@ -2172,12 +2163,12 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: _rightPressed ? (_runPressed ? AppTheme.cyan : AppTheme.accent) : AppTheme.surface.withOpacity(0.5),
+                            color: _rightPressed ? (_runPressed ? AppTheme.cyan : AppTheme.accent) : AppTheme.surface.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _runPressed ? AppTheme.cyan : AppTheme.accent.withOpacity(0.3), width: 2),
+                            border: Border.all(color: _runPressed ? AppTheme.cyan : AppTheme.accent.withValues(alpha: 0.3), width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: (_runPressed ? AppTheme.cyan : AppTheme.accent).withOpacity(_rightPressed ? 0.3 : 0.05),
+                                color: (_runPressed ? AppTheme.cyan : AppTheme.accent).withValues(alpha: _rightPressed ? 0.3 : 0.05),
                                 blurRadius: 10,
                               ),
                             ],
@@ -2199,7 +2190,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                       child: Container(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         child: Center(
                           child: Container(
                             width: 320,
@@ -2210,7 +2201,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               border: Border.all(color: AppTheme.line, width: 2),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.accent.withOpacity(0.1),
+                                  color: AppTheme.accent.withValues(alpha: 0.1),
                                   blurRadius: 40,
                                 ),
                               ],
@@ -2245,12 +2236,13 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                 // Exit Button
                                 SGTouchable(
                                   onTap: () async {
+                                    final navigator = Navigator.of(context);
                                     await _doorCtrl.reverse();
                                     if (mounted) {
                                       SystemChrome.setPreferredOrientations([
                                         DeviceOrientation.portraitUp,
                                       ]);
-                                      Navigator.pop(context);
+                                      navigator.pop();
                                     }
                                   },
                                   child: Container(
@@ -2259,7 +2251,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                                     decoration: BoxDecoration(
                                       color: Colors.transparent,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: AppTheme.red.withOpacity(0.5)),
+                                      border: Border.all(color: AppTheme.red.withValues(alpha: 0.5)),
                                     ),
                                     child: Center(
                                       child: Text(
@@ -2306,7 +2298,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             height: size.height,
                             decoration: BoxDecoration(
                               color: const Color(0xFF0D1B2A),
-                              border: Border(right: BorderSide(color: AppTheme.accent.withOpacity(0.3), width: 1.5)),
+                              border: Border(right: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5)),
                             ),
                             child: ClipRect(
                               child: AnimatedBuilder(
@@ -2328,7 +2320,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                               height: size.height,
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0D1B2A),
-                                border: Border(left: BorderSide(color: AppTheme.accent.withOpacity(0.3), width: 1.5)),
+                                border: Border(left: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5)),
                               ),
                               child: Stack(
                                 children: [
@@ -2382,17 +2374,6 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
   }
 }
 
-class _InfiniteGrid extends StatelessWidget {
-  final double cameraX;
-  const _InfiniteGrid({required this.cameraX});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _GridPainter(cameraX),
-    );
-  }
-}
 class _Box {
   double x;
   double y = 0.0;
@@ -2463,31 +2444,6 @@ class _DamageNumber {
   }
 }
 
-class _GridPainter extends CustomPainter {
-  final double cameraX;
-  _GridPainter(this.cameraX);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.accent.withOpacity(0.05)
-      ..strokeWidth = 1.0;
-
-    const double step = 60.0;
-    double offset = -(cameraX % step);
-
-    for (double x = offset; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GridPainter oldDelegate) => oldDelegate.cameraX != cameraX;
-}
 
 class _NotebookPainter extends CustomPainter {
   final double progress;
@@ -2499,8 +2455,8 @@ class _NotebookPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
       ..color = isBlueTheme 
-          ? const Color(0xFF4FC3F7).withOpacity(0.05)
-          : Colors.blue.withOpacity(0.05)
+          ? const Color(0xFF4FC3F7).withValues(alpha: 0.05)
+          : Colors.blue.withValues(alpha: 0.05)
       ..strokeWidth = 1.0;
 
     // Static Horizontal Lines
@@ -2525,22 +2481,17 @@ class _CratePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final framePaint = Paint()
-      ..color = const Color(0xFF2D1B18).withOpacity(0.6)
+      ..color = const Color(0xFF2D1B18).withValues(alpha: 0.6)
       ..strokeWidth = 6.0
       ..style = PaintingStyle.stroke;
 
-    final detailPaint = Paint()
-      ..color = const Color(0xFF2D1B18).withOpacity(0.4)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
 
     // Main X-Beam
     canvas.drawLine(const Offset(10, 10), Offset(size.width - 10, size.height - 10), framePaint);
     canvas.drawLine(Offset(size.width - 10, 10), Offset(10, size.height - 10), framePaint);
 
     // Corner Studs (Metal nails)
-    final studPaint = Paint()..color = const Color(0xFFBDBDBD).withOpacity(0.3);
-    const double s = 6.0;
+    final studPaint = Paint()..color = const Color(0xFFBDBDBD).withValues(alpha: 0.3);
     canvas.drawCircle(const Offset(8, 8), 2, studPaint);
     canvas.drawCircle(Offset(size.width - 8, 8), 2, studPaint);
     canvas.drawCircle(Offset(8, size.height - 8), 2, studPaint);
@@ -2548,7 +2499,7 @@ class _CratePainter extends CustomPainter {
 
     // Corner L-Brackets
     final bracketPaint = Paint()
-      ..color = const Color(0xFF2D1B18).withOpacity(0.8)
+      ..color = const Color(0xFF2D1B18).withValues(alpha: 0.8)
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
     

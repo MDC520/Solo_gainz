@@ -31,7 +31,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
   }
 
   void _nextCombo() {
-    if (!mounted) return;
+    if (!context.mounted) return;
     
     final animations = _getCurrentAnimations();
     setState(() {
@@ -61,7 +61,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     super.dispose();
   }
 
-  void _startTraining(BuildContext context) async {
+  void _startTraining() async {
     // 1. Request orientation change first
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -71,7 +71,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     // 2. Wait for the OS to rotate
     await Future.delayed(const Duration(milliseconds: 300));
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     // 3. Navigate and ensure it resets when returning
     Navigator.push(
@@ -162,7 +162,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: SGTouchable(
-                        onTap: () => _startTraining(context),
+                        onTap: _startTraining,
                         child: Container(
                           width: double.infinity,
                           height: 100,

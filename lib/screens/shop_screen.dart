@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import '../models/user_stats.dart';
 import '../screens/buy_coins_screen.dart';
 import '../services/storage.dart';
-import '../services/auth_service.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
 
@@ -116,7 +115,7 @@ class _ShopPageState extends State<ShopPage> {
               // Deduct coins
               _s.coins -= totalPrice;
               await Storage.saveUserStats(_s);
-              await AuthService().syncData();
+              // await Storage.syncData(); // Optional: trigger local backup
               // Add chests to inventory
               for (int i = 0; i < qty; i++) {
                 await Storage.addChestToInventory(chestType);

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
-import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -244,7 +243,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     try {
       if (i < 0 || i >= _quests.length) return;
       final q = _quests[i];
-      if (q.completed || q.currentProgress < q.maxGoal) return;
+      if (q.completed) return;
       
       q.completed = true;
       await Storage.updateDailyQuest(i, q);
@@ -252,7 +251,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (_stats != null) {
         _stats!.xp += q.xpReward;
         _levelUp();
-        _handleChestDrop();
         await Storage.addLifetimeStat('total_completed', 1);
         _checkAchievements();
       }
@@ -326,7 +324,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     try {
       if (i < 0 || i >= _customQuests.length) return;
       final q = _customQuests[i];
-      if (q.completed || q.currentProgress < q.maxGoal) return;
+      if (q.completed) return;
       
       q.completed = true;
       await Storage.updateCustomQuest(i, q);
@@ -334,7 +332,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (_stats != null) {
         _stats!.xp += q.xpReward;
         _levelUp();
-        _handleChestDrop();
         await Storage.addLifetimeStat('total_completed', 1);
         _checkAchievements();
       }
@@ -348,48 +345,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     }
   }
 
-  void _handleChestDrop() {
-    // 35% chance to drop a chest
-    Timer.run(() async {
-      final rand = DateTime.now().millisecond % 100;
-      if (rand < 35) {
-        final type = (rand < 10) ? 'iron_chest' : 'wooden_chest';
-        if (Storage.hasEmptySlot()) {
-          Storage.addChestToInventory(type);
-          _chestFoundDialog(type);
-        }
-      }
-    });
-  }
-
-  void _chestFoundDialog(String type) {
-    if (!mounted) return;
-    final isIron = type == 'iron_chest';
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text('Chest Found!',
-            style: AppTheme.h2(color: isIron ? AppTheme.cyan : AppTheme.amber)),
-        content: Text(
-            'You earned a ${isIron ? "Iron" : "Wooden"} chest for your hard work!',
-            style: AppTheme.body()),
-        actions: [
-          CupertinoDialogAction(
-            child: Text('Visit Inventory',
-                style: AppTheme.label(color: AppTheme.accent)),
-            onPressed: () {
-              Navigator.pop(ctx);
-              // Navigation can be added here if needed
-            },
-          ),
-          CupertinoDialogAction(
-            child: Text('Nice', style: AppTheme.label()),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _levelUp() {
     if (_stats == null) return;
@@ -1544,7 +1499,6 @@ class _QuestCardState extends State<_QuestCard> {
   @override
   Widget build(BuildContext context) {
     final quest = widget.quest;
-    final done = quest.completed;
     final pct = quest.maxGoal == 0
         ? 1.0
         : (quest.currentProgress / quest.maxGoal).clamp(0.0, 1.0);
@@ -1661,10 +1615,24 @@ class _QuestCardState extends State<_QuestCard> {
               // ── Header row (always visible) ──
               Row(
                 children: [
-                  iconIndex > 0
-                      ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 24)
-                      : Text('${widget.questIndex + 1}', style: AppTheme.h2(color: widget.color)),
-                  const SizedBox(width: 12),
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: widget.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: widget.color.withValues(alpha: 0.3), width: 1.5),
+                    ),
+                    child: Center(
+                      child: iconIndex > 0
+                          ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 20)
+                          : Text('${widget.questIndex + 1}', 
+                              style: AppTheme.h2(color: widget.color).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Container(width: 1.5, height: 24, color: widget.color.withValues(alpha: 0.2)),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1754,32 +1722,20 @@ class _QuestCardState extends State<_QuestCard> {
             Expanded(child: _LinearProgress(pct: pct, color: widget.color)),
             const SizedBox(width: 16),
             SGTouchable(
-              onTap: quest.currentProgress >= quest.maxGoal ? _confirmCompletion : null,
+              onTap: _confirmCompletion,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: quest.currentProgress >= quest.maxGoal 
-                      ? AppTheme.accent.withValues(alpha: 0.15) 
-                      : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppTheme.accent.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: quest.currentProgress >= quest.maxGoal 
-                        ? AppTheme.accent 
-                        : AppTheme.line,
+                    color: AppTheme.accent.withValues(alpha: 0.4),
                     width: 2,
                   ),
                 ),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: quest.completed ? 1.0 : 0.0,
-                  child: const Icon(
-                    Icons.check, 
-                    color: AppTheme.accent, 
-                    size: 18
-                  ),
-                ),
+                child: null,
               ),
             ),
             const SizedBox(width: 4),
@@ -2202,10 +2158,6 @@ class _MarchingDashPainter extends CustomPainter {
     );
 
     // Calculate total perimeter of the rounded rectangle
-    final straightWidth = size.width - 2 * radius;
-    final straightHeight = size.height - 2 * radius;
-    final cornerArc = 2 * math.pi * radius / 4; // quarter circle
-    final perimeter = 2 * straightWidth + 2 * straightHeight + 4 * cornerArc;
 
     const dashLen = 8.0;
     const gapLen = 6.0;

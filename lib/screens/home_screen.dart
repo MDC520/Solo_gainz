@@ -32,7 +32,6 @@ class _HomePageState extends State<HomePage> {
   Timer? _hitResetTimer;
   Alignment _voiceAlign = Alignment.centerLeft;
   bool _isAutoSpawning = false;
-  Timer? _autoSpawnTimer;
 
   bool get _isMidnightHour {
     final hour = DateTime.now().hour;
@@ -54,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     // Clear any existing odds first
     AppShell.midnightOdds.value = [];
     
-    _autoSpawnTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+    Timer.periodic(const Duration(milliseconds: 30), (timer) {
       final currentOdds = AppShell.midnightOdds.value;
       if (currentOdds.length >= 150) {
         timer.cancel();

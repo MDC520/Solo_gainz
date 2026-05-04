@@ -1,6 +1,5 @@
 import '../models/user_stats.dart';
 import '../services/storage.dart';
-import '../services/auth_service.dart';
 import '../theme/theme.dart';
 import '../background.dart';
 import '../widgets/player.dart';
@@ -129,12 +128,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await Storage.saveDailyQuests(quests);
     await Storage.saveData('is_onboarded', true);
 
-    // Sync to Supabase immediately and await it
-    try {
-      await AuthService().syncData();
-    } catch (e) {
-      debugPrint('Onboarding sync error: $e');
-    }
 
     // Wait for the animation to feel good (Requested 3.85 seconds)
     // We subtract a bit for the sync time, but keep it roughly 3.85 total if possible
