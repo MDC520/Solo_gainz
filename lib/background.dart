@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 import 'theme/theme.dart';
 
-/// LivelyBackground — "Simple & Alive" Breathing Aura
+/// LivelyBackground — "Cinematic Depth"
 /// 
-/// Inspired by modern clean UI:
-/// • Solid, deep background with a rich tint.
-/// • Large, soft "Breathing" radial auras that provide life.
-/// • Extremely subtle moving perspective grid for grounded motion.
+/// A high-premium, immersive background for Solo Gainz.
+/// • Replaced glowing blobs with atmospheric veils.
+/// • Removed random grid lines for a cleaner, deeper aesthetic.
+/// • Uses multi-layered parallax gradients to create a sense of vast space.
 class LivelyBackground extends StatefulWidget {
   final Widget child;
   final bool isMoving;
@@ -26,12 +26,12 @@ class _LivelyBackgroundState extends State<LivelyBackground>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 25),
     );
     if (widget.isMoving) {
       _ctrl.repeat();
     } else {
-      _ctrl.value = 0.5; // Static nice state
+      _ctrl.value = 0.5;
     }
   }
 
@@ -57,114 +57,154 @@ class _LivelyBackgroundState extends State<LivelyBackground>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // ── Base Solid Tint ──
+        // ── 1. Deep Void Foundation ──
         Positioned.fill(
           child: const DecoratedBox(
             decoration: BoxDecoration(color: AppTheme.black),
           ),
         ),
         Positioned.fill(
-          child: const DecoratedBox(
-            decoration: BoxDecoration(
+          child: Container(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
                   Color(0xFF0F172A), // Deep Navy
                   AppTheme.black,
+                  Color(0xFF0A0C10), // Midnight
                 ],
+                stops: [0.0, 0.6, 1.0],
               ),
             ),
           ),
         ),
 
-        // ── Breathing Auras ──
+        // ── 2. Atmospheric Veils & Depth ──
         Positioned.fill(
           child: RepaintBoundary(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (context, _) => CustomPaint(
-                painter: _SimpleAlivePainter(t: _ctrl.value),
+                painter: _CinematicDepthPainter(t: _ctrl.value),
               ),
             ),
           ),
         ),
 
-        // ── Content ──
+        // ── 3. Interaction Shadow (Vignette) ──
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: 1.5,
+                  colors: [
+                    Colors.transparent,
+                    AppTheme.black.withValues(alpha: 0.2),
+                    AppTheme.black.withValues(alpha: 0.8),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // ── 4. Content ──
         RepaintBoundary(child: widget.child),
       ],
     );
   }
 }
 
-class _SimpleAlivePainter extends CustomPainter {
+class _CinematicDepthPainter extends CustomPainter {
   final double t;
-  _SimpleAlivePainter({required this.t});
+  _CinematicDepthPainter({required this.t});
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawAuras(canvas, size);
-    _drawSubtleGrid(canvas, size);
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    // Layer 1: Slow, massive diagonal veil (Nebula-like drift)
+    _drawVeil(canvas, size, 
+      angle: 0.4, 
+      speed: 0.05, 
+      opacity: 0.04, 
+      color: AppTheme.accent
+    );
+
+    // Layer 2: Subtle counter-drift veil
+    _drawVeil(canvas, size, 
+      angle: -0.2, 
+      speed: 0.08, 
+      opacity: 0.02, 
+      color: AppTheme.cyan
+    );
+
+    // Layer 3: Distant Depth (Soft horizontal floor gradient)
+    _drawHorizon(canvas, size);
+
+    // Layer 4: Vertical Light Pulse (Breathing effect)
+    _drawBreathingCore(canvas, size);
   }
 
-  void _drawAuras(Canvas canvas, Size size) {
-    // Large, soft, breathing blobs of color
-    final pulse = (math.sin(t * 2 * math.pi) + 1) / 2;
-    final moveX = math.sin(t * 2 * math.pi) * 30;
-    final moveY = math.cos(t * 2 * math.pi) * 20;
-
-    // Aura 1: Top Left (Accent Blue)
-    final paint1 = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppTheme.accent.withValues(alpha: 0.10 + (pulse * 0.05)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY),
-        radius: size.width * 0.7,
-      ));
-    canvas.drawCircle(Offset(size.width * 0.2 + moveX, size.height * 0.2 + moveY), size.width * 0.7, paint1);
-
-    // Aura 2: Bottom Right (Cyan/Mint)
-    final paint2 = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppTheme.cyan.withValues(alpha: 0.08 + ((1 - pulse) * 0.04)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.8 - moveX, size.height * 0.8 - moveY),
-        radius: size.width * 0.6,
-      ));
-    canvas.drawCircle(Offset(size.width * 0.8 - moveX, size.height * 0.8 - moveY), size.width * 0.6, paint2);
-  }
-
-  void _drawSubtleGrid(Canvas canvas, Size size) {
-    final horizonY = size.height * 0.75;
-    final gridSpeed = 2.0;
-    final offset = (t * gridSpeed) % 1.0;
-
+  void _drawVeil(Canvas canvas, Size size, {
+    required double angle, 
+    required double speed, 
+    required double opacity,
+    required Color color,
+  }) {
+    final offset = (t * speed) % 1.0;
     final paint = Paint()
-      ..color = AppTheme.accent.withValues(alpha: 0.02)
-      ..strokeWidth = 1.0;
+      ..shader = LinearGradient(
+        begin: Alignment(-1.5 + (offset * 3), -1.0),
+        end: Alignment(1.5 + (offset * 3), 1.0),
+        colors: [
+          Colors.transparent,
+          color.withValues(alpha: opacity),
+          Colors.transparent,
+        ],
+        stops: const [0.3, 0.5, 0.7],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Horizontal moving lines (Linear for speed, less perspective distortion but faster)
-    for (int i = 0; i < 6; i++) {
-      final frac = (i + offset) / 6;
-      final y = horizonY + (size.height - horizonY) * frac;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+  }
 
-    // Vertical vanishing lines
-    final vanishX = size.width / 2;
-    for (int i = 0; i <= 8; i++) {
-      final xFrac = i / 8;
-      final bottomX = xFrac * size.width;
-      canvas.drawLine(Offset(vanishX, horizonY), Offset(bottomX, size.height), paint);
-    }
+  void _drawHorizon(Canvas canvas, Size size) {
+    final horizonY = size.height * 0.7;
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          AppTheme.accent.withValues(alpha: 0.02),
+          AppTheme.black.withValues(alpha: 0.2),
+        ],
+      ).createShader(Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY));
+    
+    canvas.drawRect(Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY), paint);
+  }
+
+  void _drawBreathingCore(Canvas canvas, Size size) {
+    final pulse = (math.sin(t * 2 * math.pi) + 1) / 2;
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          Colors.transparent,
+          AppTheme.accent.withValues(alpha: 0.005 + (pulse * 0.01)),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
   }
 
   @override
-  bool shouldRepaint(_SimpleAlivePainter old) => true;
+  bool shouldRepaint(_CinematicDepthPainter old) => true;
 }
+

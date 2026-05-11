@@ -1036,22 +1036,22 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                         ],
                       ),
                       SGTouchable(
-                        onTap: _allDone ? null : _toggleEditMode,
-                        disabled: _allDone,
+                        onTap: (_allDone || _tab == 1) ? null : _toggleEditMode,
+                        disabled: _allDone || _tab == 1,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           width: 110,
                           height: 38,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _allDone
+                            color: (_allDone || _tab == 1)
                                 ? AppTheme.surface.withValues(alpha: 0.5)
                                 : _isEditing
                                     ? AppTheme.accent
                                     : AppTheme.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _allDone
+                              color: (_allDone || _tab == 1)
                                   ? AppTheme.line
                                   : _isEditing
                                       ? AppTheme.accent
@@ -1065,7 +1065,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               Icon(
                                 _isEditing ? Icons.check : Icons.tune_rounded,
                                 size: 16,
-                                color: _allDone
+                                color: (_allDone || _tab == 1)
                                     ? AppTheme.muted
                                     : _isEditing
                                         ? Colors.black
@@ -1075,7 +1075,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               Text(
                                 _isEditing ? 'Done' : 'Customize',
                                 style: AppTheme.label(
-                                  color: _allDone
+                                  color: (_allDone || _tab == 1)
                                       ? AppTheme.muted
                                       : _isEditing
                                           ? Colors.black

@@ -15,11 +15,22 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
   
   // Combo Animation States
   int _comboIdx = 0;
-  int _storyProgress = 0; 
+  final int _storyProgress = 0; 
 
   final List<String> _combo0 = ['Kick01', 'Punch01', 'Kick02'];
   final List<String> _combo1 = ['Kick03', 'Punch02', 'Punch03'];
   final List<String> _comboAdvanced = ['Roll', 'Jump', 'Jump Fall', 'Roll', 'Jump', 'Jump Fall', 'Roll', 'Sprint', 'Slide'];
+  
+  // Arena Combo States
+  int _arenaIdx = 0;
+  final List<String> _arenaShocks = ['ShockLight', 'ShockHeavy'];
+
+  void _nextArenaCombo() {
+    if (!mounted) return;
+    setState(() {
+      _arenaIdx = (_arenaIdx + 1) % _arenaShocks.length;
+    });
+  }
 
   @override
   void initState() {
@@ -50,9 +61,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
   }
 
   List<String> _getCurrentAnimations() {
-    if (_storyProgress == 0) return _combo0;
-    if (_storyProgress == 1) return _combo1;
-    return _comboAdvanced;
+    return [..._combo0, ..._combo1];
   }
 
   @override
@@ -118,7 +127,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
       ),
     };
 
-    final style = styles[_storyProgress] ?? styles[0]!;
+    final style = styles[0]!;
     final Color cardBg = style.bg;
     final Color accentColor = style.accent;
     final List<String> currentAnimations = _getCurrentAnimations();
@@ -193,6 +202,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     },
                                   ),
                                 ),
+
 
                                 // Centered, zoomed-in model pushing a box
                                 Center(
@@ -304,22 +314,137 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                   ),
                                 ),
 
-                                // Training Title (Centered Left)
+                                // Ground Line (Subtle Accent)
                                 Positioned(
-                                  top: 0,
-                                  bottom: 0,
-                                  left: 20,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  bottom: 15,
+                                  left: 30,
+                                  right: 30,
+                                  child: Container(
+                                    height: 1.5,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.white.withValues(alpha: 0),
+                                          Colors.white.withValues(alpha: 0.15), 
+                                          Colors.white.withValues(alpha: 0),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Minimal indicator
+                                Positioned(
+                                  top: 10,
+                                  right: 12,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         'TRAINING',
-                                        style: AppTheme.mono(color: Colors.white, size: 11).copyWith(
-                                          letterSpacing: 3,
+                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
+                                          letterSpacing: 1,
                                         ),
                                       ),
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Dashed Separator
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                      child: Row(
+                        children: List.generate(40, (index) => Expanded(
+                          child: Container(
+                            height: 2,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        )),
+                      ),
+                    ),
+
+                    // 2. Story Mode Card (Full Width)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: SGTouchable(
+                        onTap: () {},
+                        child: Container(
+                          width: double.infinity,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white, 
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Stack(
+                              children: [
+                                // Animated Background Pattern
+                                Positioned.fill(
+                                  child: AnimatedBuilder(
+                                    animation: _bgCtrl,
+                                    builder: (context, child) {
+                                      return CustomPaint(
+                                        painter: _NotebookPainter(
+                                          _bgCtrl.value, 
+                                          lineColor: accentColor.withValues(alpha: 0.08),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+
+                                // Dynamic Player (Running)
+                                Center(
+                                  child: OverflowBox(
+                                    maxHeight: 200, 
+                                    child: Transform.translate(
+                                      offset: const Offset(0, -50),
+                                      child: const Player(
+                                        key: ValueKey('Combo_Story_Run'),
+                                        animation: 'Run',
+                                        size: 160,
+                                        loop: true,
+                                        fps: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Minimal indicator
+                                Positioned(
+                                  top: 10,
+                                  right: 12,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'STORY',
+                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
                                     ],
                                   ),
                                 ),
@@ -335,9 +460,68 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                       gradient: LinearGradient(
                                         colors: [
                                           Colors.white.withValues(alpha: 0),
-                                          Colors.white.withValues(alpha: 0.1), // Even more subtle
+                                          Colors.white.withValues(alpha: 0.15), 
                                           Colors.white.withValues(alpha: 0),
                                         ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 3. Combat Arena Card (Full Width)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      child: SGTouchable(
+                        onTap: () {},
+                        child: Container(
+                          width: double.infinity,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1505), // Dark Gold
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white, 
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Stack(
+                              children: [
+                                // Animated Background Pattern
+                                Positioned.fill(
+                                  child: AnimatedBuilder(
+                                    animation: _bgCtrl,
+                                    builder: (context, child) {
+                                      return CustomPaint(
+                                        painter: _NotebookPainter(
+                                          _bgCtrl.value, 
+                                          lineColor: Colors.orangeAccent.withValues(alpha: 0.08),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                // Single Player Animation (Cycling Shocks)
+                                Center(
+                                  child: OverflowBox(
+                                    maxHeight: 200, 
+                                    child: Transform.translate(
+                                      offset: const Offset(0, -50),
+                                      child: Player(
+                                        key: ValueKey('Arena_Shock_$_arenaIdx'),
+                                        animation: _arenaShocks[_arenaIdx],
+                                        size: 160,
+                                        loop: false,
+                                        fps: 8,
+                                        onComplete: _nextArenaCombo,
                                       ),
                                     ),
                                   ),
@@ -347,273 +531,44 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                 Positioned(
                                   top: 10,
                                   right: 12,
-                                  child: Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'PVP',
+                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                    ],
+                                  ),
+                                ),
+
+                                // Ground Line (Subtle White)
+                                Positioned(
+                                  bottom: 15,
+                                  left: 30,
+                                  right: 30,
+                                  child: Container(
+                                    height: 1.5,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.white.withValues(alpha: 0),
+                                          Colors.white.withValues(alpha: 0.15), 
+                                          Colors.white.withValues(alpha: 0),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // 2. Story Mode Card (Full Width)
-                    Container(
-                      height: 116,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.topCenter,
-                        children: [
-                          // Main Story Card
-                          SGTouchable(
-                            onTap: () {
-                              if (_storyProgress == 0) {
-                                AppTheme.showSnackBar(context, 'Story Mode coming soon!');
-                              } else {
-                                AppTheme.showSnackBar(context, 'Level Locked! Reach Progress 0 first.');
-                              }
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: _storyProgress > 0 ? const Color(0xFF1E1E1E) : cardBg,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white, 
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Stack(
-                                  children: [
-                                    // Animated Background Pattern
-                                    Positioned.fill(
-                                      child: AnimatedBuilder(
-                                        animation: _bgCtrl,
-                                        builder: (context, child) {
-                                          return CustomPaint(
-                                            painter: _NotebookPainter(
-                                              _bgCtrl.value, 
-                                              lineColor: (_storyProgress > 0 ? Colors.white : accentColor).withValues(alpha: 0.08),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-
-                                    // Dynamic Player (Faded when locked)
-                                    Center(
-                                      child: Opacity(
-                                        opacity: _storyProgress > 0 ? 0.05 : 1.0,
-                                        child: OverflowBox(
-                                          maxHeight: 200, 
-                                          child: Transform.translate(
-                                            offset: const Offset(0, -45),
-                                            child: Stack(
-                                              alignment: Alignment.bottomCenter,
-                                              children: [
-                                                Opacity(
-                                                  opacity: 0.1,
-                                                  child: Transform.scale(
-                                                    scaleY: -1,
-                                                    alignment: Alignment.bottomCenter,
-                                                    child: Player(
-                                                      key: ValueKey('Reflect_Story_${_storyProgress}_$_comboIdx'),
-                                                      animation: currentAnimations[_comboIdx],
-                                                      size: 160,
-                                                      loop: currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide',
-                                                    ),
-                                                  ),
-                                                ),
-                                                Player(
-                                                  key: ValueKey('Combo_Story_${_storyProgress}_$_comboIdx'),
-                                                  animation: currentAnimations[_comboIdx],
-                                                  size: 160,
-                                                  loop: currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide',
-                                                  fps: 12,
-                                                  onComplete: (currentAnimations[_comboIdx] == 'Sprint' || currentAnimations[_comboIdx] == 'Slide') ? null : _nextCombo,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Center Lock Icon
-                                    if (_storyProgress > 0)
-                                      Center(
-                                        child: Icon(
-                                          Icons.lock_rounded, 
-                                          color: Colors.white.withValues(alpha: 0.2),
-                                          size: 40,
-                                        ),
-                                      ),
-
-                                    // Title Group (Center Left)
-                                    Positioned(
-                                      top: 0,
-                                      bottom: 0,
-                                      left: 20,
-                                      child: Opacity(
-                                        opacity: _storyProgress > 0 ? 0.3 : 1.0,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'STORY MODE',
-                                              style: AppTheme.mono(color: Colors.white, size: 11).copyWith(
-                                                letterSpacing: 3,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Vertical Battery Indicator (Right Side)
-                                    Positioned(
-                                      top: 0,
-                                      bottom: 0,
-                                      right: 20,
-                                      child: Opacity(
-                                        opacity: _storyProgress > 0 ? 0.3 : 1.0,
-                                        child: Center(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              // Battery Tip (Top)
-                                              Container(
-                                                width: 6,
-                                                height: 3,
-                                                decoration: BoxDecoration(
-                                                  color: (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.5),
-                                                  borderRadius: const BorderRadius.only(
-                                                    topLeft: Radius.circular(1.5),
-                                                    topRight: Radius.circular(1.5),
-                                                  ),
-                                                ),
-                                              ),
-                                              // Battery Body
-                                              Container(
-                                                padding: const EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(5),
-                                                  border: Border.all(
-                                                    color: (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.5),
-                                                    width: 1.5,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  // Generate segments from bottom (5-1) to top (1-5)
-                                                  children: List.generate(5, (i) {
-                                                    int index = 4 - i; // Reverse for bottom-to-top fill
-                                                    return Container(
-                                                      width: 14,
-                                                      height: 10,
-                                                      margin: EdgeInsets.only(bottom: i == 4 ? 0 : 2),
-                                                      decoration: BoxDecoration(
-                                                        color: index < _storyProgress 
-                                                          ? (_storyProgress > 0 ? Colors.grey : accentColor)
-                                                          : (_storyProgress > 0 ? Colors.grey : accentColor).withValues(alpha: 0.08),
-                                                        borderRadius: BorderRadius.circular(1.5),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // +/- Controls (Floating at the bottom edge)
-                          Positioned(
-                            top: 84,
-                            left: 20,
-                            child: Container(
-                              width: 80,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: _storyProgress > 0 ? const Color(0xFF1E1E1E) : cardBg,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Stack(
-                                  children: [
-                                    // Matching Animated Background
-                                    Positioned.fill(
-                                      child: AnimatedBuilder(
-                                        animation: _bgCtrl,
-                                        builder: (context, child) {
-                                          return CustomPaint(
-                                            painter: _NotebookPainter(
-                                              _bgCtrl.value, 
-                                              lineColor: (_storyProgress > 0 ? Colors.white : accentColor).withValues(alpha: 0.08),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    
-                                    // Split Controls
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: SGTouchable(
-                                            onTap: () {
-                                              if (_storyProgress > 0) setState(() => _storyProgress--);
-                                            },
-                                            child: const Center(
-                                              child: Icon(Icons.remove, color: Colors.white, size: 18),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 1.5,
-                                          height: double.infinity,
-                                          color: Colors.white.withValues(alpha: 0.3),
-                                        ),
-                                        Expanded(
-                                          child: SGTouchable(
-                                            onTap: () {
-                                              if (_storyProgress < 5) setState(() => _storyProgress++);
-                                            },
-                                            child: const Center(
-                                              child: Icon(Icons.add, color: Colors.white, size: 18),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
 

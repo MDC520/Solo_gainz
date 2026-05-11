@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
                           letterSpacing: 1.5,
                         )),
                     const SizedBox(height: 4),
-                    Text('Sadiq Team',
+                    Text('Xoventic',
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

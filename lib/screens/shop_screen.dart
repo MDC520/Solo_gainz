@@ -78,7 +78,7 @@ class _ShopPageState extends State<ShopPage> {
         builder: (ctx) => CupertinoAlertDialog(
           title: Text('Not enough coins', style: AppTheme.h3()),
           content: Text(
-            'You need ${totalPrice - _s.coins} more T coins to buy $qty chests.',
+            'You need \$${totalPrice - _s.coins} more to buy $qty chests.',
             style: AppTheme.body(),
           ),
           actions: [
@@ -99,7 +99,7 @@ class _ShopPageState extends State<ShopPage> {
         title: Text('Buy $chestName${qty > 1 ? " x$qty" : ""}',
             style: AppTheme.h3()),
         content: Text(
-          'This will cost $totalPrice T coins.\nThe chest${qty > 1 ? "s" : ""} will be placed in your inventory.',
+          'This will cost \$$totalPrice.\nThe chest${qty > 1 ? "s" : ""} will be placed in your inventory.',
           style: AppTheme.body(),
         ),
         actions: [
@@ -199,7 +199,7 @@ class _ShopPageState extends State<ShopPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.generating_tokens_rounded,
+                                  Icons.attach_money_rounded,
                                   size: 16,
                                   color: AppTheme.white,
                                 ),
@@ -283,7 +283,7 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'wooden',
                   name: 'Wooden Chest',
-                  desc: 'A sturdy wooden chest. Rewards 6–399 T coins. Rare drops above 100.',
+                  desc: 'A sturdy wooden chest. Rewards \$6–399. Rare drops above \$100.',
                   price: 900,
                   qty: _woodenQty,
                   onQtyChanged: (v) => setState(() => _woodenQty = v),
@@ -292,7 +292,7 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'iron',
                   name: 'Iron Chest',
-                  desc: 'A reinforced iron chest. Rewards 6–399 T coins. Better drop rates.',
+                  desc: 'A reinforced iron chest. Rewards \$6–399. Better drop rates.',
                   price: 1600,
                   qty: _ironQty,
                   onQtyChanged: (v) => setState(() => _ironQty = v),
@@ -301,7 +301,7 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'gold',
                   name: 'Gold Chest',
-                  desc: 'The ultimate treasure. Rewards 500–5000 T coins. Guaranteed epic loot.',
+                  desc: 'The ultimate treasure. Rewards \$500–5000. Guaranteed epic loot.',
                   price: 4500,
                   qty: _goldQty,
                   onQtyChanged: (v) => setState(() => _goldQty = v),
@@ -484,7 +484,7 @@ class _ShopPageState extends State<ShopPage> {
                           ),
                           const SizedBox(width: 4),
                           Icon(
-                            Icons.generating_tokens_rounded,
+                            Icons.attach_money_rounded,
                             size: 14,
                             color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted,
                           ),
