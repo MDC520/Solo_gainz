@@ -1676,7 +1676,7 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.line, width: 2),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.visibility_off_rounded,
                             color: AppTheme.text2,
                             size: 20,
@@ -1799,7 +1799,7 @@ class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStat
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.line),
                           ),
-                          child: const Icon(Icons.pause_rounded, color: AppTheme.white, size: 24),
+                          child: Icon(Icons.pause_rounded, color: AppTheme.white, size: 24),
                         ),
                       ),
                       const SizedBox(width: 16),

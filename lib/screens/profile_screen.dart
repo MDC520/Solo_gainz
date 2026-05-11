@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final user = Storage.getCurrentUser() ?? 'Player';
-    if (_s == null) return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
+    if (_s == null) return Center(child: CircularProgressIndicator(color: AppTheme.accent));
     final s = _s!;
     final xpNeeded = RankSystem.getXpNeededForNextLevel(s.rank);
     final xpProgress = (s.xp / xpNeeded).clamp(0.0, 1.0);
@@ -143,7 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.monetization_on_rounded, size: 12, color: AppTheme.amber),
+                                    Icon(Icons.monetization_on_rounded, size: 12, color: AppTheme.amber),
                                     const SizedBox(width: 4),
                                     Text(
                                       '${s.coins}',
@@ -171,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppTheme.line),
                         ),
-                        child: const Icon(Icons.settings_rounded, size: 22, color: AppTheme.text1),
+                        child: Icon(Icons.settings_rounded, size: 22, color: AppTheme.text1),
                       ),
                     ),
                   ),
@@ -271,7 +271,7 @@ class _AvatarWidget extends StatelessWidget {
               ),
             ),
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.black,
               ),
@@ -311,7 +311,7 @@ class _AvatarWidget extends StatelessWidget {
                   BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 2),
                 ],
               ),
-              child: const Icon(Icons.camera_alt_rounded, size: 14, color: AppTheme.black),
+              child: Icon(Icons.camera_alt_rounded, size: 14, color: AppTheme.black),
             ),
           ),
         ],
@@ -349,7 +349,7 @@ class _RankCard extends StatelessWidget {
                 height: 70,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.shield_rounded, color: AppTheme.accent, size: 60),
+                    Icon(Icons.shield_rounded, color: AppTheme.accent, size: 60),
               ),
             ],
           ),
@@ -539,7 +539,7 @@ class _AchievementsList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.emoji_events_rounded, color: AppTheme.amber, size: 28),
+                Icon(Icons.emoji_events_rounded, color: AppTheme.amber, size: 28),
                 const SizedBox(height: 8),
                 Text(
                   achievements[index].toUpperCase(),

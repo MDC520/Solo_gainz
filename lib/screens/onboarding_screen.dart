@@ -1152,7 +1152,7 @@ class _WavingHandState extends State<WavingHand>
           border: Border.all(
               color: AppTheme.accent.withValues(alpha: 0.2), width: 1),
         ),
-        child: const Icon(Icons.front_hand_rounded,
+        child: Icon(Icons.front_hand_rounded,
             size: 82, color: AppTheme.accent),
       ),
     );

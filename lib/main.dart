@@ -21,10 +21,10 @@ Future<void> main() async {
   // Set system UI to transparent and edge-to-edge for immersive feel
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.dark,
     systemNavigationBarContrastEnforced: false,
     systemStatusBarContrastEnforced: false,
   ));
@@ -59,11 +59,16 @@ class SoloGainzApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Solo Gainz',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      home: const _AppRoot(),
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppTheme.isDarkNotifier,
+      builder: (context, isDark, child) {
+        return MaterialApp(
+          title: 'Solo Gainz',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.theme,
+          home: const _AppRoot(),
+        );
+      },
     );
   }
 }
@@ -300,26 +305,13 @@ class AppShellState extends State<AppShell>
                             padding: EdgeInsets.only(
                                 bottom: bottomPadding * (1 - t)),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.01),
+                              color: AppTheme.black, // Solid Paper White
                               borderRadius: BorderRadius.circular(radius),
                               border: Border(
-                                top: BorderSide(
-                                    color: AppTheme.accent.withValues(alpha: 0.4), width: 1.5),
-                                bottom: BorderSide(
-                                    color: t > 0.01
-                                        ? AppTheme.accent.withValues(alpha: 0.4)
-                                        : Colors.transparent,
-                                    width: t > 0.01 ? 1.2 : 0),
-                                left: BorderSide(
-                                    color: t > 0.01
-                                        ? AppTheme.accent.withValues(alpha: 0.4)
-                                        : Colors.transparent,
-                                    width: t > 0.01 ? 1.2 : 0),
-                                right: BorderSide(
-                                    color: t > 0.01
-                                        ? AppTheme.accent.withValues(alpha: 0.4)
-                                        : Colors.transparent,
-                                    width: t > 0.01 ? 1.2 : 0),
+                                top: BorderSide(color: AppTheme.text1, width: 1.5),
+                                bottom: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
+                                left: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
+                                right: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
                               ),
                             ),
                             child: child,
@@ -341,17 +333,17 @@ class AppShellState extends State<AppShell>
                               Icon(
                                 sel ? item.$1 : item.$2,
                                 size: 20,
-                                color: sel ? AppTheme.accent : AppTheme.white,
+                                color: sel ? AppTheme.accent : AppTheme.text3,
                               ),
                               const SizedBox(height: 4),
                               Text(item.$3,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
                                     fontWeight:
-                                        sel ? FontWeight.w600 : FontWeight.w500,
+                                        sel ? FontWeight.w700 : FontWeight.w500,
                                     color:
-                                        sel ? AppTheme.accent : AppTheme.white,
-                                    letterSpacing: 0.2,
+                                        sel ? AppTheme.accent : AppTheme.text3,
+                                    letterSpacing: 0.5,
                                   )),
                             ],
                           ),

@@ -464,8 +464,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Padding(
-                                          padding: EdgeInsets.only(top: 1),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 1),
                                           child: Icon(Icons.error,
                                               size: 14, color: AppTheme.red),
                                         ),

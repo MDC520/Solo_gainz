@@ -138,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: AppTheme.line),
                               ),
-                              child: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
+                              child: Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
                             ),
                           ),
                           const SizedBox(width: 20),
@@ -166,6 +166,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
+                      _buildSettingItem(
+                        icon: Icons.dark_mode_rounded,
+                        title: 'Dark Mode',
+                        subtitle: 'Enable Aura & Glass theme',
+                        color: AppTheme.purple,
+                        trailing: ValueListenableBuilder<bool>(
+                          valueListenable: AppTheme.isDarkNotifier,
+                          builder: (context, isDark, _) => CupertinoSwitch(
+                            value: isDark,
+                            activeTrackColor: AppTheme.accent,
+                            onChanged: (v) => AppTheme.toggleTheme(),
+                          ),
+                        ),
+                      ),
+                      _buildDivider(),
                       _buildSettingItem(
                         icon: Icons.auto_awesome_motion,
                         title: 'Floating Interface',

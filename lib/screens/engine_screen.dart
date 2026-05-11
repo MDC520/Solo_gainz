@@ -1807,7 +1807,7 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.line),
                           ),
-                          child: const Icon(Icons.pause_rounded, color: AppTheme.white, size: 24),
+                          child: Icon(Icons.pause_rounded, color: AppTheme.white, size: 24),
                         ),
                       ),
                       const SizedBox(width: 16),

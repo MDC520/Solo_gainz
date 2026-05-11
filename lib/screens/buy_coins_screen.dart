@@ -8,7 +8,7 @@ class _Bundle {
   final String subtitle;
   final String price;
   final Color color;
-  const _Bundle({
+  _Bundle({
     required this.coins,
     required this.title,
     required this.subtitle,
@@ -123,7 +123,7 @@ class BuyCoinsScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: AppTheme.line, width: 1.5),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.close,
                                 size: 20,
                                 color: AppTheme.text2,

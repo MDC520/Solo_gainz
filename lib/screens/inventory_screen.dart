@@ -74,7 +74,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: AppTheme.glassBorder, width: 1.5),
                               ),
-                              child: const Icon(Icons.close, size: 20, color: AppTheme.white),
+                              child: Icon(Icons.close, size: 20, color: AppTheme.white),
                             ),
                           ),
                         ],
@@ -182,7 +182,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             height: 104,
             alignment: Alignment.bottomCenter,
             padding: const EdgeInsets.only(bottom: 25),
-            child: const Icon(Icons.add_circle_outline, color: AppTheme.text3, size: 22),
+            child: Icon(Icons.add_circle_outline, color: AppTheme.text3, size: 22),
           ),
         ),
       );
@@ -334,7 +334,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         title: 'INSTANT UNLOCK',
         child: Column(
           children: [
-            const Icon(Icons.bolt, color: AppTheme.amber, size: 64),
+            Icon(Icons.bolt, color: AppTheme.amber, size: 64),
             const SizedBox(height: 16),
             Text('SPEED UP PROCESS?', style: AppTheme.h2()),
             const SizedBox(height: 12),

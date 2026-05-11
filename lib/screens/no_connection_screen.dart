@@ -95,7 +95,7 @@ class _NoConnectionScreenState extends State<NoConnectionScreen>
                             color: AppTheme.red.withValues(alpha: 0.25),
                             width: 1.5),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.wifi_off_rounded,
                         size: 64,
                         color: AppTheme.red,

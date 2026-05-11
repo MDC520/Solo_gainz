@@ -102,8 +102,8 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     // Dynamic styling based on progress
     final Map<int, _CardStyle> styles = {
       0: _CardStyle(
-        bg: const Color(0xFF1A0B2E), // Purple
-        accent: const Color(0xFFB388FF),
+        bg: AppTheme.black, 
+        accent: AppTheme.accent,
       ),
       1: _CardStyle(
         bg: const Color(0xFF0F051A), // Dark Purple
@@ -138,7 +138,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppTheme.dark,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -176,9 +176,9 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                           width: double.infinity,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0D1B2A), // Dark Navy Blue
+                            color: AppTheme.black, 
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: AppTheme.text1, width: 2),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.3),
@@ -197,7 +197,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     animation: _bgCtrl,
                                     builder: (context, child) {
                                       return CustomPaint(
-                                        painter: _NotebookPainter(_bgCtrl.value, lineColor: Colors.blue.withValues(alpha: 0.05)),
+                                        painter: _NotebookPainter(_bgCtrl.value, lineColor: AppTheme.text1.withValues(alpha: 0.05)),
                                       );
                                     },
                                   ),
@@ -257,8 +257,8 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                                   begin: Alignment.topCenter,
                                                   end: Alignment.bottomCenter,
                                                   colors: [
-                                                    const Color(0xFF0D1B2A).withValues(alpha: 0),
-                                                    const Color(0xFF0D1B2A),
+                                                    AppTheme.black.withValues(alpha: 0),
+                                                    AppTheme.black,
                                                   ],
                                                 ),
                                               ),
@@ -342,13 +342,13 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'TRAINING',
-                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
                                     ],
                                   ),
                                 ),
@@ -368,7 +368,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                             height: 2,
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: AppTheme.text1.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -385,10 +385,10 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                           width: double.infinity,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: cardBg,
+                            color: AppTheme.black,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white, 
+                              color: AppTheme.text1, 
                               width: 2,
                             ),
                           ),
@@ -438,13 +438,13 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'STORY',
-                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
                                     ],
                                   ),
                                 ),
@@ -483,10 +483,10 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                           width: double.infinity,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1505), // Dark Gold
+                            color: AppTheme.black,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white, 
+                              color: AppTheme.text1, 
                               width: 2,
                             ),
                           ),
@@ -536,13 +536,13 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'PVP',
-                                        style: AppTheme.mono(color: Colors.white.withValues(alpha: 0.3), size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: Colors.white.withValues(alpha: 0.3), size: 18),
+                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
                                     ],
                                   ),
                                 ),

@@ -439,7 +439,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: AppTheme.black.withValues(alpha: 0.8),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.5), width: 1.5),
+                  border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: 1.5),
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
@@ -478,7 +478,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           ),
                           child: CupertinoTextField(
                             controller: nameCtrl,
-                            style: AppTheme.body(color: Colors.white).copyWith(fontSize: 14),
+                            style: AppTheme.body(color: AppTheme.text1).copyWith(fontSize: 14),
                             placeholder: 'e.g., Diamond Pushups',
                             placeholderStyle: AppTheme.body(color: AppTheme.text3).copyWith(fontSize: 14),
                             cursorColor: AppTheme.accent,
@@ -574,7 +574,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                   ),
                                   child: Icon(
                                     _getCustomQuestIcon(idx),
-                                    color: isSelected ? Colors.black : AppTheme.text2,
+                                    color: isSelected ? Colors.white : AppTheme.text2,
                                     size: 22,
                                   ),
                                 ),
@@ -661,7 +661,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           opt,
                           textAlign: TextAlign.center,
                           style: AppTheme.label(
-                            color: active ? Colors.black : AppTheme.text2,
+                            color: active ? Colors.white : AppTheme.text2,
                           ).copyWith(fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal),
                         ),
                       ),
@@ -812,7 +812,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             color: AppTheme.surface,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, color: AppTheme.text2, size: 20),
+                          child: Icon(Icons.close, color: AppTheme.text2, size: 20),
                         ),
                       ),
                     ],
@@ -1052,10 +1052,10 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: (_allDone || _tab == 1)
-                                  ? AppTheme.line
+                                  ? AppTheme.text3.withValues(alpha: 0.3)
                                   : _isEditing
                                       ? AppTheme.accent
-                                      : Colors.white,
+                                      : AppTheme.text1,
                               width: 1.5,
                             ),
                           ),
@@ -1140,7 +1140,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       child: Text(
         label,
         style: AppTheme.label(
-          color: isSelected ? Colors.black : AppTheme.text2,
+          color: isSelected ? Colors.white : AppTheme.text2,
         ).copyWith(fontSize: 13),
       ),
     );
@@ -1606,7 +1606,7 @@ class _QuestCardState extends State<_QuestCard> {
             border: Border.all(
               color: _isEditingLocal
                   ? Colors.transparent
-                  : Colors.white.withValues(alpha: 0.3),
+                  : AppTheme.text1,
               width: 1.5,
             ),
           ),
@@ -1660,7 +1660,7 @@ class _QuestCardState extends State<_QuestCard> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
                         ),
-                        child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.red),
+                        child: Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.red),
                       ),
                     ),
                 ],
@@ -1821,9 +1821,9 @@ class _LinearProgress extends StatelessWidget {
               height: 4,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: AppTheme.text1.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(2),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 0.5),
+                border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: 0.5),
               ),
             ),
             AnimatedContainer(
@@ -1905,21 +1905,21 @@ class _ActionButtonState extends State<_ActionButton> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: widget.active ? AppTheme.accent : AppTheme.elevated,
+            color: widget.active ? AppTheme.accent : AppTheme.text1,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.active
                   ? AppTheme.accent
-                  : (widget.disabled ? AppTheme.line : AppTheme.muted),
+                  : (widget.disabled ? AppTheme.text3.withValues(alpha: 0.5) : AppTheme.text1),
             ),
           ),
-          child: Icon(
-            widget.icon,
-            size: 20,
-            color: widget.active
-                ? Colors.white
-                : (widget.disabled ? AppTheme.muted : AppTheme.text1),
-          ),
+            child: Icon(
+              widget.icon,
+              size: 20,
+              color: widget.active
+                  ? Colors.white
+                  : (widget.disabled ? AppTheme.text3 : Colors.white),
+            ),
         ),
       ),
     );
@@ -1980,7 +1980,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
       decoration: BoxDecoration(
         color: AppTheme.green.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.green.withValues(alpha: 0.2)),
+        border: Border.all(color: AppTheme.text1, width: 1.5),
       ),
       child: Row(
         children: [

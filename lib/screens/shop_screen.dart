@@ -188,26 +188,25 @@ class _ShopPageState extends State<ShopPage> {
                               vertical: 7,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.surface,
+                              color: AppTheme.text1,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: AppTheme.white,
-                                width: 1.5,
-                              ),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
+                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.attach_money_rounded,
                                   size: 16,
-                                  color: AppTheme.white,
+                                  color: Colors.white,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   '${_s.coins}',
                                   style: AppTheme.label().copyWith(
-                                    color: AppTheme.white,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.5,
                                   ),
@@ -263,7 +262,7 @@ class _ShopPageState extends State<ShopPage> {
                             child: Text(
                               _tabs[i],
                               style: AppTheme.label(
-                                color: _tab == i ? Colors.black : AppTheme.text2,
+                                color: _tab == i ? Colors.white : AppTheme.text2,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -356,9 +355,16 @@ class _ShopPageState extends State<ShopPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.black,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.white, width: 1.5),
+        border: Border.all(color: AppTheme.text1.withValues(alpha: 0.15), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -462,31 +468,28 @@ class _ShopPageState extends State<ShopPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
+                      color: canTotal && availableSlots >= qty ? AppTheme.text1 : AppTheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: canTotal && availableSlots >= qty ? null : Border.all(color: AppTheme.line, width: 1.5),
-                      boxShadow: canTotal && availableSlots >= qty
-                          ? [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)]
-                          : null,
+                      border: Border.all(color: AppTheme.text1, width: 1.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           availableSlots == 0 ? 'FULL' : 'BUY FOR ',
-                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted),
+                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3),
                         ),
                         if (availableSlots > 0) ...[
                           Text(
                             '$totalCost',
-                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted)
+                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3)
                                 .copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             Icons.attach_money_rounded,
                             size: 14,
-                            color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.muted,
+                            color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3,
                           ),
                         ],
                       ],
@@ -515,8 +518,8 @@ class _ShopPageState extends State<ShopPage> {
         child: Icon(icon,
             size: 14,
             color: disabled
-                ? AppTheme.muted.withValues(alpha: 0.3)
-                : AppTheme.white),
+                ? AppTheme.text3.withValues(alpha: 0.3)
+                : AppTheme.text1),
       ),
     );
   }
