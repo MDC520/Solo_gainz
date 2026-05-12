@@ -1,6 +1,8 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/storage.dart';
 
 export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
@@ -13,15 +15,34 @@ class AppTheme {
   static final ValueNotifier<bool> isDarkNotifier = ValueNotifier(false);
   static bool get isDark => isDarkNotifier.value;
 
+  static void init() {
+    isDarkNotifier.value = Storage.getData('is_dark_mode', defaultValue: false);
+  }
+
   static void toggleTheme() {
     isDarkNotifier.value = !isDarkNotifier.value;
+    Storage.saveData('is_dark_mode', isDarkNotifier.value);
     _updateAppIcon();
+    _updateSystemUI();
     heavy();
+  }
+
+  static void _updateSystemUI() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+      systemStatusBarContrastEnforced: false,
+    ));
   }
 
   static const _iconChannel = MethodChannel('flutter/platform');
 
   static Future<void> _updateAppIcon() async {
+    if (!Platform.isIOS) return; // SystemChrome.setAlternateIcon is iOS only
     try {
       await _iconChannel.invokeMethod(
         'SystemChrome.setAlternateIcon',
@@ -33,8 +54,8 @@ class AppTheme {
   }
 
   // ── Colors ───────────────────────────────────────────────────────────────
-  static Color get black      => isDark ? const Color(0xFF0A0A12) : const Color(0xFFF2F2F2);
-  static Color get dark       => isDark ? const Color(0xFF14141F) : const Color(0xFFE8E8E8);
+  static Color get black      => isDark ? const Color(0xFF0A0A12) : const Color(0xFFE2E8F0); // Silver Light
+  static Color get dark       => isDark ? const Color(0xFF14141F) : const Color(0xFFCBD5E1); // Silver Dark
   static Color get accent     => isDark ? const Color(0xFF00F2FF) : const Color(0xFF0F172A);
   static Color get cyan       => isDark ? const Color(0xFF00F2FF) : const Color(0xFF059669);
   static Color get amber      => isDark ? const Color(0xFFFACC15) : const Color(0xFFD97706);

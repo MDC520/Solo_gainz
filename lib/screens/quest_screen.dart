@@ -480,7 +480,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             controller: nameCtrl,
                             style: AppTheme.body(color: AppTheme.text1).copyWith(fontSize: 14),
                             placeholder: 'e.g., Diamond Pushups',
-                            placeholderStyle: AppTheme.body(color: AppTheme.text3).copyWith(fontSize: 14),
+                            placeholderStyle: AppTheme.body(color: AppTheme.text2).copyWith(fontSize: 14),
                             cursorColor: AppTheme.accent,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             decoration: null,
@@ -524,7 +524,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                       controller: goalCtrl,
                                       style: AppTheme.mono(color: AppTheme.accent, size: 14),
                                       placeholder: '10',
-                                      placeholderStyle: AppTheme.mono(color: AppTheme.text3, size: 14),
+                                      placeholderStyle: AppTheme.mono(color: AppTheme.text2, size: 14),
                                       keyboardType: TextInputType.number,
                                       cursorColor: AppTheme.accent,
                                       textAlign: TextAlign.center,
@@ -612,7 +612,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _sheetLabel(String t) => Text(t, style: AppTheme.label(color: AppTheme.text3).copyWith(fontSize: 10, letterSpacing: 1.2));
+  Widget _sheetLabel(String t) => Text(t, style: AppTheme.label(color: AppTheme.text2).copyWith(fontSize: 10, letterSpacing: 1.2));
 
   Widget _buildSlidingToggle({
     required List<String> options,
@@ -1031,7 +1031,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           const SizedBox(height: 4),
                           Text(
                             _isEditing ? 'Tap a card to customize it.' : 'Complete your daily grind.',
-                            style: AppTheme.caption(color: _isEditing ? AppTheme.accent : null),
+                            style: AppTheme.caption(color: _isEditing ? AppTheme.accent : AppTheme.text2),
                           ),
                         ],
                       ),
@@ -1621,13 +1621,13 @@ class _QuestCardState extends State<_QuestCard> {
                     decoration: BoxDecoration(
                       color: widget.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: widget.color.withValues(alpha: 0.3), width: 1.5),
+                      border: Border.all(color: Colors.black, width: 1.5),
                     ),
                     child: Center(
                       child: iconIndex > 0
-                          ? Icon(_getCustomQuestIcon(iconIndex), color: widget.color, size: 20)
+                          ? Icon(_getCustomQuestIcon(iconIndex), color: Colors.black, size: 20)
                           : Text('${widget.questIndex + 1}', 
-                              style: AppTheme.h2(color: widget.color).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                              style: AppTheme.h2(color: Colors.black).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -1645,7 +1645,7 @@ class _QuestCardState extends State<_QuestCard> {
                               : isKm
                                   ? '${quest.currentProgress} / ${quest.maxGoal} km'
                                   : '${quest.currentProgress} / ${quest.maxGoal} reps',
-                          style: AppTheme.caption(color: AppTheme.text3),
+                          style: AppTheme.caption(color: AppTheme.text2),
                         ),
                       ],
                     ),

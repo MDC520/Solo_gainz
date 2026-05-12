@@ -175,7 +175,7 @@ class _ShopPageState extends State<ShopPage> {
                           const SizedBox(height: 4),
                           Text(
                             'Exchange coins for elite upgrades.',
-                            style: AppTheme.caption(),
+                            style: AppTheme.caption(color: AppTheme.text2),
                           ),
                         ],
                       ),
@@ -329,7 +329,7 @@ class _ShopPageState extends State<ShopPage> {
                   const SizedBox(height: 8),
                   Text(
                     'The blacksmith is still forging these items.',
-                    style: AppTheme.caption(),
+                    style: AppTheme.caption(color: AppTheme.text2),
                   ),
                 ],
               ),
@@ -418,7 +418,7 @@ class _ShopPageState extends State<ShopPage> {
                     const SizedBox(height: 4),
                     Text(
                       desc,
-                      style: AppTheme.caption(),
+                      style: AppTheme.caption(color: AppTheme.text2),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -477,19 +477,19 @@ class _ShopPageState extends State<ShopPage> {
                       children: [
                         Text(
                           availableSlots == 0 ? 'FULL' : 'BUY FOR ',
-                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3),
+                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2),
                         ),
                         if (availableSlots > 0) ...[
                           Text(
                             '$totalCost',
-                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3)
+                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2)
                                 .copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             Icons.attach_money_rounded,
                             size: 14,
-                            color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text3,
+                            color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2,
                           ),
                         ],
                       ],
@@ -518,7 +518,7 @@ class _ShopPageState extends State<ShopPage> {
         child: Icon(icon,
             size: 14,
             color: disabled
-                ? AppTheme.text3.withValues(alpha: 0.3)
+                ? AppTheme.text2.withValues(alpha: 0.3)
                 : AppTheme.text1),
       ),
     );

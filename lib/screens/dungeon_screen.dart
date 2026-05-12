@@ -152,7 +152,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                   const SizedBox(height: 4),
                   Text(
                     'Conquer the abyss and hone your skills.',
-                    style: AppTheme.caption(),
+                    style: AppTheme.caption(color: AppTheme.text2),
                   ),
                 ],
               ),
@@ -342,7 +342,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'TRAINING',
-                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
@@ -438,7 +438,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'STORY',
-                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
@@ -536,7 +536,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     children: [
                                       Text(
                                         'PVP',
-                                        style: AppTheme.mono(color: AppTheme.text3, size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),

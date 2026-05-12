@@ -23,14 +23,6 @@ class _HomePageState extends State<HomePage> {
     return hour >= 22 || hour < 5;
   }
 
-  final bool _flipPlayer = false;
-  int _hitCount = 0;
-  double _cardHurtPulse = 0.0;
-  String _voiceLine = "Let's get those gains today!";
-  bool _showBubble = false;
-  Timer? _bubbleTimer;
-  Timer? _hitResetTimer;
-  Alignment _voiceAlign = Alignment.centerLeft;
   bool _isAutoSpawning = false;
 
   bool get _isMidnightHour {
@@ -90,56 +82,7 @@ class _HomePageState extends State<HomePage> {
     return 'Go To Sleep,';
   }
 
-  static const List<String> _lines = [
-    "Are we lifting or just scrolling?",
-    "Your muscles are buffering...",
-    "Sweat is just fat crying.",
-    "Gravity is your only enemy.",
-    "Biceps: Loading... 404 error.",
-    "I'm 100% pixels, 0% body fat.",
-    "Do you even lift, bro?",
-    "Don't stop, I'm watching.",
-    "My code is stronger than your squat.",
-    "Legacy is better than likes.",
-    "Earn that cheat meal.",
-    "I don't need rest, but you do.",
-    "Upgrade your body, not your phone.",
-    "Is that a pump or just lighting?",
-    "Winners don't make excuses.",
-    "I'm judging your form right now.",
-    "Put the phone down and push!",
-    "Your potential is infinite.",
-    "Character growth requires pain.",
-    "I'm digital, you're biological. Move!",
-  ];
 
-  static const List<String> _hurtLines = [
-    "Stop poking my polygons!",
-    "That's a technical foul!",
-    "My ego! It's bruised!",
-    "I'll remember this at level 100.",
-    "Reported for bullying a sprite.",
-    "Is this your cardio? Tapping?",
-    "My health bar is screaming.",
-    "Go fight a boss, not me!",
-    "Ouch! My pixels are leaking!",
-    "I'll remember this!",
-    "Hey! I'm on your team!",
-    "That wasn't in the tutorial!",
-    "Stop, or I'll delete your save!",
-    "You tap like a level 1.",
-    "My collision box isn't a toy!",
-    "I'm fragile! Handle with care!",
-    "Save the aggression for the iron!",
-    "Pixelated pain! It's real!",
-  ];
-
-  static const List<String> _stunnedLines = [
-    "Dizzy... so dizzy...",
-    "Brain.exe has stopped.",
-    "Seeing stars... many stars.",
-    "Overload! Rebooting!",
-  ];
 
   @override
   void initState() {
@@ -158,84 +101,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _bubbleTimer?.cancel();
-    _hitResetTimer?.cancel();
     super.dispose();
-  }
-
-  void _showVoiceLine({bool isHurt = false, bool isStunned = false}) {
-    _bubbleTimer?.cancel();
-    setState(() {
-      final list = isStunned ? _stunnedLines : (isHurt ? _hurtLines : _lines);
-      String newLine;
-      do {
-        newLine = list[Random().nextInt(list.length)];
-      } while (newLine == _voiceLine && list.length > 1);
-
-      _voiceLine = newLine;
-      final isLeft = Random().nextBool();
-      _voiceAlign = Alignment(
-        isLeft ? -0.85 : 0.85,
-        (Random().nextDouble() * 1.4) - 0.7,
-      );
-      _showBubble = true;
-    });
-    _bubbleTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted) setState(() => _showBubble = false);
-    });
-  }
-
-  bool get _isSleeping => _isNight && _playerAnim == 'Stunned';
-
-  void _onPlayerTap() async {
-    // If sleeping: play a silent hit and go back to sleep — no voice
-    if (_isSleeping) {
-      setState(() {
-        _cardHurtPulse = 1.0;
-        _playerAnim = ['Hit', 'HitUp'][Random().nextInt(2)];
-      });
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (mounted) setState(() => _cardHurtPulse = 0.0);
-      });
-      // The onComplete of the Player widget will return them to Stunned automatically
-      return;
-    }
-
-    // If non-sleep stunned (post-10-hit), do nothing
-    if (_playerAnim == 'Stunned') return;
-
-    _hitResetTimer?.cancel();
-    _showVoiceLine(isHurt: true);
-    _hitCount++;
-
-    setState(() => _cardHurtPulse = 1.0);
-
-    if (_hitCount >= 10) {
-      _hitCount = 0;
-      setState(() => _playerAnim = 'Stunned');
-      _showVoiceLine(isStunned: true);
-      await Future.delayed(const Duration(seconds: 5));
-      if (mounted) {
-        setState(() {
-          _playerAnim = _isNight ? 'Stunned' : 'Run';
-          _cardHurtPulse = 0.0;
-        });
-      }
-      return;
-    }
-
-    Future.delayed(const Duration(milliseconds: 150), () {
-      if (mounted && _playerAnim != 'Stunned') {
-        setState(() => _cardHurtPulse = 0.0);
-      }
-    });
-
-    _hitResetTimer = Timer(const Duration(milliseconds: 2500), () {
-      if (mounted) setState(() => _hitCount = 0);
-    });
-
-    final anims = ['Hit', 'HitUp'];
-    setState(() => _playerAnim = anims[Random().nextInt(anims.length)]);
   }
 
   @override
@@ -321,10 +187,7 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     border: Border.symmetric(
-                      horizontal: BorderSide(
-                        color: Color.lerp(AppTheme.accent, AppTheme.red.withValues(alpha: 0.5), _cardHurtPulse)!,
-                        width: 2.0,
-                      ),
+                      horizontal: BorderSide(color: AppTheme.accent, width: 2.0),
                     ),
                     boxShadow: [
                       BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 6)),
@@ -333,36 +196,6 @@ class _HomePageState extends State<HomePage> {
                   child: Stack(
                     clipBehavior: Clip.hardEdge,
                     children: [
-                      // Voice Overlay
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 300),
-                            opacity: _showBubble ? 1.0 : 0.0,
-                            child: AnimatedAlign(
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeOutBack,
-                              alignment: _voiceAlign,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                                child: Container(
-                                  constraints: const BoxConstraints(maxWidth: 110),
-                                  child: Text(
-                                    _voiceLine,
-                                    style: AppTheme.caption(color: AppTheme.text1).copyWith(
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                    textAlign: _voiceAlign.x < 0 ? TextAlign.left : TextAlign.right,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
                       // Ground Line
                       Positioned(
                         bottom: 30, left: 20, right: 20,
@@ -383,21 +216,14 @@ class _HomePageState extends State<HomePage> {
                         bottom: 30, left: 0, right: 0, height: 260,
                         child: Align(
                           alignment: Alignment.bottomCenter,
-                          child: GestureDetector(
-                            onTap: _onPlayerTap,
-                            behavior: HitTestBehavior.opaque,
-                            child: Transform.scale(
-                              scaleX: _flipPlayer ? -1 : 1,
-                              child: Player(
-                                animation: _playerAnim,
-                                fps: _playerAnim == 'Run' ? 12 : 8,
-                                size: 260,
-                                loop: _playerAnim == 'Run' || _playerAnim == 'Stunned' || _playerAnim == 'Idle',
-                                onComplete: () {
-                                  if (mounted) setState(() => _playerAnim = _isNight ? 'Stunned' : 'Run');
-                                },
-                              ),
-                            ),
+                          child: Player(
+                            animation: _playerAnim,
+                            fps: _playerAnim == 'Run' ? 12 : 8,
+                            size: 260,
+                            loop: _playerAnim == 'Run' || _playerAnim == 'Stunned' || _playerAnim == 'Idle',
+                            onComplete: () {
+                              if (mounted) setState(() => _playerAnim = _isNight ? 'Stunned' : 'Run');
+                            },
                           ),
                         ),
                       ),

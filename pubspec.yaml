@@ -13,7 +13,6 @@ dependencies:
   hive_flutter: ^1.1.0
   image_picker: ^1.1.0
   google_fonts: ^7.0.0
-  supabase_flutter: ^2.3.0
   connectivity_plus: ^5.0.0
   image_cropper: ^8.0.0
   flutter_local_notifications: ^17.1.0
@@ -70,8 +69,6 @@ flutter:
     - Assets/Player Model/LadderClimb/
     - Assets/Player Model/LadderClimbFinish/
     - Assets/Player Model/LadderClimbHorizontal/
-    - Assets/Player Model/LandingDust/
-    - Assets/Player Model/JumpDust/
     - Assets/Player Model/ThrowOverarm/
     - Assets/Player Model/ThrowUnderarm/
     - Assets/Rank Shields/

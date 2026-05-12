@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../main.dart';
 import '../widgets/chest_sprite.dart';
 import 'open_chest_screen.dart';
 import '../background.dart';
+import '../widgets/wood_background.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -42,7 +45,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LivelyBackground(
+    return WoodBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent, 
         body: Stack(
@@ -121,11 +124,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppTheme.accent.withValues(alpha: 0.1),
-                          AppTheme.glassBorder,
+                          AppTheme.isDark ? const Color(0xFF4B5563) : const Color(0xFF94A3B8),
+                          AppTheme.isDark ? const Color(0xFF1F2937) : const Color(0xFF475569),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppTheme.isDark ? Colors.black : Colors.white.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.5),
@@ -137,9 +144,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                   Container(
                     height: 12,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.glassBorder.withValues(alpha: 0.5),
+                      color: AppTheme.isDark ? Colors.black.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.3),
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
                     ),
                   ),
@@ -171,20 +178,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final slot = _slots[index];
 
     if (slot == null) {
-      return GestureDetector(
-        onTap: () {
-          AppShell.navigateTo(3); 
-          Navigator.pop(context); 
+      return DragTarget<int>(
+        onWillAccept: (from) => from != index,
+        onAccept: (from) => _onMove(from, index),
+        builder: (context, candidateData, rejectedData) {
+          return GestureDetector(
+            onTap: () {
+              AppShell.navigateTo(3);
+              Navigator.pop(context);
+            },
+            child: Opacity(
+              opacity: 0.15,
+              child: Container(
+                height: 104,
+                alignment: Alignment.bottomCenter,
+                padding: const EdgeInsets.only(bottom: 45),
+                child: Icon(Icons.add_circle_outline, color: AppTheme.text1, size: 30),
+              ),
+            ),
+          );
         },
-        child: Opacity(
-          opacity: 0.15,
-          child: Container(
-            height: 104,
-            alignment: Alignment.bottomCenter,
-            padding: const EdgeInsets.only(bottom: 25),
-            child: Icon(Icons.add_circle_outline, color: AppTheme.text3, size: 22),
-          ),
-        ),
       );
     }
 
@@ -192,56 +205,82 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final status = slot['status'] as String;
     final spriteType = type == 'wooden_chest' ? 'wooden' : type == 'iron_chest' ? 'iron' : 'gold';
 
-    return SGTouchable(
-      onTap: () {
-        if (status == 'locked') {
-          _showUnlockDialog(index, type);
-        } else if (status == 'unlocking') {
-          final skipCost = type == 'wooden_chest' ? 50 : type == 'iron_chest' ? 100 : 300;
-          _showSkipDialog(index, type, skipCost);
-        } else {
-          _openChest(index, type);
-        }
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          SizedBox(
-            height: 20,
-            child: Center(
-              child: _buildSlotFooter(status, index, type),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  width: 40,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: const BorderRadius.all(Radius.elliptical(40, 6)),
-                  ),
-                ),
-              ),
-              Hero(
-                tag: 'chest_$index',
-                child: ChestSprite(
-                  chestType: spriteType,
-                  animation: 'Idle',
-                  fps: status == 'ready' ? 12 : 8,
-                  size: 78,
-                ),
-              ),
-            ],
-          ),
-        ],
+    return LongPressDraggable<int>(
+      data: index,
+      delay: const Duration(milliseconds: 600),
+      feedback: _ShakingChest(spriteType: spriteType),
+      childWhenDragging: Opacity(opacity: 0.3, child: _buildSlotUI(index, type, status, spriteType)),
+      child: DragTarget<int>(
+        onWillAccept: (from) => from != index,
+        onAccept: (from) => _onMove(from, index),
+        builder: (context, candidate, rejected) {
+          return SGTouchable(
+            onTap: () {
+              if (status == 'locked') {
+                _showUnlockDialog(index, type);
+              } else if (status == 'unlocking') {
+                final skipCost = type == 'wooden_chest' ? 250 : type == 'iron_chest' ? 500 : 1500;
+                _showSkipDialog(index, type, skipCost);
+              } else {
+                _openChest(index, type);
+              }
+            },
+            child: _buildSlotUI(index, type, status, spriteType),
+          );
+        },
       ),
     );
+  }
+
+  Widget _buildSlotUI(int index, String type, String status, String spriteType) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SizedBox(
+          height: 28,
+          child: Center(
+            child: _buildSlotFooter(status, index, type),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: 40,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  borderRadius: const BorderRadius.all(Radius.elliptical(40, 6)),
+                ),
+              ),
+            ),
+            Hero(
+              tag: 'chest_$index',
+              child: ChestSprite(
+                chestType: spriteType,
+                animation: 'Idle',
+                fps: 8,
+                size: 78,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _onMove(int from, int to) {
+    final slots = Storage.getInventorySlots();
+    final item = slots[from];
+    slots[from] = slots[to];
+    slots[to] = item;
+    Storage.saveInventorySlots(slots);
+    _load();
+    HapticFeedback.mediumImpact();
   }
 
   Widget _buildSlotFooter(String status, int index, String type) {
@@ -253,12 +292,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: AppTheme.cyan.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(4),
           boxShadow: [
             BoxShadow(color: AppTheme.cyan.withValues(alpha: 0.3), blurRadius: 8),
           ],
         ),
-        child: Text('COLLECT',
+        child: Text('READY',
             style: AppTheme.label(color: Colors.white).copyWith(fontSize: 9)),
       );
     }
@@ -274,38 +313,28 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A0A0A),
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.isDark ? const Color(0xFF0A0A0A) : const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isUnlocking ? AppTheme.amber : AppTheme.glassBorder, 
+          color: isUnlocking ? AppTheme.amber : (AppTheme.isDark ? AppTheme.glassBorder : Colors.white.withValues(alpha: 0.2)), 
           width: 1.5
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isUnlocking ? Icons.timer : Icons.lock_outline, 
-            size: 11, 
-            color: isUnlocking ? AppTheme.amber : AppTheme.text3
-          ),
-          const SizedBox(width: 5),
-          Text(
-            timeStr, 
-            style: AppTheme.mono(
-              color: isUnlocking ? AppTheme.amber : AppTheme.text3, 
-              size: 10
-            )
-          ),
-        ],
+      child: Text(
+        timeStr, 
+        style: AppTheme.mono(
+          color: isUnlocking ? AppTheme.amber : AppTheme.text3, 
+          size: 11
+        ).copyWith(fontWeight: FontWeight.w900)
       ),
     );
   }
 
   String _formatDuration(Duration d) {
-    if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m';
-    if (d.inMinutes > 0) return '${d.inMinutes}m ${d.inSeconds % 60}s';
-    return '${d.inSeconds}s';
+    String h = d.inHours.toString().padLeft(2, '0');
+    String m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    String s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
   }
 
   void _showUnlockDialog(int index, String chestType) {
@@ -325,50 +354,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   void _showSkipDialog(int index, String chestType, int skipCost) {
-    final stats = Storage.getUserStats();
-    final hasCoins = stats.coins >= skipCost;
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => _GameDialog(
-        title: 'INSTANT UNLOCK',
-        child: Column(
-          children: [
-            Icon(Icons.bolt, color: AppTheme.amber, size: 64),
-            const SizedBox(height: 16),
-            Text('SPEED UP PROCESS?', style: AppTheme.h2()),
-            const SizedBox(height: 12),
-            Text(
-              'Sacrifice $skipCost T coins to instantly\nreveal the treasures within.',
-              textAlign: TextAlign.center,
-              style: AppTheme.body(),
-            ),
-            const SizedBox(height: 24),
-            SGButton(
-              label: hasCoins ? 'PAY $skipCost COINS' : 'INSUFFICIENT FUNDS',
-              icon: Icons.monetization_on_outlined,
-              onTap: hasCoins
-                  ? () {
-                      stats.coins -= skipCost;
-                      Storage.saveUserStats(stats);
-                      final slots = Storage.getInventorySlots();
-                      if (index < slots.length && slots[index] != null) {
-                        slots[index]!['status'] = 'ready';
-                        Storage.saveInventorySlots(slots);
-                      }
-                      Navigator.pop(ctx);
-                      _load();
-                    }
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            SGButton(
-              label: 'WAIT IT OUT',
-              outlined: true,
-              onTap: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _ChestSkipSheet(
+        index: index,
+        chestType: chestType,
+        skipCost: skipCost,
+        onDone: () => _load(),
       ),
     );
   }
@@ -414,7 +408,7 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
     final isIron = widget.chestType == 'iron_chest';
     _filledSegments = isWooden ? 1 : isIron ? 3 : 5;
     _name = isWooden ? 'Wooden Chest' : isIron ? 'Iron Chest' : 'Gold Chest';
-    _duration = isWooden ? '2h' : isIron ? '4h' : '8h';
+    _duration = isWooden ? '02:00:00' : isIron ? '04:00:00' : '08:00:00';
     _animateSegments();
   }
 
@@ -567,6 +561,78 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
   }
 }
 
+class _ChestSkipSheet extends StatelessWidget {
+  final int index;
+  final String chestType;
+  final int skipCost;
+  final VoidCallback onDone;
+
+  const _ChestSkipSheet({
+    required this.index,
+    required this.chestType,
+    required this.skipCost,
+    required this.onDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = Storage.getUserStats();
+    final hasCoins = stats.coins >= skipCost;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      decoration: BoxDecoration(
+        color: AppTheme.bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(color: AppTheme.line, width: 1.5),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          Text('INSTANT UNLOCK', style: AppTheme.h1().copyWith(letterSpacing: 2)),
+          const SizedBox(height: 12),
+          Text(
+            'Sacrifice $skipCost T coins to instantly\nreveal the treasures within.',
+            textAlign: TextAlign.center,
+            style: AppTheme.body(color: AppTheme.text2),
+          ),
+          const SizedBox(height: 32),
+          
+          SGButton(
+            label: hasCoins ? 'PAY $skipCost COINS' : 'INSUFFICIENT FUNDS',
+            icon: Icons.monetization_on_outlined,
+            onTap: hasCoins
+                ? () {
+                    stats.coins -= skipCost;
+                    Storage.saveUserStats(stats);
+                    final slots = Storage.getInventorySlots();
+                    if (index < slots.length && slots[index] != null) {
+                      slots[index]!['status'] = 'ready';
+                      Storage.saveInventorySlots(slots);
+                    }
+                    Navigator.pop(context);
+                    onDone();
+                  }
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GameDialog extends StatelessWidget {
   final String title;
   final Widget child;
@@ -601,6 +667,57 @@ class _GameDialog extends StatelessWidget {
             const SizedBox(height: 24),
             child,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShakingChest extends StatefulWidget {
+  final String spriteType;
+  const _ShakingChest({required this.spriteType});
+
+  @override
+  State<_ShakingChest> createState() => _ShakingChestState();
+}
+
+class _ShakingChestState extends State<_ShakingChest> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _shake;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 150))..repeat(reverse: true);
+    _shake = Tween<double>(begin: -0.05, end: 0.05).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: AnimatedBuilder(
+        animation: _shake,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: _shake.value,
+            child: Transform.scale(
+              scale: 1.2,
+              child: child,
+            ),
+          );
+        },
+        child: ChestSprite(
+          chestType: widget.spriteType,
+          animation: 'Idle',
+          fps: 12,
+          size: 90,
         ),
       ),
     );

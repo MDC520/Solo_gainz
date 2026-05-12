@@ -74,11 +74,11 @@ class _LivelyBackgroundState extends State<LivelyBackground>
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        const Color(0xFFFAFAFA),
-                        AppTheme.dark,
-                        const Color(0xFFF0F0F0),
+                        const Color(0xFFF1F5F9), // Slate 100
+                        AppTheme.black,          // Slate 200 (Silver Light)
+                        AppTheme.dark,           // Slate 300 (Silver Dark)
                       ],
-                      stops: const [0.0, 0.6, 1.0],
+                      stops: const [0.0, 0.4, 1.0],
                     ),
                   ),
                 ),

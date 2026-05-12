@@ -111,132 +111,123 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LivelyBackground(
-      isMoving: false,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          slivers: [
-            SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SGTouchable(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.line),
-                              ),
-                              child: Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
+    return AnimatedBuilder(
+      animation: AppTheme.isDarkNotifier,
+      builder: (context, _) => LivelyBackground(
+        isMoving: false,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverToBoxAdapter(
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SGTouchable(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.line),
                             ),
+                            child: Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
                           ),
-                          const SizedBox(width: 20),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Settings', style: AppTheme.h1().copyWith(fontSize: 32)),
-                              const SizedBox(height: 4),
-                              Text('App preferences & system', style: AppTheme.caption(color: AppTheme.text2)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Settings', style: AppTheme.h1().copyWith(fontSize: 32)),
+                            const SizedBox(height: 4),
+                            Text('App preferences & system', style: AppTheme.caption(color: AppTheme.text2)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const SGSectionHeader(title: 'Interface'),
-                SGCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingItem(
-                        icon: Icons.dark_mode_rounded,
-                        title: 'Dark Mode',
-                        subtitle: 'Enable Aura & Glass theme',
-                        color: AppTheme.purple,
-                        trailing: ValueListenableBuilder<bool>(
-                          valueListenable: AppTheme.isDarkNotifier,
-                          builder: (context, isDark, _) => CupertinoSwitch(
-                            value: isDark,
-                            activeTrackColor: AppTheme.accent,
-                            onChanged: (v) => AppTheme.toggleTheme(),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const SGSectionHeader(title: 'Interface'),
+                    SGCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          _buildSettingItem(
+                            icon: Icons.dark_mode_rounded,
+                            title: 'Dark Mode',
+                            subtitle: 'Enable Aura & Glass theme',
+                            color: AppTheme.purple,
+                            trailing: CupertinoSwitch(
+                              value: AppTheme.isDark,
+                              activeTrackColor: AppTheme.accent,
+                              onChanged: (_) => AppTheme.toggleTheme(),
+                            ),
                           ),
-                        ),
+                          _buildDivider(),
+                          _buildSettingItem(
+                            icon: Icons.auto_awesome_motion,
+                            title: 'Floating Interface',
+                            subtitle: 'Enable beautiful aura effects',
+                            color: AppTheme.cyan,
+                            trailing: CupertinoSwitch(
+                              value: Storage.isNavbarFloating(),
+                              activeTrackColor: AppTheme.accent,
+                              onChanged: (v) async {
+                                await Storage.setNavbarFloating(v);
+                                if (mounted) setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                      _buildDivider(),
-                      _buildSettingItem(
-                        icon: Icons.auto_awesome_motion,
-                        title: 'Floating Interface',
-                        subtitle: 'Enable beautiful aura effects',
-                        color: AppTheme.cyan,
-                        trailing: CupertinoSwitch(
-                          value: Storage.isNavbarFloating(),
-                          activeTrackColor: AppTheme.accent,
-                          onChanged: (v) async {
-                            await Storage.setNavbarFloating(v);
-                            if (mounted) setState(() {});
-                          },
-                        ),
+                    ),
+                    const SizedBox(height: 32),
+                    const SGSectionHeader(title: 'System'),
+                    SGCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          _buildSettingItem(
+                            icon: Icons.help_outline,
+                            title: 'Support',
+                            subtitle: 'Contact us or view FAQs',
+                            color: AppTheme.amber,
+                            onTap: _showHelp,
+                          ),
+                          _buildDivider(),
+                          _buildSettingItem(
+                            icon: Icons.info_outline,
+                            title: 'About',
+                            subtitle: 'Version 1.0.0-Alpha',
+                            color: AppTheme.purple,
+                            onTap: _launchAbout,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 60),
+                    Center(
+                      child: Text(
+                        'All progress is stored locally on this device.',
+                        style: AppTheme.caption(color: AppTheme.muted),
+                      ),
+                    ),
+                  ]),
                 ),
-                
-                const SizedBox(height: 32),
-                const SGSectionHeader(title: 'System'),
-                SGCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingItem(
-                        icon: Icons.help_outline,
-                        title: 'Support',
-                        subtitle: 'Contact us or view FAQs',
-                        color: AppTheme.amber,
-                        onTap: _showHelp,
-                      ),
-                      _buildDivider(),
-                      _buildSettingItem(
-                        icon: Icons.info_outline,
-                        title: 'About',
-                        subtitle: 'Version 1.0.0-Alpha',
-                        color: AppTheme.purple,
-                        onTap: _launchAbout,
-                      ),
-                    ],
-                  ),
-                ),
-
-
-
-                const SizedBox(height: 60),
-                Center(
-                  child: Text(
-                    'All progress is stored locally on this device.',
-                    style: AppTheme.caption(color: AppTheme.muted),
-                  ),
-                ),
-              ]),
-            ),
+              ),
+            ],
           ),
-          ],
         ),
       ),
     );

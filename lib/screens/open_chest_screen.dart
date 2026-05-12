@@ -1,7 +1,10 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
+import '../widgets/wood_background.dart';
 
 class OpenChestScreen extends StatefulWidget {
   final int slotIndex;
@@ -19,173 +22,127 @@ class OpenChestScreen extends StatefulWidget {
 
 class _OpenChestScreenState extends State<OpenChestScreen>
     with TickerProviderStateMixin {
-  // -- State --
+
   int _rewardCoins = 0;
   bool _isMaxReward = false;
   String _spriteAnimation = 'Idle';
-
-  int _tapsRemaining = 3; // Must tap 3 times to open
   bool _chestOpened = false;
   bool _showClaimButton = false;
+  bool _didStart = false;
 
-  // -- Controllers --
+  // Ground sits at 62% screen height
+  static const double _groundFraction = 0.62;
+  final double _chestSize = 160.0;
+
   late AnimationController _dropCtrl;
-  late AnimationController _shakeCtrl;
   late AnimationController _burstCtrl;
-  late AnimationController _floatCtrl;
+  late AnimationController _dustCtrl;
   late AnimationController _particlesCtrl;
 
-  // -- Animations --
+  // 0 = above screen, 1 = landed
+  late Animation<double> _dropProgress;
   late Animation<double> _dropScale;
-  late Animation<Alignment> _dropAlign;
-
+  late Animation<double> _dustOpacity;
   late Animation<double> _flashOpacity;
   late Animation<double> _rewardScale;
   late Animation<double> _rewardSlide;
-  late Animation<double> _floatAnim;
 
   @override
   void initState() {
     super.initState();
     _generateReward();
     _setupAnimations();
-    _startDropSequence();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didStart) {
+      _didStart = true;
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) {
+          _dropCtrl.forward().then((_) {
+            if (!mounted) return;
+            // Trigger dust on land
+            _dustCtrl.forward();
+            HapticFeedback.heavyImpact();
+          });
+        }
+      });
+    }
   }
 
   void _generateReward() {
     final rng = Random();
     final type = widget.chestType;
-
     if (type == 'wooden_chest') {
       final roll = rng.nextDouble();
-      if (roll < 0.60) {
-        _rewardCoins = 6 + rng.nextInt(45);
-      } else if (roll < 0.85) {
-        _rewardCoins = 51 + rng.nextInt(50);
-      } else if (roll < 0.96) {
-        _rewardCoins = 101 + rng.nextInt(150);
-      } else if (roll < 0.995) {
-        _rewardCoins = 251 + rng.nextInt(148);
-      } else {
-        _rewardCoins = 399;
-      }
+      if (roll < 0.60)       _rewardCoins = 6   + rng.nextInt(45);
+      else if (roll < 0.85)  _rewardCoins = 51  + rng.nextInt(50);
+      else if (roll < 0.96)  _rewardCoins = 101 + rng.nextInt(150);
+      else if (roll < 0.995) _rewardCoins = 251 + rng.nextInt(148);
+      else                   _rewardCoins = 399;
     } else if (type == 'iron_chest') {
       final roll = rng.nextDouble();
-      if (roll < 0.45) {
-        _rewardCoins = 6 + rng.nextInt(45);
-      } else if (roll < 0.75) {
-        _rewardCoins = 51 + rng.nextInt(50);
-      } else if (roll < 0.92) {
-        _rewardCoins = 101 + rng.nextInt(150);
-      } else if (roll < 0.99) {
-        _rewardCoins = 251 + rng.nextInt(148);
-      } else {
-        _rewardCoins = 399;
-      }
+      if (roll < 0.45)       _rewardCoins = 6   + rng.nextInt(45);
+      else if (roll < 0.75)  _rewardCoins = 51  + rng.nextInt(50);
+      else if (roll < 0.92)  _rewardCoins = 101 + rng.nextInt(150);
+      else if (roll < 0.99)  _rewardCoins = 251 + rng.nextInt(148);
+      else                   _rewardCoins = 399;
     } else {
-      // Gold Chest Rewards: 500 to 5000 T-Coins
       final roll = rng.nextDouble();
-      if (roll < 0.40) {
-        _rewardCoins = 500 + rng.nextInt(500);
-      } else if (roll < 0.70) {
-        _rewardCoins = 1001 + rng.nextInt(1000);
-      } else if (roll < 0.90) {
-        _rewardCoins = 2001 + rng.nextInt(1500);
-      } else if (roll < 0.98) {
-        _rewardCoins = 3501 + rng.nextInt(1498);
-      } else {
-        _rewardCoins = 5000;
-      }
+      if (roll < 0.40)       _rewardCoins = 500  + rng.nextInt(500);
+      else if (roll < 0.70)  _rewardCoins = 1001 + rng.nextInt(1000);
+      else if (roll < 0.90)  _rewardCoins = 2001 + rng.nextInt(1500);
+      else if (roll < 0.98)  _rewardCoins = 3501 + rng.nextInt(1498);
+      else                   _rewardCoins = 5000;
     }
-    _isMaxReward = (type == 'gold_chest') ? _rewardCoins == 5000 : _rewardCoins == 399;
+    _isMaxReward = (widget.chestType == 'gold_chest') ? _rewardCoins == 5000 : _rewardCoins == 399;
   }
 
   void _setupAnimations() {
-    // 1. Drop In
-    _dropCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1400));
-    _dropAlign = AlignmentTween(
-            begin: const Alignment(0, -2.0), end: const Alignment(0, 0.7))
+    // Drop: progress 0→1 (0=off screen top, 1=landed)
+    _dropCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _dropProgress = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(parent: _dropCtrl, curve: Curves.bounceOut));
-    _dropScale = Tween<double>(begin: 0.2, end: 1.0)
-        .animate(CurvedAnimation(parent: _dropCtrl, curve: Curves.easeOutBack));
+    _dropScale = Tween<double>(begin: 0.3, end: 1.0)
+        .animate(CurvedAnimation(parent: _dropCtrl, curve: Curves.easeOut));
 
-    // 2. Float while waiting for tap (Disabled as per user request for grounded feel)
-    _floatCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1500));
-    _floatAnim = ConstantTween<double>(0.0).animate(_floatCtrl);
+    // Dust puff
+    _dustCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _dustOpacity = Tween<double>(begin: 1.0, end: 0.0)
+        .animate(CurvedAnimation(parent: _dustCtrl, curve: Curves.easeOut));
 
-    // 3. Shake per tap
-    _shakeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 150));
-
-    // 4. Burst and Reveal (The explosion!)
-    _burstCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2400));
-
+    // Burst open
+    _burstCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
     _flashOpacity = TweenSequence([
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeIn)),
-          weight: 10),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 1.0, end: 0.0)
-              .chain(CurveTween(curve: Curves.easeOut)),
-          weight: 20),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 10),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeOut)), weight: 20),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 70),
     ]).animate(_burstCtrl);
+    _rewardScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _burstCtrl, curve: const Interval(0.25, 0.6, curve: Curves.elasticOut)));
+    _rewardSlide = Tween<double>(begin: 60.0, end: -60.0).animate(
+        CurvedAnimation(parent: _burstCtrl, curve: const Interval(0.25, 0.6, curve: Curves.easeOutBack)));
 
-    _rewardScale = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-        parent: _burstCtrl,
-        curve: const Interval(0.25, 0.6, curve: Curves.elasticOut)));
-
-    _rewardSlide = Tween<double>(begin: 80.0, end: -120.0).animate(
-        CurvedAnimation(
-            parent: _burstCtrl,
-            curve: const Interval(0.25, 0.6, curve: Curves.easeOutBack)));
-
-    // 5. Particles continuously firing after burst
-    _particlesCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 4000));
-  }
-
-  Future<void> _startDropSequence() async {
-    await _dropCtrl.forward();
+    // Particles after burst
+    _particlesCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 4000));
   }
 
   void _onChestTap() {
     if (_chestOpened || !_dropCtrl.isCompleted) return;
-
-    setState(() {
-      _tapsRemaining--;
-    });
-
-    if (_tapsRemaining > 0) {
-      // Rapid shake
-      _shakeCtrl.forward(from: 0).then((_) {
-        if (mounted && !_chestOpened) _shakeCtrl.reverse();
-      });
-    } else {
-      _openChest();
-    }
+    _openChest();
   }
 
   Future<void> _openChest() async {
     if (_chestOpened) return;
-    setState(() {
-      _chestOpened = true;
-    });
-
-    _floatCtrl.stop();
+    setState(() => _chestOpened = true);
+    HapticFeedback.mediumImpact();
     _burstCtrl.forward();
-    _particlesCtrl.repeat(); // let the particles rain
-
-    // Switch to open sprite at the flash peak
-    Future.delayed(const Duration(milliseconds: 240), () {
+    _particlesCtrl.repeat();
+    Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) setState(() => _spriteAnimation = 'Open');
     });
-
-    // Show claim button near the end of burst
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) setState(() => _showClaimButton = true);
     });
@@ -202,293 +159,417 @@ class _OpenChestScreenState extends State<OpenChestScreen>
   @override
   void dispose() {
     _dropCtrl.dispose();
-    _shakeCtrl.dispose();
     _burstCtrl.dispose();
-    _floatCtrl.dispose();
+    _dustCtrl.dispose();
     _particlesCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final spriteType = widget.chestType == 'wooden_chest'
-        ? 'wooden'
-        : widget.chestType == 'iron_chest'
-            ? 'iron'
-            : 'gold';
-    final isWooden = widget.chestType == 'wooden_chest';
-    final isIron = widget.chestType == 'iron_chest';
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppTheme.isDarkNotifier,
+      builder: (context, isDark, _) {
+        final spriteType = widget.chestType == 'wooden_chest' ? 'wooden'
+            : widget.chestType == 'iron_chest' ? 'iron' : 'gold';
+        final glowColor = widget.chestType == 'wooden_chest' ? AppTheme.amber
+            : widget.chestType == 'iron_chest' ? AppTheme.cyan : AppTheme.purple;
 
-    final Color intenseGlow = isWooden
-        ? AppTheme.amber
-        : isIron
-            ? AppTheme.cyan
-            : AppTheme.purple;
+        return PopScope(
+          canPop: false,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: WoodBackground(
+              child: LayoutBuilder(builder: (context, constraints) {
+                final double h = constraints.maxHeight;
+                final double w = constraints.maxWidth;
 
-    // ignore: deprecated_member_use
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        backgroundColor: Colors.black, // true black for contrast
-        body: Stack(
-          alignment: Alignment.center,
-          children: [
-            // No background light rays (removed)
+                // Ground sits at groundFraction of screen height
+                final double groundY = h * _groundFraction;
 
-            // Particle burst (after open) - Keeping particles but making them less "glowy"
-            if (_chestOpened)
-              AnimatedBuilder(
-                animation: _particlesCtrl,
-                builder: (context, _) {
-                  return CustomPaint(
-                    size: Size.infinite,
-                    painter: _PremiumBurstPainter(
-                      progress: _particlesCtrl.value,
-                      color: intenseGlow.withValues(alpha: 0.5),
-                    ),
-                  );
-                },
-              ),
+                // When fully landed, chest bottom = ground, so chest center = groundY - chestSize/2
+                final double landedCenterY = groundY - _chestSize / 2;
 
-            // The Chest (and tap interaction)
-            AnimatedBuilder(
-              animation: Listenable.merge(
-                  [_dropCtrl, _floatCtrl, _shakeCtrl, _burstCtrl]),
-              builder: (context, _) {
-                // Drop alignment and float
-                final currentAlign = _dropAlign.value;
-                double currentScale = _dropScale.value;
+                // Start position: chest center far above screen
+                final double startCenterY = -_chestSize;
 
-                // Shake calculation
-                double shakeX = 0;
-                if (!_chestOpened && _shakeCtrl.isAnimating) {
-                  shakeX = sin(_shakeCtrl.value * pi * 4) * 8.0;
-                  currentScale += sin(_shakeCtrl.value * pi) * 0.05; // bulge
-                }
+                return Stack(
+                  children: [
 
-                return Align(
-                  alignment: currentAlign,
-                  child: Transform.translate(
-                    offset: Offset(shakeX, _chestOpened ? 0 : _floatAnim.value),
-                    child: Transform.scale(
-                      scale: currentScale,
-                      child: GestureDetector(
-                        onTap: _onChestTap,
-                        behavior: HitTestBehavior.opaque,
-                        child: ChestSprite(
-                          chestType: spriteType,
-                          animation: _spriteAnimation,
-                          fps: _spriteAnimation == 'Open' ? 14 : 10,
-                          size: 180,
-                          playOnce: _spriteAnimation == 'Open',
+                    // ── DARK GROUND (below ground line) ──────────────────────
+                    Positioned(
+                      top: groundY,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.85),
+                              Colors.black.withValues(alpha: 0.97),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
 
-            // Instructional Text
-            if (!_chestOpened && _dropCtrl.isCompleted)
-              Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.25,
-                child: AnimatedBuilder(
-                  animation: _floatCtrl,
-                  builder: (context, _) => Opacity(
-                    opacity: 0.5 +
-                        (sin(_floatCtrl.value) * 0.5 + 0.5) *
-                            0.5, // 0.5 to 1.0 pulse
-                    child: Column(
-                      children: [
-                        Text(
-                          _tapsRemaining > 1
-                              ? 'TAP TO UNLOCK'
-                              : 'ONE MORE TAP!',
-                          style: GoogleFonts.inter(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 3,
+                    // ── GROUND SHIMMER LINE ───────────────────────────────────
+                    Positioned(
+                      top: groundY,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                            Colors.transparent,
+                            isDark
+                                ? Colors.white.withValues(alpha: 0.6)
+                                : Colors.white.withValues(alpha: 0.4),
+                            isDark
+                                ? Colors.white.withValues(alpha: 0.6)
+                                : Colors.white.withValues(alpha: 0.4),
+                            Colors.transparent,
+                          ], stops: const [0.0, 0.3, 0.7, 1.0]),
+                        ),
+                      ),
+                    ),
+
+                    // ── ANIMATED: CHEST + REFLECTION ─────────────────────────
+                    AnimatedBuilder(
+                      animation: _dropCtrl,
+                      builder: (context, _) {
+                        final double t = _dropProgress.value; // 0→1
+                        final double scale = _dropScale.value;
+
+                        // Current chest center Y (lerp from off-screen to landed)
+                        final double chestCenterY = startCenterY + t * (landedCenterY - startCenterY);
+                        final double chestTop = chestCenterY - _chestSize / 2;
+
+                        // Mirror reflection: same distance below ground as chest is above
+                        // chest center distance above ground = groundY - chestCenterY
+                        // reflection center = groundY + (groundY - chestCenterY)
+                        final double reflCenterY = 2 * groundY - chestCenterY;
+                        final double reflTop = reflCenterY - _chestSize / 2;
+
+                        // Reflection opacity fades with distance from ground
+                        final double distFromGround = (groundY - chestCenterY).abs();
+                        final double maxDist = (groundY - startCenterY).abs();
+                        final double reflOpacity = (1 - distFromGround / maxDist) * 0.25;
+
+                        return Stack(
+                          children: [
+
+                            // Reflection (below ground, flipped vertically)
+                            Positioned(
+                              top: reflTop,
+                              left: w / 2 - _chestSize / 2,
+                              child: Opacity(
+                                opacity: reflOpacity.clamp(0.0, 0.25),
+                                child: Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.diagonal3Values(scale, -scale * 0.5, 1.0),
+                                  child: ChestSprite(
+                                    chestType: spriteType,
+                                    animation: _spriteAnimation,
+                                    fps: 8,
+                                    size: _chestSize,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Oval ground shadow (always on ground line)
+                            Positioned(
+                              top: groundY - 8,
+                              left: w / 2 - 55 * scale,
+                              child: Container(
+                                width: 110 * scale,
+                                height: 16 * scale,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.black.withValues(alpha: 0.55 * scale),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      blurRadius: 18,
+                                      spreadRadius: 6,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // The Chest
+                            Positioned(
+                              top: chestTop,
+                              left: w / 2 - _chestSize / 2,
+                              child: Transform.scale(
+                                scale: scale,
+                                child: GestureDetector(
+                                  onTap: _onChestTap,
+                                  behavior: HitTestBehavior.opaque,
+                                  child: ChestSprite(
+                                    chestType: spriteType,
+                                    animation: _spriteAnimation,
+                                    fps: _spriteAnimation == 'Open' ? 14 : 10,
+                                    size: _chestSize,
+                                    playOnce: _spriteAnimation == 'Open',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    // ── DUST PUFF ON LANDING ──────────────────────────────────
+                    AnimatedBuilder(
+                      animation: _dustCtrl,
+                      builder: (context, _) {
+                        if (!_dustCtrl.isAnimating && !_dustCtrl.isCompleted) {
+                          return const SizedBox.shrink();
+                        }
+                        return Positioned(
+                          top: groundY - 20,
+                          left: 0,
+                          right: 0,
+                          child: Opacity(
+                            opacity: _dustOpacity.value,
+                            child: CustomPaint(
+                              size: Size(w, 80),
+                              painter: _DustPainter(
+                                progress: _dustCtrl.value,
+                                cx: w / 2,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // ── PARTICLES (after burst) ───────────────────────────────
+                    if (_chestOpened)
+                      AnimatedBuilder(
+                        animation: _particlesCtrl,
+                        builder: (context, _) => CustomPaint(
+                          size: Size(w, h),
+                          painter: _BurstPainter(
+                            progress: _particlesCtrl.value,
+                            color: glowColor,
+                            originY: groundY,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                              3,
-                              (index) => Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: index >= (3 - _tapsRemaining)
-                                            ? Colors.white24
-                                            : intenseGlow,
-                                      ),
-                                    ),
-                                  )),
+                      ),
+
+                    // ── WHITE FLASH ───────────────────────────────────────────
+                    AnimatedBuilder(
+                      animation: _burstCtrl,
+                      builder: (context, _) => IgnorePointer(
+                        child: Opacity(
+                          opacity: _flashOpacity.value,
+                          child: Container(color: Colors.white),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
 
-            // White Flash Overlay (Explosion)
-            AnimatedBuilder(
-              animation: _burstCtrl,
-              builder: (context, _) => IgnorePointer(
-                child: Opacity(
-                  opacity: _flashOpacity.value,
-                  child: Container(color: Colors.white),
-                ),
-              ),
-            ),
-
-            // The Reward (Floats up from the chest)
-            if (_chestOpened)
-              AnimatedBuilder(
-                animation: _burstCtrl,
-                builder: (context, _) {
-                  return Align(
-                    alignment: Alignment.center,
-                    child: Transform.translate(
-                      offset: Offset(0, _rewardSlide.value),
-                      child: Transform.scale(
-                        scale: _rewardScale.value,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_isMaxReward) ...[
-                              Text('★ JACKPOT ★',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.amber,
-                                    letterSpacing: 4,
-                                  )),
-                              const SizedBox(height: 8),
-                            ] else ...[
-                              Text('YOU FOUND',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white70,
-                                    letterSpacing: 2,
-                                  )),
-                              const SizedBox(height: 8),
-                            ],
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
+                    // ── TAP HINT ─────────────────────────────────────────────
+                    if (!_chestOpened)
+                      AnimatedBuilder(
+                        animation: _dropCtrl,
+                        builder: (context, _) {
+                          if (!_dropCtrl.isCompleted) return const SizedBox.shrink();
+                          return Positioned(
+                            bottom: h * 0.18,
+                            left: 0, right: 0,
+                            child: Column(
                               children: [
-                                Icon(Icons.generating_tokens_rounded,
-                                    size: 48, color: AppTheme.amber),
-                                const SizedBox(width: 12),
                                 Text(
-                                  '+$_rewardCoins',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 64,
+                                  'TAP TO REVEAL',
+                                  textAlign: TextAlign.center,
+                                  style: AppTheme.h2(color: AppTheme.white).copyWith(
+                                    fontSize: 22,
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    height: 1.0,
+                                    letterSpacing: 5,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Center(
+                                  child: Container(
+                                    width: 48, height: 4,
+                                    decoration: BoxDecoration(
+                                      color: glowColor,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
+                          );
+                        },
+                      ),
+
+                    // ── REWARD TEXT ───────────────────────────────────────────
+                    if (_chestOpened)
+                      AnimatedBuilder(
+                        animation: _burstCtrl,
+                        builder: (context, _) => Positioned(
+                          top: h * 0.08,
+                          left: 0, right: 0,
+                          child: Transform.translate(
+                            offset: Offset(0, _rewardSlide.value),
+                            child: Transform.scale(
+                              scale: _rewardScale.value,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _isMaxReward ? '★ JACKPOT ★' : 'YOU FOUND',
+                                    textAlign: TextAlign.center,
+                                    style: AppTheme.h2(
+                                      color: _isMaxReward ? AppTheme.amber : AppTheme.text2,
+                                    ).copyWith(
+                                      fontSize: _isMaxReward ? 26 : 18,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.generating_tokens_rounded, size: 52, color: AppTheme.amber),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        '+$_rewardCoins',
+                                        style: AppTheme.h1(color: AppTheme.white).copyWith(
+                                          fontSize: 72,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // ── COLLECT BUTTON ────────────────────────────────────────
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOutBack,
+                      bottom: _showClaimButton ? 40 : -120,
+                      left: 24, right: 24,
+                      child: SGTouchable(
+                        onTap: _claim,
+                        child: Container(
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppTheme.accent,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.accent.withValues(alpha: 0.45),
+                                blurRadius: 24,
+                                spreadRadius: 4,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              'COLLECT REWARD',
+                              style: AppTheme.h2(color: Colors.white).copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
 
-            // Claim Button
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutBack,
-              bottom: _showClaimButton ? 50 : -100,
-              child: SGTouchable(
-                onTap: _claim,
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'COLLECT REWARD',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+                  ],
+                );
+              }),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-// Custom painter for the premium explosion particles
-class _PremiumBurstPainter extends CustomPainter {
-  final double progress; // 0.0 to 1.0 repeating
-  final Color color;
+// ── Dust Puff Painter ─────────────────────────────────────────────────────────
+class _DustPainter extends CustomPainter {
+  final double progress; // 0 → 1
+  final double cx;
 
-  _PremiumBurstPainter({required this.progress, required this.color});
+  _DustPainter({required this.progress, required this.cx});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Firing particles outwards from center
-    final paint = Paint()
-      ..style = PaintingStyle.fill
-      ..strokeCap = StrokeCap.round;
+    final rng = Random(7);
+    final paint = Paint()..style = PaintingStyle.fill;
 
-    final center = Offset(size.width * 0.5, size.height * 0.5);
-    final random = Random(42); // fixed seed for consistent rays
+    for (int i = 0; i < 24; i++) {
+      final side = i % 2 == 0 ? 1 : -1; // spread left & right
+      final speed = 0.4 + rng.nextDouble() * 0.6;
+      final angle = (rng.nextDouble() * 40 - 20) * pi / 180; // mostly horizontal
+      final dist = progress * (40 + rng.nextDouble() * 80) * speed;
+      final rise = progress * (10 + rng.nextDouble() * 30) * progress; // arc upward then fall
+      
+      final dx = cx + side * dist * cos(angle);
+      final dy = size.height * 0.6 - rise + progress * progress * 20;
+      final radius = (3 + rng.nextDouble() * 6) * (1 - progress);
+      final opacity = (1 - progress) * (0.4 + rng.nextDouble() * 0.4);
 
-    for (int i = 0; i < 40; i++) {
-      final angle = random.nextDouble() * pi * 2;
-      // We use speed and offset so particles appear at different times during the progress loop
-      final speed = 0.5 + random.nextDouble() * 1.5; // distance modifier
-      final delay = random.nextDouble();
-
-      // particle's local time [0.0 - 1.0]
-      double localT = (progress + delay) % 1.0;
-
-      // smooth fade out
-      final opacity = (1.0 - localT) * (random.nextDouble() * 0.6 + 0.4);
-
-      // Calculate position (moving outwards)
-      final dist = localT * (size.width * 0.8) * speed;
-      final dx = center.dx + cos(angle) * dist;
-      final dy = center.dy + sin(angle) * dist;
-
-      paint.color = i % 3 == 0
-          ? Colors.white.withValues(alpha: opacity)
-          : color.withValues(alpha: opacity);
-
-      // size decreases as it moves outward
-      final radius = (3.0 + random.nextDouble() * 3.0) * (1.0 - localT);
-
-      canvas.drawCircle(Offset(dx, dy), radius, paint);
+      paint.color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0));
+      canvas.drawCircle(Offset(dx, dy), radius.clamp(0.5, 12), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _PremiumBurstPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _DustPainter old) => old.progress != progress;
+}
+
+// ── Burst Painter ─────────────────────────────────────────────────────────────
+class _BurstPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double originY;
+
+  _BurstPainter({required this.progress, required this.color, required this.originY});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, originY);
+    final rng = Random(42);
+
+    for (int i = 0; i < 50; i++) {
+      final angle = rng.nextDouble() * pi * 2;
+      final speed = 0.6 + rng.nextDouble() * 1.4;
+      final delay = rng.nextDouble();
+      final localT = (progress + delay) % 1.0;
+      final opacity = (1.0 - localT) * (rng.nextDouble() * 0.7 + 0.3);
+      final dist = localT * size.width * 0.6 * speed;
+      final dx = center.dx + cos(angle) * dist;
+      final dy = center.dy + sin(angle) * dist;
+      paint.color = (i % 3 == 0 ? Colors.white : color).withValues(alpha: opacity.clamp(0.0, 1.0));
+      final radius = (4.0 + rng.nextDouble() * 4.0) * (1.0 - localT);
+      canvas.drawCircle(Offset(dx, dy), radius.clamp(0.1, 10.0), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BurstPainter old) => true;
 }
