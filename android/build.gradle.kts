@@ -42,14 +42,21 @@ tasks.register<Delete>("clean") {
 }
 
 subprojects {
-    tasks.withType<JavaCompile>().configureEach {
-        options.compilerArgs.add("-Xlint:-options")
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
+    val configureTasks = Action<Project> {
+        tasks.withType<JavaCompile>().configureEach {
+            options.compilerArgs.add("-Xlint:-options")
+            sourceCompatibility = "17"
+            targetCompatibility = "17"
         }
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
+            }
+        }
+    }
+    if (project.state.executed) {
+        configureTasks.execute(project)
+    } else {
+        project.afterEvaluate(configureTasks)
     }
 }

@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/storage.dart';
 import '../theme/theme.dart';
-import '../background.dart';
+import '../theme/background.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -188,6 +188,32 @@ class _SettingsPageState extends State<SettingsPage> {
                                 if (mounted) setState(() {});
                               },
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    const SGSectionHeader(title: 'App Customization'),
+                    SGCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          _buildSettingItem(
+                            icon: Icons.grid_view_rounded,
+                            title: 'Dark Icon (Default)',
+                            subtitle: 'Classic Solo Gainz aesthetic',
+                            color: AppTheme.purple,
+                            trailing: Storage.getAppIcon() == 'DarkIcon' ? Icon(Icons.check_circle, color: AppTheme.accent) : null,
+                            onTap: () => AppTheme.switchAppIcon('DarkIcon'),
+                          ),
+                          _buildDivider(),
+                          _buildSettingItem(
+                            icon: Icons.grid_view_outlined,
+                            title: 'Light Icon',
+                            subtitle: 'Clean white aesthetic',
+                            color: AppTheme.cyan,
+                            trailing: Storage.getAppIcon() == 'LightIcon' ? Icon(Icons.check_circle, color: AppTheme.accent) : null,
+                            onTap: () => AppTheme.switchAppIcon('LightIcon'),
                           ),
                         ],
                       ),

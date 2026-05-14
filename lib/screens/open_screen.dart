@@ -1,26 +1,24 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
-import '../widgets/wood_background.dart';
+import '../theme/background.dart';
 
-class OpenChestScreen extends StatefulWidget {
+class OpenScreen extends StatefulWidget {
   final int slotIndex;
   final String chestType;
 
-  const OpenChestScreen({
+  const OpenScreen({
     super.key,
     required this.slotIndex,
     required this.chestType,
   });
 
   @override
-  State<OpenChestScreen> createState() => _OpenChestScreenState();
+  State<OpenScreen> createState() => _OpenScreenState();
 }
 
-class _OpenChestScreenState extends State<OpenChestScreen>
+class _OpenScreenState extends State<OpenScreen>
     with TickerProviderStateMixin {
 
   int _rewardCoins = 0;
@@ -77,22 +75,25 @@ class _OpenChestScreenState extends State<OpenChestScreen>
     final type = widget.chestType;
     if (type == 'wooden_chest') {
       final roll = rng.nextDouble();
-      if (roll < 0.60)       _rewardCoins = 6   + rng.nextInt(45);
-      else if (roll < 0.85)  _rewardCoins = 51  + rng.nextInt(50);
+      if (roll < 0.60) {
+        _rewardCoins = 6   + rng.nextInt(45);
+      } else if (roll < 0.85)  _rewardCoins = 51  + rng.nextInt(50);
       else if (roll < 0.96)  _rewardCoins = 101 + rng.nextInt(150);
       else if (roll < 0.995) _rewardCoins = 251 + rng.nextInt(148);
       else                   _rewardCoins = 399;
     } else if (type == 'iron_chest') {
       final roll = rng.nextDouble();
-      if (roll < 0.45)       _rewardCoins = 6   + rng.nextInt(45);
-      else if (roll < 0.75)  _rewardCoins = 51  + rng.nextInt(50);
+      if (roll < 0.45) {
+        _rewardCoins = 6   + rng.nextInt(45);
+      } else if (roll < 0.75)  _rewardCoins = 51  + rng.nextInt(50);
       else if (roll < 0.92)  _rewardCoins = 101 + rng.nextInt(150);
       else if (roll < 0.99)  _rewardCoins = 251 + rng.nextInt(148);
       else                   _rewardCoins = 399;
     } else {
       final roll = rng.nextDouble();
-      if (roll < 0.40)       _rewardCoins = 500  + rng.nextInt(500);
-      else if (roll < 0.70)  _rewardCoins = 1001 + rng.nextInt(1000);
+      if (roll < 0.40) {
+        _rewardCoins = 500  + rng.nextInt(500);
+      } else if (roll < 0.70)  _rewardCoins = 1001 + rng.nextInt(1000);
       else if (roll < 0.90)  _rewardCoins = 2001 + rng.nextInt(1500);
       else if (roll < 0.98)  _rewardCoins = 3501 + rng.nextInt(1498);
       else                   _rewardCoins = 5000;
@@ -179,7 +180,8 @@ class _OpenChestScreenState extends State<OpenChestScreen>
           canPop: false,
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            body: WoodBackground(
+            body: LivelyBackground(
+              mode: LivelyBackgroundMode.wood,
               child: LayoutBuilder(builder: (context, constraints) {
                 final double h = constraints.maxHeight;
                 final double w = constraints.maxWidth;

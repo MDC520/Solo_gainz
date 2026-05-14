@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:ui';
-import 'background.dart';
+import 'theme/background.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -18,10 +18,10 @@ Future<void> main() async {
   // Set system UI to transparent and edge-to-edge for immersive feel
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarIconBrightness: Brightness.light,
     systemNavigationBarContrastEnforced: false,
     systemStatusBarContrastEnforced: false,
   ));
@@ -114,7 +114,7 @@ class _AppRootState extends State<_AppRoot> {
 class AppShell extends StatefulWidget {
   final VoidCallback onLogout;
   static final GlobalKey<AppShellState> navKey = GlobalKey<AppShellState>();
-  static final ValueNotifier<List<({double b, double r})>> midnightOdds = ValueNotifier([]);
+
   const AppShell({super.key, required this.onLogout});
 
   static void navigateTo(int index) {
@@ -270,19 +270,7 @@ class AppShellState extends State<AppShell>
                   ),
                 ),
               ),
-              ValueListenableBuilder(
-                valueListenable: AppShell.midnightOdds,
-                builder: (context, odds, _) => IgnorePointer(
-                  ignoring: true,
-                  child: Stack(
-                    children: odds.map((pos) => Positioned(
-                      bottom: pos.b,
-                      right: pos.r,
-                      child: Image.asset('Assets/Odds7.png', width: 250, fit: BoxFit.contain),
-                    )).toList(),
-                  ),
-                ),
-              ),
+
             ],
           );
         },

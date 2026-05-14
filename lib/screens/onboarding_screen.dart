@@ -1,9 +1,8 @@
 import '../models/user_stats.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
-import '../background.dart';
+import '../theme/background.dart';
 import '../widgets/player.dart';
-import '../services/notification_manager.dart';
 import 'dart:math' as math;
 
 class OnboardingScreen extends StatefulWidget {
@@ -85,26 +84,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await Storage.saveData('daily_goal', _dailyGoal);
     await Storage.saveData('notifications_enabled', _notificationsEnabled);
 
-    if (_notificationsEnabled) {
-      try {
-        await NotificationManager().showNotification(
-          id: 100,
-          title: 'Welcome to Solo Gainz! 🏆',
-          body: 'Your journey starts now. Let\'s crush those daily quests!',
-        );
-
-        final now = DateTime.now();
-        final tomorrow = DateTime(now.year, now.month, now.day + 1, 8, 0);
-        await NotificationManager().scheduleNotification(
-          id: 101,
-          title: 'Training Time! ⚔️',
-          body: 'Don\'t break your streak. Your daily quests are waiting.',
-          scheduledDate: tomorrow,
-        );
-      } catch (e) {
-        debugPrint('Notification Error: $e');
-      }
-    }
 
     final stats = Storage.getUserStats();
     stats.rank = rank;
@@ -624,16 +603,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   )),
                   Switch(
                     value: _notificationsEnabled,
-                    onChanged: (v) async {
-                      if (v) {
-                        final granted =
-                            await NotificationManager().requestPermissions();
-                        if (!granted) {
-                          // If they denied it, don't flip the switch or show a snackbar
-                          // For now, let's just keep it simple and update state if they want it
-                          // but the OS will still block it if denied.
-                        }
-                      }
+                    onChanged: (v) {
                       setState(() => _notificationsEnabled = v);
                     },
                     activeThumbColor: AppTheme.cyan,

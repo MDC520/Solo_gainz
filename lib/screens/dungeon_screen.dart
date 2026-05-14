@@ -15,11 +15,9 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
   
   // Combo Animation States
   int _comboIdx = 0;
-  final int _storyProgress = 0; 
 
   final List<String> _combo0 = ['Kick01', 'Punch01', 'Kick02'];
   final List<String> _combo1 = ['Kick03', 'Punch02', 'Punch03'];
-  final List<String> _comboAdvanced = ['Roll', 'Jump', 'Jump Fall', 'Roll', 'Jump', 'Jump Fall', 'Roll', 'Sprint', 'Slide'];
   
   // Arena Combo States
   int _arenaIdx = 0;
@@ -41,24 +39,6 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     )..repeat();
   }
 
-  void _nextCombo() {
-    if (!context.mounted) return;
-    
-    final animations = _getCurrentAnimations();
-    setState(() {
-      _comboIdx = (_comboIdx + 1) % animations.length;
-    });
-
-    // Handle special 3-second durations (Sprint and Slide)
-    final nextAnim = animations[_comboIdx];
-    if (nextAnim == 'Sprint' || nextAnim == 'Slide') {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted && _getCurrentAnimations()[_comboIdx] == nextAnim) {
-          _nextCombo();
-        }
-      });
-    }
-  }
 
   List<String> _getCurrentAnimations() {
     return [..._combo0, ..._combo1];
@@ -80,7 +60,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     // 2. Wait for the OS to rotate
     await Future.delayed(const Duration(milliseconds: 300));
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     // 3. Navigate and ensure it resets when returning
     Navigator.push(
@@ -89,6 +69,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
         builder: (_) => const TrainingScreen(isLoading: true),
       ),
     ).then((_) {
+      if (!mounted) return;
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
@@ -128,7 +109,6 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     };
 
     final style = styles[0]!;
-    final Color cardBg = style.bg;
     final Color accentColor = style.accent;
     final List<String> currentAnimations = _getCurrentAnimations();
 

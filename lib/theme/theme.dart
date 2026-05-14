@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dynamic_icon_plus/flutter_dynamic_icon_plus.dart';
 import '../services/storage.dart';
 
 export 'package:flutter/material.dart';
@@ -12,17 +13,18 @@ class AppTheme {
   AppTheme._();
 
   // ── Theme State ──────────────────────────────────────────────────────────
-  static final ValueNotifier<bool> isDarkNotifier = ValueNotifier(false);
+  static final ValueNotifier<bool> isDarkNotifier = ValueNotifier(true);
   static bool get isDark => isDarkNotifier.value;
 
   static void init() {
-    isDarkNotifier.value = Storage.getData('is_dark_mode', defaultValue: false);
+    isDarkNotifier.value = Storage.getData('is_dark_mode', defaultValue: true);
+    _updateSystemUI();
+    _updateAppIcon();
   }
 
   static void toggleTheme() {
     isDarkNotifier.value = !isDarkNotifier.value;
     Storage.saveData('is_dark_mode', isDarkNotifier.value);
-    _updateAppIcon();
     _updateSystemUI();
     heavy();
   }
@@ -37,41 +39,56 @@ class AppTheme {
       systemNavigationBarContrastEnforced: false,
       systemStatusBarContrastEnforced: false,
     ));
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  static const _iconChannel = MethodChannel('flutter/platform');
-
-  static Future<void> _updateAppIcon() async {
-    if (!Platform.isIOS) return; // SystemChrome.setAlternateIcon is iOS only
+  static Future<bool> _updateAppIcon({String? iconName}) async {
+    if (!Platform.isAndroid && !Platform.isIOS) return false;
     try {
-      await _iconChannel.invokeMethod(
-        'SystemChrome.setAlternateIcon',
-        isDark ? 'DarkIcon' : 'LightIcon',
-      );
+      if (await FlutterDynamicIconPlus.supportsAlternateIcons) {
+        final String name = iconName ?? Storage.getAppIcon();
+        await FlutterDynamicIconPlus.setAlternateIconName(iconName: name);
+        debugPrint('App icon switched to: $name');
+        return true;
+      }
+    } on MissingPluginException catch (_) {
+      debugPrint('Dynamic icon plugin not found. Please restart the app with a full rebuild.');
     } catch (e) {
-      debugPrint('Icon switch skipped: $e');
+      debugPrint('Failed to switch app icon: $e');
+    }
+    return false;
+  }
+
+  static Future<void> switchAppIcon(String iconName) async {
+    await Storage.setAppIcon(iconName);
+    final success = await _updateAppIcon(iconName: iconName);
+    
+    if (success) {
+      // Exit app to apply changes on some Android versions (as requested)
+      await Future.delayed(const Duration(milliseconds: 500));
+      SystemNavigator.pop(); 
     }
   }
 
   // ── Colors ───────────────────────────────────────────────────────────────
   static Color get black      => isDark ? const Color(0xFF0A0A12) : const Color(0xFFE2E8F0); // Silver Light
   static Color get dark       => isDark ? const Color(0xFF14141F) : const Color(0xFFCBD5E1); // Silver Dark
-  static Color get accent     => isDark ? const Color(0xFF00F2FF) : const Color(0xFF0F172A);
-  static Color get cyan       => isDark ? const Color(0xFF00F2FF) : const Color(0xFF059669);
+  static Color get accent     => isDark ? const Color(0xFF00B8D4) : const Color(0xFF0F172A);
+  static Color get cyan       => isDark ? const Color(0xFF00B8D4) : const Color(0xFF059669);
   static Color get amber      => isDark ? const Color(0xFFFACC15) : const Color(0xFFD97706);
   static Color get red        => isDark ? const Color(0xFFFF4B4B) : const Color(0xFFDC2626);
   static Color get purple     => isDark ? const Color(0xFF7000FF) : const Color(0xFF7C3AED);
   static Color get silver     => isDark ? const Color(0xFF94A3B8) : const Color(0xFF1F2937);
 
   // ── Glass & Borders ──────────────────────────────────────────────────────
-  static Color get glassLight  => isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02);
-  static Color get glassMedium => isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.05);
-  static Color get glassBorder => isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFF111827);
+  static Color get glassLight  => isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02);
+  static Color get glassMedium => isDark ? Colors.white.withOpacity(0.10) : Colors.black.withOpacity(0.05);
+  static Color get glassBorder => isDark ? Colors.white.withOpacity(0.15) : const Color(0xFF111827);
 
   // ── Text ─────────────────────────────────────────────────────────────────
   static Color get text1 => isDark ? const Color(0xFFFDFCF7) : const Color(0xFF111827);
-  static Color get text2 => isDark ? const Color(0xFFFDFCF7).withValues(alpha: 0.7) : const Color(0xFF4B5563);
-  static Color get text3 => isDark ? const Color(0xFFFDFCF7).withValues(alpha: 0.4) : const Color(0xFF9CA3AF);
+  static Color get text2 => isDark ? const Color(0xFFFDFCF7).withOpacity(0.7) : const Color(0xFF4B5563);
+  static Color get text3 => isDark ? const Color(0xFFFDFCF7).withOpacity(0.4) : const Color(0xFF9CA3AF);
 
   // ── Aliases ──────────────────────────────────────────────────────────────
   static Color get bg        => black;
@@ -81,10 +98,10 @@ class AppTheme {
   static Color get muted     => text3;
   static Color get white     => text1;
   static Color get green     => cyan;
-  static Color get accentDim => isDark ? accent.withValues(alpha: 0.2) : const Color(0xFF334155);
+  static Color get accentDim => isDark ? accent.withOpacity(0.2) : const Color(0xFF334155);
 
   static final List<BoxShadow> cardShadow = [
-    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
   ];
 
   // ── Haptics ──────────────────────────────────────────────────────────────
@@ -97,7 +114,7 @@ class AppTheme {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: body(color: text1)),
-        backgroundColor: isError ? red.withValues(alpha: 0.1) : accent.withValues(alpha: 0.1),
+        backgroundColor: isError ? red.withOpacity(0.1) : accent.withOpacity(0.1),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -225,10 +242,10 @@ class SGCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: padding ?? const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppTheme.surface.withValues(alpha: 0.8),
+      color: AppTheme.surface.withOpacity(0.8),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder,
+        color: glowColor?.withOpacity(0.5) ?? AppTheme.glassBorder,
         width: 1.5,
       ),
     ),
@@ -279,9 +296,9 @@ class SGButton extends StatelessWidget {
   Widget _buildOutlined(Color color) => Container(
     height: height,
     decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.05),
+      color: color.withOpacity(0.05),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+      border: Border.all(color: color.withOpacity(0.5), width: 1.5),
     ),
     child: Center(
       child: loading

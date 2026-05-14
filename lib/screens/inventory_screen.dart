@@ -1,13 +1,10 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../main.dart';
 import '../widgets/chest_sprite.dart';
-import 'open_chest_screen.dart';
-import '../background.dart';
-import '../widgets/wood_background.dart';
+import 'open_screen.dart';
+import '../theme/background.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -24,17 +21,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void initState() {
     super.initState();
     _load();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) async {
       if (mounted) {
-        Storage.refreshInventoryStatuses();
-        setState(() => _slots = Storage.getInventorySlots());
+        await Storage.refreshInventoryStatuses();
+        if (mounted) setState(() => _slots = Storage.getInventorySlots());
       }
     });
   }
 
-  void _load() {
-    Storage.refreshInventoryStatuses();
-    setState(() => _slots = Storage.getInventorySlots());
+  Future<void> _load() async {
+    await Storage.refreshInventoryStatuses();
+    if (mounted) setState(() => _slots = Storage.getInventorySlots());
   }
 
   @override
@@ -45,7 +42,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WoodBackground(
+    return LivelyBackground(
+      mode: LivelyBackgroundMode.wood,
       child: Scaffold(
         backgroundColor: Colors.transparent, 
         body: Stack(
@@ -91,7 +89,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _buildBench(index * 4),
-                      childCount: 4,
+                      childCount: (Storage.maxSlots / 4).ceil(),
                     ),
                   ),
                 ),
@@ -179,8 +177,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (slot == null) {
       return DragTarget<int>(
-        onWillAccept: (from) => from != index,
-        onAccept: (from) => _onMove(from, index),
+        onWillAcceptWithDetails: (details) => details.data != index,
+        onAcceptWithDetails: (details) => _onMove(details.data, index),
         builder: (context, candidateData, rejectedData) {
           return GestureDetector(
             onTap: () {
@@ -211,8 +209,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
       feedback: _ShakingChest(spriteType: spriteType),
       childWhenDragging: Opacity(opacity: 0.3, child: _buildSlotUI(index, type, status, spriteType)),
       child: DragTarget<int>(
-        onWillAccept: (from) => from != index,
-        onAccept: (from) => _onMove(from, index),
+        onWillAcceptWithDetails: (details) => details.data != index,
+        onAcceptWithDetails: (details) => _onMove(details.data, index),
         builder: (context, candidate, rejected) {
           return SGTouchable(
             onTap: () {
@@ -371,7 +369,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OpenChestScreen(slotIndex: index, chestType: chestType),
+        builder: (_) => OpenScreen(slotIndex: index, chestType: chestType),
       ),
     ).then((_) => _load());
   }
@@ -633,45 +631,6 @@ class _ChestSkipSheet extends StatelessWidget {
   }
 }
 
-class _GameDialog extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _GameDialog({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppTheme.bg,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppTheme.line, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-                color: AppTheme.accent.withValues(alpha: 0.1),
-                blurRadius: 30,
-                spreadRadius: 5)
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title,
-                style: AppTheme.label(color: AppTheme.accent)
-                    .copyWith(letterSpacing: 3)),
-            const SizedBox(height: 24),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _ShakingChest extends StatefulWidget {
   final String spriteType;

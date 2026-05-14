@@ -1,5 +1,5 @@
 name: solo_gainz
-description: "A new Flutter project."
+description: "A hybrid fitness tracker and combat dungeon game."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -7,23 +7,25 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  # Core & UI
   flutter:
     sdk: flutter
+  google_fonts: ^7.0.0
+  flutter_dynamic_icon_plus: ^1.0.0
+
+  # Storage & Persistence
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  image_picker: ^1.1.0
-  google_fonts: ^7.0.0
-  connectivity_plus: ^5.0.0
-  image_cropper: ^8.0.0
-  flutter_local_notifications: ^17.1.0
-  permission_handler: ^11.3.1
-  timezone: ^0.9.4
-  flutter_timezone: ^5.0.2
-  url_launcher: ^6.2.5
   flutter_secure_storage: ^9.2.4
+
+  # Security & Crypto
   encrypt: ^5.0.3
   crypto: ^3.0.3
-  flutter_joystick: ^0.2.1
+
+  # Device Features & Media
+  image_picker: ^1.1.0
+  image_cropper: ^8.0.0
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +37,13 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: "launcher_icon"
+  ios: false
+  image_path: "Assets/solo_gainz_dark_icon.png"
+  min_sdk_android: 21
+
+# Run: flutter pub run flutter_launcher_icons:main -f pubspec.yaml --light
+flutter_launcher_icons_light:
+  android: "launcher_icon_light"
   ios: false
   image_path: "Assets/solo_gainz_light_icon.png"
   min_sdk_android: 21
@@ -51,7 +60,6 @@ flutter:
     - Assets/Player Model/Push/
     - Assets/Player Model/Pull/
     - Assets/Player Model/PushIdle/
-    - Assets/Player Model/Spin/
     - Assets/Player Model/Hit/
     - Assets/Player Model/HitUp/
     - Assets/Player Model/Stunned/

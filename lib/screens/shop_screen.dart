@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import '../models/user_stats.dart';
-import '../screens/buy_coins_screen.dart';
+import '../screens/buy_screen.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
@@ -34,7 +34,7 @@ class _ShopPageState extends State<ShopPage> {
   void _openBuyCoins() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const BuyCoinsScreen()),
+      MaterialPageRoute(builder: (_) => const BuyScreen()),
     ).then((value) {
       if (value != null) {
         _load();
@@ -188,8 +188,9 @@ class _ShopPageState extends State<ShopPage> {
                               vertical: 7,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.text1,
+                              color: AppTheme.surface,
                               borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppTheme.text1.withValues(alpha: 0.1), width: 1),
                               boxShadow: [
                                 BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
                               ],
@@ -197,16 +198,16 @@ class _ShopPageState extends State<ShopPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.attach_money_rounded,
                                   size: 16,
-                                  color: Colors.white,
+                                  color: AppTheme.accent,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   '${_s.coins}',
                                   style: AppTheme.label().copyWith(
-                                    color: Colors.white,
+                                    color: AppTheme.text1,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.5,
                                   ),
@@ -221,17 +222,17 @@ class _ShopPageState extends State<ShopPage> {
                               width: 34,
                               height: 34,
                               decoration: BoxDecoration(
-                                color: Colors.black,
+                                color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppTheme.line,
+                                  color: AppTheme.accent,
                                   width: 1.5,
                                 ),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.add,
                                 size: 18,
-                                color: Colors.white,
+                                color: AppTheme.accent,
                               ),
                             ),
                           ),
@@ -468,28 +469,28 @@ class _ShopPageState extends State<ShopPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: canTotal && availableSlots >= qty ? AppTheme.text1 : AppTheme.surface,
+                      color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.text1, width: 1.5),
+                      border: Border.all(color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.text1.withValues(alpha: 0.2), width: 1.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           availableSlots == 0 ? 'FULL' : 'BUY FOR ',
-                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2),
+                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2),
                         ),
                         if (availableSlots > 0) ...[
                           Text(
                             '$totalCost',
-                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2)
+                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2)
                                 .copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             Icons.attach_money_rounded,
                             size: 14,
-                            color: canTotal && availableSlots >= qty ? Colors.white : AppTheme.text2,
+                            color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2,
                           ),
                         ],
                       ],

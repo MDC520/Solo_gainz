@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.solo_gainz">
 
     <!-- ── Network ─────────────────────────────────────────── -->
@@ -31,11 +32,11 @@
     <application
         android:label="Solo Gainz"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon"
+        android:icon="@mipmap/launcher_icon_dark"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:largeHeap="false"
-        android:extractNativeLibs="false">
+        android:extractNativeLibs="true">
 
         <activity
             android:name=".MainActivity"
@@ -46,32 +47,29 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
-            <!-- Required by Flutter CLI to launch the app -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
-        <activity-alias
-            android:name="LightIcon"
-            android:enabled="true"
-            android:exported="true"
-            android:icon="@mipmap/launcher_icon"
-            android:label="Solo Gainz"
-            android:targetActivity=".MainActivity">
+            
+            <!-- 
+              IMPORTANT: This intent-filter MUST be in an <activity> tag (not just an alias) 
+              for the Flutter CLI tools to correctly identify the package and launch activity.
+            -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity-alias>
 
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+        </activity>
+
+        <!-- 
+            Dynamic Icon Aliases. 
+            The default icon is handled by MainActivity.
+            Note: launcher_icon_dark exists, but launcher_icon_light does not yet.
+        -->
         <activity-alias
-            android:name="DarkIcon"
+            android:name=".DarkIcon"
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/launcher_icon" 

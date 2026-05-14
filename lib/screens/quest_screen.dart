@@ -1619,15 +1619,15 @@ class _QuestCardState extends State<_QuestCard> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: widget.color.withValues(alpha: 0.1),
+                      color: widget.color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.black, width: 1.5),
+                      border: Border.all(color: AppTheme.text1.withValues(alpha: 0.3), width: 1.5),
                     ),
                     child: Center(
                       child: iconIndex > 0
-                          ? Icon(_getCustomQuestIcon(iconIndex), color: Colors.black, size: 20)
+                          ? Icon(_getCustomQuestIcon(iconIndex), color: AppTheme.text1, size: 20)
                           : Text('${widget.questIndex + 1}', 
-                              style: AppTheme.h2(color: Colors.black).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                              style: AppTheme.h2(color: AppTheme.text1).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -1905,7 +1905,7 @@ class _ActionButtonState extends State<_ActionButton> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: widget.active ? AppTheme.accent : AppTheme.text1,
+            color: widget.active ? AppTheme.accent : AppTheme.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.active
@@ -1918,7 +1918,7 @@ class _ActionButtonState extends State<_ActionButton> {
               size: 20,
               color: widget.active
                   ? Colors.white
-                  : (widget.disabled ? AppTheme.text3 : Colors.white),
+                  : (widget.disabled ? AppTheme.text3 : AppTheme.text1),
             ),
         ),
       ),

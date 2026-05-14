@@ -5,7 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import '../models/user_stats.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
-import '../background.dart';
+import '../theme/background.dart';
 import 'settings_screen.dart';
 
 class ProfilePage extends StatefulWidget {

@@ -27,7 +27,7 @@ android {
         versionName = flutter.versionName
         // Split APK per ABI for smaller download sizes
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
     }
 
