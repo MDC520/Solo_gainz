@@ -4,6 +4,11 @@ import '../theme/theme.dart';
 import '../theme/background.dart';
 import '../widgets/player.dart';
 import 'dart:math' as math;
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onDone;
@@ -15,15 +20,16 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageCtrl = PageController();
+  final TextEditingController _nameCtrl = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  String? _profileImagePath;
   int _page = 0;
   static const int _totalPages = 5;
   bool _isFinishing = false;
 
-  // Step 3 — Daily goal
-  String _dailyGoal = 'medium'; // light / medium / hard
-
-  // Step 4 — Notifications
-  bool _notificationsEnabled = true;
+  // Step 3 — Notifications
+  bool _notificationsEnabled = false;
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 8, minute: 0);
 
   // Step 5 — Level
 
@@ -35,6 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void dispose() {
     _pageCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
@@ -58,6 +65,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   bool get _canProceed {
+    if (_page == 2) {
+      final name = _nameCtrl.text.trim();
+      if (name.isEmpty || name.length > 8) return false;
+      // Alphanumeric only
+      return RegExp(r'^[a-zA-Z0-9]+$').hasMatch(name);
+    }
     if (_page == _totalPages - 1) return _selected.length == 4;
     return true;
   }
@@ -69,20 +82,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Play success haptic/sound
     AppTheme.success();
 
-    // Set rank/level based on daily goal
+    // Set rank/level
     String rank = 'E';
     int level = 1;
-    if (_dailyGoal == 'medium') {
-      rank = 'D';
-      level = 9;
-    } else if (_dailyGoal == 'hard') {
-      rank = 'C';
-      level = 16;
-    }
 
-    // Save daily goal & notifications
-    await Storage.saveData('daily_goal', _dailyGoal);
+    // Save name, profile image, & notifications
+    await Storage.setPlayerName(_nameCtrl.text.trim());
+    if (_profileImagePath != null) {
+      await Storage.setProfileImage(_profileImagePath!);
+    }
     await Storage.saveData('notifications_enabled', _notificationsEnabled);
+    if (_notificationsEnabled) {
+      final timeStr = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+      await Storage.saveData('notification_time', timeStr);
+    }
 
 
     final stats = Storage.getUserStats();
@@ -274,18 +287,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onPageChanged: (i) => setState(() => _page = i),
             children: [
               _introSlide(
-                title: 'Welcome to\nSolo Gainz',
+                title: 'Welcome to Solo Gainz',
                 subtitle:
                     'The ultimate gamified fitness experience.\nLevel up your body like your favourite RPG character.',
                 customIcon: const WavingHand(),
               ),
               _introSlide(
-                title: 'Earn Your\nRanks',
+                title: 'Earn Your Ranks',
                 subtitle:
                     'Complete daily quests, earn XP, and climb\nfrom Rank E to the legendary Rank SG.',
                 customIcon: const RankDeck(),
               ),
-              _dailyGoalSlide(),
+              _nameSlide(),
               _notificationsSlide(),
               _loadoutSlide(),
             ],
@@ -299,8 +312,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _finishingOverlay() {
     String rankFile = 'E Rank.png';
-    if (_dailyGoal == 'medium') rankFile = 'D Rank.png';
-    if (_dailyGoal == 'hard') rankFile = 'C Rank.png';
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -407,15 +418,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 52),
               ],
             ],
-            Text(title,
-                textAlign: TextAlign.center,
-                style: AppTheme.h1().copyWith(
-                  fontSize: 44,
-                  letterSpacing: -2,
-                  height: 1.05,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.text1,
-                )),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [AppTheme.accent, AppTheme.cyan],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                child: Text(title,
+                    textAlign: TextAlign.center,
+                    style: AppTheme.h1().copyWith(
+                      fontSize: 44,
+                      letterSpacing: -1.5,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    )),
+              ),
+            ),
             const SizedBox(height: 28),
             // Subtle professional divider
             Container(
@@ -444,111 +465,238 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // ── Slide 3: Daily Goal ────────────────────────────────────────
-  Widget _dailyGoalSlide() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+  // ── Profile Image ───────────────────────────────────────────
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() => _profileImagePath = image.path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void _showImageSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildPlayerPreview(),
-            const SizedBox(height: 32),
-            Text('Daily Training Goal',
-                style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
-            const SizedBox(height: 12),
-            Text('Slide to increase your training intensity',
-                textAlign: TextAlign.center,
-                style: AppTheme.body(color: AppTheme.text2)
-                    .copyWith(fontSize: 16)),
-            const SizedBox(height: 48),
-            _buildDifficultySlider(),
-            const SizedBox(height: 48),
-            _buildGoalInfo(),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Profile Photo', style: AppTheme.h2()),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SGTouchable(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                    child: _imageSourceCard(
+                      Icons.camera_alt_rounded,
+                      'Take Selfie',
+                      AppTheme.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SGTouchable(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                    child: _imageSourceCard(
+                      Icons.photo_library_rounded,
+                      'Import Photos',
+                      AppTheme.cyan,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDifficultySlider() {
-    double value = 0;
-    if (_dailyGoal == 'medium') value = 1;
-    if (_dailyGoal == 'hard') value = 2;
-
+  Widget _imageSourceCard(IconData icon, String label, Color color) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      height: 64,
+      padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: AppTheme.line, width: 1.5),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
       ),
-      child: SliderTheme(
-        data: SliderThemeData(
-          trackHeight: 6,
-          activeTrackColor: _goalColor.withValues(alpha: 0.3),
-          inactiveTrackColor: AppTheme.line,
-          thumbColor: _goalColor,
-          overlayColor: _goalColor.withValues(alpha: 0.1),
-          activeTickMarkColor: Colors.transparent,
-          inactiveTickMarkColor: Colors.transparent,
-          thumbShape: const RoundSliderThumbShape(
-            enabledThumbRadius: 18,
-            elevation: 0,
-            pressedElevation: 0,
+      child: Column(
+        children: [
+          Icon(icon, size: 32, color: color),
+          const SizedBox(height: 12),
+          Text(label, style: AppTheme.label(color: color)),
+        ],
+      ),
+    );
+  }
+
+  // ── Slide 3: Name Selection ───────────────────────────────────
+  Widget _nameSlide() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SGTouchable(
+              onTap: _showImageSourcePicker,
+              child: Stack(
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _profileImagePath != null
+                            ? AppTheme.accent
+                            : AppTheme.line,
+                        width: 2,
+                      ),
+                      image: _profileImagePath != null
+                          ? DecorationImage(
+                              image: FileImage(File(_profileImagePath!)),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: _profileImagePath == null
+                        ? Icon(Icons.person_outline_rounded,
+                            size: 64, color: AppTheme.text3)
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.bg, width: 2),
+                      ),
+                      child: Icon(
+                        _profileImagePath == null
+                            ? Icons.add_a_photo_rounded
+                            : Icons.edit_rounded,
+                        size: 16,
+                        color: AppTheme.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [AppTheme.accent, AppTheme.cyan],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              child: Text('Player Identity',
+                  style: AppTheme.h1().copyWith(
+                    fontSize: 32,
+                    letterSpacing: -1,
+                    color: Colors.white,
+                  )),
+            ),
+            const SizedBox(height: 12),
+            Text('Set your photo and name, Player.',
+                textAlign: TextAlign.center,
+                style: AppTheme.body(color: AppTheme.text2)
+                    .copyWith(fontSize: 16)),
+            const SizedBox(height: 48),
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.line, width: 2),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              child: TextField(
+                controller: _nameCtrl,
+                style: AppTheme.h2(),
+                textAlign: TextAlign.center,
+                maxLength: 8,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Enter your name',
+                  hintStyle: AppTheme.body(color: AppTheme.text3),
+                  border: InputBorder.none,
+                  counterText: "", // Hide the default counter
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('This name will be visible on your profile.',
+                style: AppTheme.caption(color: AppTheme.text3)),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppTheme.cyan,
+              onPrimary: AppTheme.black,
+              surface: AppTheme.surface,
+              onSurface: AppTheme.text1,
+            ),
           ),
-        ),
-        child: Slider(
-          value: value,
-          min: 0,
-          max: 2,
-          divisions: 2,
-          onChanged: (val) {
-            AppTheme.tap();
-            setState(() {
-              if (val == 0) {
-                _dailyGoal = 'light';
-              } else if (val == 1) {
-                _dailyGoal = 'medium';
-              } else {
-                _dailyGoal = 'hard';
-              }
-            });
-          },
-        ),
-      ),
+          child: child!,
+        );
+      },
     );
-  }
-
-  Widget _buildGoalInfo() {
-    String title = 'Beginner';
-    String desc = '2 quests per day • Casual training';
-    if (_dailyGoal == 'medium') {
-      title = 'Experienced';
-      desc = '4 quests per day • Balanced training';
-    } else if (_dailyGoal == 'hard') {
-      title = 'Elite';
-      desc = '6 quests per day • Intensive training';
+    if (picked != null && picked != _reminderTime) {
+      setState(() {
+        _reminderTime = picked;
+      });
     }
-
-    return Column(
-      children: [
-        Text(title.toUpperCase(),
-            style: AppTheme.h2(color: _goalColor).copyWith(
-              letterSpacing: 2,
-              fontWeight: FontWeight.w900,
-            )),
-        const SizedBox(height: 8),
-        Text(desc, style: AppTheme.body(color: AppTheme.text2)),
-      ],
-    );
-  }
-
-  Color get _goalColor {
-    if (_dailyGoal == 'light') return AppTheme.accent;
-    if (_dailyGoal == 'medium') return AppTheme.amber;
-    return AppTheme.red;
   }
 
   // ── Slide 4: Notifications ────────────────────────────────────
@@ -571,8 +719,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   size: 52, color: AppTheme.cyan),
             ),
             const SizedBox(height: 32),
-            Text('Daily Reminders',
-                style: AppTheme.h1().copyWith(fontSize: 30)),
+            ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [AppTheme.accent, AppTheme.cyan],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              child: Text('Daily Reminders',
+                  style: AppTheme.h1().copyWith(
+                    fontSize: 32,
+                    letterSpacing: -1,
+                    color: Colors.white,
+                  )),
+            ),
             const SizedBox(height: 10),
             Text('Stay consistent. We\'ll remind you to train every day.',
                 textAlign: TextAlign.center,
@@ -603,8 +762,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   )),
                   Switch(
                     value: _notificationsEnabled,
-                    onChanged: (v) {
-                      setState(() => _notificationsEnabled = v);
+                    onChanged: (v) async {
+                      if (v) {
+                        final status = await Permission.notification.request();
+                        if (status.isGranted) {
+                          setState(() => _notificationsEnabled = true);
+                        } else {
+                          setState(() => _notificationsEnabled = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Notification permission denied.', style: AppTheme.body(color: Colors.white))),
+                            );
+                          }
+                        }
+                      } else {
+                        setState(() => _notificationsEnabled = false);
+                      }
                     },
                     activeThumbColor: AppTheme.cyan,
                     activeTrackColor: AppTheme.cyan.withValues(alpha: 0.3),
@@ -623,8 +796,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text('Reminder Time',
                         style: AppTheme.body(color: AppTheme.text1)),
                     const Spacer(),
-                    Text('8:00 AM',
-                        style: AppTheme.label(color: AppTheme.accent)),
+                    SGTouchable(
+                      onTap: _selectTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cyan.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(_reminderTime.format(context),
+                            style: AppTheme.label(color: AppTheme.cyan)),
+                      ),
+                    ),
                   ]),
                 ],
               ]),
@@ -650,8 +834,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SafeArea(
       child: Column(children: [
         const SizedBox(height: 24),
-        Text('Daily Loadout',
-            style: AppTheme.h1().copyWith(fontSize: 32, letterSpacing: -1)),
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [AppTheme.accent, AppTheme.cyan],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: Text('Daily Loadout',
+              style: AppTheme.h1().copyWith(
+                fontSize: 32,
+                letterSpacing: -1,
+                color: Colors.white,
+              )),
+        ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -958,48 +1153,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPlayerPreview() {
-    String anim = 'Spin';
-    if (_dailyGoal == 'medium') anim = 'Run';
-    if (_dailyGoal == 'hard') anim = 'Sprint';
-
-    return SizedBox(
-      height: 260,
-      width: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Ground line
-          Positioned(
-            bottom: 20,
-            left: 60,
-            right: 60,
-            child: Container(
-              height: 2,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.line.withValues(alpha: 0),
-                    AppTheme.accent.withValues(alpha: 0.6),
-                    AppTheme.line.withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Player Model
-          Positioned(
-            bottom: 20,
-            child: Player(
-              animation: anim,
-              size: 260,
-              fps: anim == 'Sprint' ? 14 : 9,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ── Rank Deck (Pro Redesign) ──────────────────────────────────
@@ -1114,17 +1267,8 @@ class _WavingHandState extends State<WavingHand>
           child: child,
         );
       },
-      child: Container(
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: AppTheme.accent.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-          border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.2), width: 1),
-        ),
-        child: Icon(Icons.front_hand_rounded,
+      child: Icon(Icons.front_hand_rounded,
             size: 82, color: AppTheme.accent),
-      ),
     );
   }
 }

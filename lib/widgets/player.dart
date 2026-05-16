@@ -52,7 +52,7 @@ class _PlayerState extends State<Player> {
   // Frame counts per animation folder
   static const Map<String, int> _frameCounts = {
     'Hit': 3,
-    'HitUp': 3,
+    'GetUp': 3,
     'Idle': 7,
     'Jump': 3,
     'JumpDust': 7,
@@ -124,10 +124,16 @@ class _PlayerState extends State<Player> {
   }
 
   void _startTimer() {
+    if (widget.fps <= 0) return;
     final interval = Duration(milliseconds: (1000 / widget.fps).round());
     _timer = Timer.periodic(interval, (_) {
       if (!mounted || _frames.isEmpty || widget.paused) return;
       
+      if (_frame >= _frames.length) {
+        setState(() => _frame = 0);
+        return;
+      }
+
       final nextFrame = _frame + 1;
       if (nextFrame >= _frames.length) {
         if (widget.loop) {
@@ -150,6 +156,9 @@ class _PlayerState extends State<Player> {
 
   @override
   Widget build(BuildContext context) {
+    if (_frames.isEmpty) {
+      return SizedBox(width: widget.size, height: widget.size);
+    }
     return Image.asset(
       _frames[_frame],
       fit: BoxFit.contain,

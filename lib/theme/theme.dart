@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,10 +17,13 @@ class AppTheme {
   static final ValueNotifier<bool> isDarkNotifier = ValueNotifier(true);
   static bool get isDark => isDarkNotifier.value;
 
-  static void init() {
+  static Future<void> init() async {
     isDarkNotifier.value = Storage.getData('is_dark_mode', defaultValue: true);
     _updateSystemUI();
-    _updateAppIcon();
+    // Re-enable the saved icon alias on startup.
+    // Both aliases start as disabled in AndroidManifest so Flutter tooling
+    // can find MainActivity directly. We activate the correct alias here.
+    try { await _updateAppIcon(); } catch (_) {}
   }
 
   static void toggleTheme() {
@@ -43,8 +47,8 @@ class AppTheme {
   }
 
   static Future<bool> _updateAppIcon({String? iconName}) async {
-    if (!Platform.isAndroid && !Platform.isIOS) return false;
     try {
+      if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return false;
       if (await FlutterDynamicIconPlus.supportsAlternateIcons) {
         final String name = iconName ?? Storage.getAppIcon();
         await FlutterDynamicIconPlus.setAlternateIconName(iconName: name);
@@ -52,7 +56,7 @@ class AppTheme {
         return true;
       }
     } on MissingPluginException catch (_) {
-      debugPrint('Dynamic icon plugin not found. Please restart the app with a full rebuild.');
+      debugPrint('Dynamic icon plugin not found. Restart with a full rebuild.');
     } catch (e) {
       debugPrint('Failed to switch app icon: $e');
     }

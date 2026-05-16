@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:home_widget/home_widget.dart';
 import '../models/user_stats.dart';
 import 'security_service.dart';
 
@@ -120,7 +121,41 @@ class Storage {
 
   // Quests
   static List<DailyQuest> getDailyQuests() => (_box.get(dailyQuestsKey) as List?)?.cast<DailyQuest>().toList() ?? [];
-  static Future<void> saveDailyQuests(List<DailyQuest> quests) => _box.put(dailyQuestsKey, quests);
+  static Future<void> saveDailyQuests(List<DailyQuest> quests) async {
+    await _box.put(dailyQuestsKey, quests);
+    await _updateHomeWidget(quests);
+  }
+  
+  static Future<void> _updateHomeWidget(List<DailyQuest> quests) async {
+    try {
+      final total = quests.length;
+      final completed = quests.where((q) => q.completed).length;
+      
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      
+      await HomeWidget.saveWidgetData<bool>('all_completed', total > 0 && total == completed);
+      await HomeWidget.saveWidgetData<String>('quest_progress', '$completed / $total');
+      await HomeWidget.saveWidgetData<int>('quest_percent', total == 0 ? 0 : ((completed / total) * 100).toInt());
+      await HomeWidget.saveWidgetData<int>('refresh_time_ms', tomorrow.millisecondsSinceEpoch);
+      
+      // Save up to 4 individual quests
+      for (int i = 0; i < 4; i++) {
+        if (i < total) {
+          final q = quests[i];
+          await HomeWidget.saveWidgetData<String>('quest_${i}_name', q.questName);
+          await HomeWidget.saveWidgetData<int>('quest_${i}_progress', q.progressPct);
+          await HomeWidget.saveWidgetData<bool>('quest_${i}_visible', true);
+        } else {
+          await HomeWidget.saveWidgetData<bool>('quest_${i}_visible', false);
+        }
+      }
+
+      await HomeWidget.updateWidget(name: 'QuestWidgetProvider', androidName: 'QuestWidgetProvider');
+    } catch (e) {
+      debugPrint('HomeWidget error: $e');
+    }
+  }
   static Future<void> updateDailyQuest(int index, DailyQuest quest) async {
     final quests = getDailyQuests();
     if (index >= 0 && index < quests.length) {
@@ -233,8 +268,11 @@ class Storage {
 
   // App Settings & Auth
   static bool isLoggedIn() => true;
-  static bool isOnboarded() => true;
-  static String? getCurrentUser() => 'Player';
+  static bool isOnboarded() => getData('is_onboarded', defaultValue: false);
+  static String? getCurrentUser() => getData('player_name', defaultValue: 'Player');
+  static Future<void> setPlayerName(String name) => saveData('player_name', name);
+  static String? getProfileImage() => getData('profile_image');
+  static Future<void> setProfileImage(String path) => saveData('profile_image', path);
   static bool isNavbarFloating() => getData('is_navbar_floating', defaultValue: true);
   static Future<void> setNavbarFloating(bool value) => saveData('is_navbar_floating', value);
   static bool isNavbarHidden() => getData('is_navbar_hidden', defaultValue: false);

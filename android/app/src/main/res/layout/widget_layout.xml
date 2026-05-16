@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DAILY QUESTS"
+            android:textColor="#00FFB2"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:layout_alignParentStart="true" />
+            
+        <TextView
+            android:id="@+id/widget_progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/4"
+            android:textColor="#888888"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+    
+    <ProgressBar
+        android:id="@+id/widget_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginBottom="16dp"
+        android:progressDrawable="@drawable/custom_progress"
+        android:max="100"
+        android:progress="0" />
+
+    <!-- Container for Quests -->
+    <LinearLayout
+        android:id="@+id/quests_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Quest 0 -->
+        <LinearLayout
+            android:id="@+id/quest_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:id="@+id/quest_0_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quest 1"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+                
+            <ProgressBar
+                android:id="@+id/quest_0_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progressDrawable="@drawable/custom_progress"
+                android:max="100"
+                android:progress="0" />
+        </LinearLayout>
+
+        <!-- Quest 1 -->
+        <LinearLayout
+            android:id="@+id/quest_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:id="@+id/quest_1_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quest 2"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+                
+            <ProgressBar
+                android:id="@+id/quest_1_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progressDrawable="@drawable/custom_progress"
+                android:max="100"
+                android:progress="0" />
+        </LinearLayout>
+        
+        <!-- Quest 2 -->
+        <LinearLayout
+            android:id="@+id/quest_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:id="@+id/quest_2_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quest 3"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+                
+            <ProgressBar
+                android:id="@+id/quest_2_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progressDrawable="@drawable/custom_progress"
+                android:max="100"
+                android:progress="0" />
+        </LinearLayout>
+        
+        <!-- Quest 3 -->
+        <LinearLayout
+            android:id="@+id/quest_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:id="@+id/quest_3_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quest 4"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+                
+            <ProgressBar
+                android:id="@+id/quest_3_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progressDrawable="@drawable/custom_progress"
+                android:max="100"
+                android:progress="0" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <Chronometer
+        android:id="@+id/widget_chronometer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textColor="#00FFB2"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:visibility="gone"
+        android:countDown="true" />
+
+</LinearLayout>

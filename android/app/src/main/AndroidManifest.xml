@@ -46,12 +46,10 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            
-            <!-- 
-              IMPORTANT: This intent-filter MUST be in an <activity> tag (not just an alias) 
-              for the Flutter CLI tools to correctly identify the package and launch activity.
-            -->
+            android:windowSoftInputMode="adjustResize"
+            android:enabled="true">
+
+            <!-- Required by Flutter tooling to detect the launch activity -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -64,12 +62,27 @@
         </activity>
 
         <!-- 
-            Dynamic Icon Aliases. 
-            The default icon is handled by MainActivity.
-            Note: launcher_icon_dark exists, but launcher_icon_light does not yet.
+            Dynamic Icon Aliases
+            MainActivity holds the LAUNCHER intent-filter so Flutter tooling
+            can find the launch activity. The aliases are toggled at runtime
+            by the app to swap the launcher icon. Both start disabled; the app
+            code enables the correct one on launch.
         -->
         <activity-alias
             android:name=".DarkIcon"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/launcher_icon_dark"
+            android:label="Solo Gainz"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LightIcon"
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/launcher_icon" 
@@ -96,6 +109,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <receiver android:name="QuestWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info" />
+        </receiver>
+
     </application>
 
     <queries>

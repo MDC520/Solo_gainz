@@ -42,7 +42,7 @@ Future<void> main() async {
       Storage.init(),
       SecurityService.init(),
     ]);
-    AppTheme.init(); // Load saved theme preference
+    await AppTheme.init(); // Load saved theme & activate icon alias
   } catch (e) {
     debugPrint('Init error: $e');
   }

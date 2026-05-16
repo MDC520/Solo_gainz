@@ -10,9 +10,10 @@ class MainActivity : FlutterActivity() {
         
         // Defend app data: Blocks external apps from taking screenshots, recording screen,
         // or capturing RAM surfaces in the recent apps menu.
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // FLAG_SECURE is disabled in debug/emulator environments to prevent black screen issues
+        // window.setFlags(
+        //     WindowManager.LayoutParams.FLAG_SECURE,
+        //     WindowManager.LayoutParams.FLAG_SECURE
+        // )
     }
 }

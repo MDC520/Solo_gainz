@@ -4,6 +4,7 @@ import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/player.dart';
 import 'inventory_screen.dart';
+import 'dart:io';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,6 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   UserStats? _s;
   String _playerAnim = 'Run'; // Refined in initState based on time
+  String? _profileImagePath;
   
   bool get _isNight {
     final hour = DateTime.now().hour;
@@ -43,7 +45,12 @@ class _HomePageState extends State<HomePage> {
 
   void _load() {
     try {
-      if (mounted) setState(() => _s = Storage.getUserStats());
+      if (mounted) {
+        setState(() {
+          _s = Storage.getUserStats();
+          _profileImagePath = Storage.getProfileImage();
+        });
+      }
     } catch (e) {
       debugPrint('Home load error: $e');
     }
@@ -70,60 +77,119 @@ class _HomePageState extends State<HomePage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_greeting, style: AppTheme.caption(color: _greeting.contains('Sleep') ? AppTheme.white : AppTheme.text2)),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(Storage.getCurrentUser() ?? 'Athlete', style: AppTheme.h1()),
-                              const SizedBox(width: 8),
-                              Text('Lv.${s.level}', 
-                                   style: AppTheme.mono(color: AppTheme.accent, size: 14).copyWith(fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: 140,
-                            height: 6,
-                            decoration: BoxDecoration(color: AppTheme.line, borderRadius: BorderRadius.circular(4)),
-                            child: Stack(
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 600),
-                                  width: 140 * progress,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(colors: [AppTheme.accent, AppTheme.cyan]),
-                                    borderRadius: BorderRadius.circular(4),
-                                    boxShadow: [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 4)],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text('Rank ${s.rank} - ${s.xp}/$xpNeeded XP',
-                               style: AppTheme.caption(color: AppTheme.text2).copyWith(fontSize: 9, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      SGTouchable(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InventoryScreen())),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Avatar + Info Column
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.line, width: 1.5),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.accent, width: 1.5),
+                            image: _profileImagePath != null
+                                ? DecorationImage(
+                                    image: FileImage(File(_profileImagePath!)),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                          child: Icon(Icons.backpack, size: 18, color: AppTheme.text1),
+                          child: _profileImagePath == null
+                              ? Icon(Icons.person_rounded,
+                                  color: AppTheme.text3, size: 32)
+                              : null,
                         ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_greeting,
+                                style: AppTheme.caption(
+                                    color: _greeting.contains('Sleep')
+                                        ? AppTheme.white
+                                        : AppTheme.text2)),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(Storage.getCurrentUser() ?? 'Athlete',
+                                    style: AppTheme.h1().copyWith(fontSize: 22)),
+                                const SizedBox(width: 8),
+                                Text('Lv.${s.level}',
+                                    style: AppTheme.mono(
+                                            color: AppTheme.accent, size: 12)
+                                        .copyWith(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // XP Progress Bar
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 140,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                      color: AppTheme.line,
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: Stack(
+                                    children: [
+                                      AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 600),
+                                        width: 140 * progress,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(colors: [
+                                            AppTheme.accent,
+                                            AppTheme.cyan
+                                          ]),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          boxShadow: [
+                                            BoxShadow(
+                                                color: AppTheme.accent
+                                                    .withValues(alpha: 0.3),
+                                                blurRadius: 4)
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('Rank ${s.rank} - ${s.xp}/$xpNeeded XP',
+                                    style: AppTheme.caption(color: AppTheme.text2)
+                                        .copyWith(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    // Inventory Button
+                    SGTouchable(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const InventoryScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.line, width: 1.5),
+                        ),
+                        child: Icon(Icons.backpack_rounded,
+                            size: 20, color: AppTheme.text1),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
