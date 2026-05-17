@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/user_stats.dart';
+
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/player.dart';
@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   UserStats? _s;
   String _playerAnim = 'Run'; // Refined in initState based on time
+  int _playerAnimId = 0;
   String? _profileImagePath;
   ValueListenable<Box>? _dailyQuestsListenable;
   int _activeWeekIndex = 0;
@@ -167,6 +168,7 @@ class _HomePageState extends State<HomePage> {
         final weekday = DateTime.now().weekday;
         final isWeekend = weekday == 6 || weekday == 7;
         _playerAnim = isWeekend ? 'Idle' : (_isNight ? 'Stunned' : 'Run');
+        _playerAnimId++;
       });
     }
     _touchIdleTimer = Timer(const Duration(seconds: 20), () {
@@ -202,6 +204,7 @@ class _HomePageState extends State<HomePage> {
         final weekday = DateTime.now().weekday;
         final isWeekend = weekday == 6 || weekday == 7;
         _playerAnim = isWeekend ? 'Idle' : (_isNight ? 'Stunned' : 'Run');
+        _playerAnimId++;
       });
       _resetUserTouchTimer();
       return;
@@ -209,6 +212,7 @@ class _HomePageState extends State<HomePage> {
     final nextAnim = _animationQueue.removeAt(0);
     setState(() {
       _playerAnim = nextAnim;
+      _playerAnimId++;
     });
   }
 
@@ -443,6 +447,7 @@ class _HomePageState extends State<HomePage> {
     final weekday = DateTime.now().weekday;
     final isWeekend = weekday == 6 || weekday == 7;
     _playerAnim = isWeekend ? 'Idle' : (_isNight ? 'Stunned' : 'Run');
+    _playerAnimId++;
     if (isWeekend) {
       final rand = Random();
       final List<WeekendQuestion> shuffled = List.from(_weekendPool)..shuffle(rand);
@@ -900,6 +905,7 @@ class _HomePageState extends State<HomePage> {
                         child: Align(
                           alignment: Alignment.bottomCenter,
                           child: Player(
+                            key: ValueKey('$_playerAnim-$_playerAnimId'),
                             animation: _playerAnim,
                             fps: (_playerAnim == 'Run' || _idleMoves.contains(_playerAnim)) ? 12.0 : 8.0,
                             size: 260.0,
@@ -913,6 +919,7 @@ class _HomePageState extends State<HomePage> {
                                     final weekday = DateTime.now().weekday;
                                     final isWeekend = weekday == 6 || weekday == 7;
                                     _playerAnim = isWeekend ? 'Idle' : (_isNight ? 'Stunned' : 'Run');
+                                    _playerAnimId++;
                                   });
                                 }
                               }

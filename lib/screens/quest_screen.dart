@@ -3,8 +3,9 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/user_stats.dart';
+
 import '../services/storage.dart';
 import '../theme/theme.dart';
 
@@ -1551,6 +1552,10 @@ class _QuestCardState extends State<_QuestCard> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 3.0,
+                  ),
                 ),
                 child: Stack(
                   children: [
@@ -1975,48 +1980,312 @@ class _CelebrationCardState extends State<_CelebrationCard>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.green.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.text1, width: 1.5),
+    return SGTouchable(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (context) => _DetailedCountdownSheet(onTimerZero: widget.onTimerZero),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.green.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.text1, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            AnimatedBuilder(
+              animation: _anim,
+              builder: (ctx, child) {
+                return Transform.rotate(
+                  angle: _anim.value,
+                  child: child,
+                );
+              },
+              child: Icon(Icons.emoji_events, size: 22, color: AppTheme.green),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('DAILY MISSIONS COMPLETE',
+                      style: AppTheme.h3(color: AppTheme.green)
+                          .copyWith(fontSize: 12)),
+                  Text('Next reset', style: AppTheme.caption()),
+                ],
+              ),
+            ),
+            StreamBuilder<int>(
+              stream: Stream.periodic(const Duration(seconds: 1), (i) => i),
+              builder: (context, snapshot) {
+                return Text(
+                  _getCountdown(),
+                  style: AppTheme.mono(color: AppTheme.text1, size: 14),
+                );
+              },
+            ),
+          ],
+        ),
       ),
-      child: Row(
+    );
+  }
+}
+
+class _DetailedCountdownSheet extends StatefulWidget {
+  final VoidCallback onTimerZero;
+  const _DetailedCountdownSheet({required this.onTimerZero});
+
+  @override
+  State<_DetailedCountdownSheet> createState() => _DetailedCountdownSheetState();
+}
+
+class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
+    with TickerProviderStateMixin {
+  late AnimationController _trophyCtrl;
+  late Animation<double> _trophyAnim;
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulseAnim;
+  late Ticker _ticker;
+  Duration _remaining = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Trophy wobble animation
+    _trophyCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _trophyAnim = Tween<double>(begin: -0.12, end: 0.12).animate(
+      CurvedAnimation(parent: _trophyCtrl, curve: Curves.easeInOutSine),
+    );
+
+    // Pulse glow animation
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 0.3, end: 0.8).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOutSine),
+    );
+
+    // High-frequency ticker for real-time ms updates
+    _ticker = createTicker((_) {
+      final now = DateTime.now();
+      final nextReset = DateTime(now.year, now.month, now.day + 1);
+      final diff = nextReset.difference(now);
+
+      if (diff.isNegative || diff.inMilliseconds <= 0) {
+        _ticker.stop();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          widget.onTimerZero();
+          if (mounted) Navigator.of(context).pop();
+        });
+        return;
+      }
+
+      setState(() => _remaining = diff);
+    })..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _trophyCtrl.dispose();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = _remaining.inHours.toString().padLeft(2, '0');
+    final minutes = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
+    final millis = ((_remaining.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0');
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom + 24,
+        left: 20,
+        right: 20,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.green.withValues(alpha: 0.4), width: 2),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Top: Status Banner ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.green.withValues(alpha: 0.15),
+                    AppTheme.green.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: Row(
+                children: [
+                  AnimatedBuilder(
+                    animation: _trophyAnim,
+                    builder: (ctx, child) => Transform.rotate(
+                      angle: _trophyAnim.value,
+                      child: child,
+                    ),
+                    child: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: AppTheme.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppTheme.green.withValues(alpha: 0.4)),
+                      ),
+                      child: const Icon(Icons.emoji_events, size: 20, color: Color(0xFF00E676)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ALL MISSIONS COMPLETE',
+                          style: AppTheme.label(color: AppTheme.green).copyWith(fontSize: 11, letterSpacing: 1.5),
+                        ),
+                        const SizedBox(height: 2),
+                        Text('Next reset countdown',
+                          style: AppTheme.caption(color: AppTheme.text2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedBuilder(
+                    animation: _pulseAnim,
+                    builder: (ctx, child) => Container(
+                      width: 8, height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.green.withValues(alpha: _pulseAnim.value),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.green.withValues(alpha: _pulseAnim.value * 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Divider ──
+            Container(height: 1, color: AppTheme.green.withValues(alpha: 0.15)),
+
+            // ── Bottom: Timer Split View ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+              child: Row(
+                children: [
+                  _buildTimeUnit(hours, 'HRS'),
+                  _buildSeparator(),
+                  _buildTimeUnit(minutes, 'MIN'),
+                  _buildSeparator(),
+                  _buildTimeUnit(seconds, 'SEC'),
+                  _buildSeparator(),
+                  _buildTimeUnit(millis, 'MS', isMs: true),
+                ],
+              ),
+            ),
+
+            // ── Animated accent bar ──
+            AnimatedBuilder(
+              animation: _pulseAnim,
+              builder: (ctx, child) => Container(
+                height: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.green.withValues(alpha: 0.0),
+                      AppTheme.green.withValues(alpha: _pulseAnim.value),
+                      AppTheme.green.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeUnit(String value, String label, {bool isMs = false}) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedBuilder(
-            animation: _anim,
-            builder: (ctx, child) {
-              return Transform.rotate(
-                angle: _anim.value,
-                child: child,
-              );
-            },
-            child: Icon(Icons.emoji_events, size: 22, color: AppTheme.green),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('DAILY MISSIONS COMPLETE',
-                    style: AppTheme.h3(color: AppTheme.green)
-                        .copyWith(fontSize: 12)),
-                Text('Next reset', style: AppTheme.caption()),
-              ],
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            decoration: BoxDecoration(
+              color: isMs
+                  ? AppTheme.green.withValues(alpha: 0.08)
+                  : AppTheme.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isMs
+                    ? AppTheme.green.withValues(alpha: 0.25)
+                    : AppTheme.glassBorder,
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                value,
+                style: AppTheme.mono(
+                  color: isMs ? AppTheme.green : AppTheme.text1,
+                  size: isMs ? 20 : 24,
+                ),
+              ),
             ),
           ),
-          StreamBuilder<int>(
-            stream: Stream.periodic(const Duration(seconds: 1), (i) => i),
-            builder: (context, snapshot) {
-              return Text(
-                _getCountdown(),
-                style: AppTheme.mono(color: AppTheme.text1, size: 14),
-              );
-            },
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: AppTheme.caption(color: AppTheme.text3).copyWith(
+              fontSize: 9,
+              letterSpacing: 1.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSeparator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Text(
+        ':',
+        style: AppTheme.mono(color: AppTheme.text3, size: 20),
       ),
     );
   }

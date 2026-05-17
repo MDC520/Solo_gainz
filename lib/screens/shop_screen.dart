@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import '../models/user_stats.dart';
+
 import '../screens/buy_screen.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
