@@ -13,6 +13,9 @@ class ChestSprite extends StatefulWidget {
   /// Frames per second
   final double fps;
 
+  /// Optional alignment
+  final Alignment alignment;
+
   /// Optional fixed size
   final double? size;
 
@@ -30,6 +33,7 @@ class ChestSprite extends StatefulWidget {
     this.size,
     this.playOnce = false,
     this.onComplete,
+    this.alignment = Alignment.bottomCenter,
   });
 
   @override
@@ -133,7 +137,7 @@ class _ChestSpriteState extends State<ChestSprite> {
       fit: BoxFit.contain,
       width: widget.size,
       height: widget.size,
-      alignment: Alignment.bottomCenter,
+      alignment: widget.alignment,
       filterQuality: FilterQuality.none,
       gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) {

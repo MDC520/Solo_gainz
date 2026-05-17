@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import '../widgets/player.dart';
 import '../theme/theme.dart';
+import '../theme/background.dart';
 import 'training_screen.dart';
 
 class DungeonPage extends StatefulWidget {
@@ -118,10 +120,11 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.dark,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      backgroundColor: AppTheme.black,
+      body: LivelyBackground(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // ── Header Section ───────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
@@ -559,7 +562,8 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 
 }

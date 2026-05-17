@@ -213,6 +213,7 @@ class AppShellState extends State<AppShell>
                       final marginSide = 16.0 * t;
                       final radius = 20.0 * t;
                       final currentNavH = _navH + (bottomPadding * (1 - t));
+                      final borderColor = Colors.white.withValues(alpha: 0.22);
 
                       return Container(
                         margin: EdgeInsets.fromLTRB(marginSide, 0, marginSide, _gap * t),
@@ -227,10 +228,10 @@ class AppShellState extends State<AppShell>
                                 color: AppTheme.black,
                                 borderRadius: BorderRadius.circular(radius),
                                 border: Border(
-                                  top: BorderSide(color: AppTheme.text1, width: 1.5),
-                                  bottom: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
-                                  left: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
-                                  right: t > 0 ? BorderSide(color: AppTheme.text1, width: 1.5 * t) : BorderSide.none,
+                                  top: BorderSide(color: borderColor, width: 1.2),
+                                  bottom: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
+                                  left: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
+                                  right: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
                                 ),
                               ),
                               child: child,
@@ -271,7 +272,7 @@ class AppShellState extends State<AppShell>
                 ),
               ),
 
-            ],
+             ],
           );
         },
       ),

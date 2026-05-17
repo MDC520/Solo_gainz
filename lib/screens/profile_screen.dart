@@ -29,16 +29,16 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       setState(() {
         _s = Storage.getUserStats();
-        _profileImagePath = Storage.getData('profile_image_path', defaultValue: '');
+        _profileImagePath = Storage.getProfileImage() ?? '';
       });
     } catch (e) {
       debugPrint('Profile load error: $e');
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512);
+    final XFile? image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (image != null) {
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: image.path,
@@ -47,16 +47,111 @@ class _ProfilePageState extends State<ProfilePage> {
         maxWidth: 512,
         maxHeight: 512,
         uiSettings: [
-          AndroidUiSettings(toolbarTitle: 'Crop Profile Picture', toolbarColor: AppTheme.bg, toolbarWidgetColor: Colors.white, activeControlsWidgetColor: AppTheme.accent),
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Profile Picture',
+            toolbarColor: AppTheme.bg,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: AppTheme.accent,
+          ),
           IOSUiSettings(title: 'Crop Profile Picture'),
         ],
       );
       if (croppedFile != null) {
         setState(() => _profileImagePath = croppedFile.path);
-        await Storage.saveData('profile_image_path', croppedFile.path);
+        await Storage.setProfileImage(croppedFile.path);
         if (mounted) AppTheme.showSnackBar(context, 'Profile picture updated!');
       }
     }
+  }
+
+  void _showImageSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.line,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Profile Photo', style: AppTheme.h2()),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SGTouchable(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                    child: _imageSourceCard(
+                      Icons.camera_alt_rounded,
+                      'Take Selfie',
+                      AppTheme.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SGTouchable(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                    child: _imageSourceCard(
+                      Icons.photo_library_rounded,
+                      'Import Photos',
+                      AppTheme.cyan,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imageSourceCard(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 32, color: color),
+          const SizedBox(height: 12),
+          Text(label, style: AppTheme.label(color: color)),
+        ],
+      ),
+    );
+  }
+
+  String _getCharacterTitle(int level, String rank) {
+    final r = rank.toUpperCase();
+    if (r == 'SS' || r == 'S') return 'Shadow Monarch';
+    if (r == 'A') return 'Grand Gladiator';
+    if (level >= 30) return 'Vanguard Conqueror';
+    if (level >= 20) return 'Iron Champion';
+    if (level >= 10) return 'Runic Hunter';
+    return 'Novice Leveler';
   }
 
   @override
@@ -64,8 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = Storage.getCurrentUser() ?? 'Player';
     if (_s == null) return Center(child: CircularProgressIndicator(color: AppTheme.accent));
     final s = _s!;
-    final xpNeeded = RankSystem.getXpNeededForNextLevel(s.rank);
-    final xpProgress = (s.xp / xpNeeded).clamp(0.0, 1.0);
+    final characterTitle = _getCharacterTitle(s.level, s.rank);
 
     return Scaffold(
       backgroundColor: AppTheme.black,
@@ -74,150 +168,157 @@ class _ProfilePageState extends State<ProfilePage> {
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // ── SLIVER APP BAR (HEADER) ──
-              SliverAppBar(
-                expandedHeight: 280,
-                collapsedHeight: 100,
-                pinned: true,
-                stretch: true,
-                backgroundColor: AppTheme.black.withValues(alpha: 0.8),
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
-                  background: Stack(
-                    alignment: Alignment.center,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 50, 20, 120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Background Glow
-                      Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              AppTheme.accent.withValues(alpha: 0.15),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Profile Picture Section
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // Header Title & Settings (Top Right, aligned like quest_screen)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(height: 60),
-                          _AvatarWidget(
-                            imagePath: _profileImagePath,
-                            onTap: _pickImage,
-                            initial: user.isNotEmpty ? user[0].toUpperCase() : 'P',
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            user.toUpperCase(),
-                            style: AppTheme.h1().copyWith(fontSize: 28, letterSpacing: -0.5),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accent.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppTheme.accent.withValues(alpha: 0.2)),
-                                ),
-                                child: Text(
-                                  'LEVEL ${s.level}',
-                                  style: AppTheme.mono(color: AppTheme.accent, size: 10),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.amber.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppTheme.amber.withValues(alpha: 0.2)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.monetization_on_rounded, size: 12, color: AppTheme.amber),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${s.coins}',
-                                      style: AppTheme.mono(color: AppTheme.amber, size: 10),
-                                    ),
-                                  ],
-                                ),
+                              Text('Player Profile', style: AppTheme.h1()),
+                              const SizedBox(height: 4),
+                              Text(
+                                'View status and achievements.',
+                                style: AppTheme.caption(color: AppTheme.text2),
                               ),
                             ],
+                          ),
+                          SGTouchable(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.text1, width: 1.5),
+                              ),
+                              child: Icon(Icons.settings_rounded, size: 18, color: AppTheme.text2),
+                            ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: SGTouchable(
-                      onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (_) => const SettingsPage())),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.line),
-                        ),
-                        child: Icon(Icons.settings_rounded, size: 22, color: AppTheme.text1),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // ── MAIN CONTENT ──
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // ── RANK CARD ──
-                    _RankCard(rank: s.rank),
-                    const SizedBox(height: 24),
-
-                    // ── PROGRESS SECTION ──
-                    _ProgressCard(
-                      xp: s.xp,
-                      xpNeeded: xpNeeded,
-                      progress: xpProgress,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── STATS GRID ──
-                    const SGSectionHeader(title: 'Lifetime Stats'),
-                    const SizedBox(height: 8),
-                    _StatsGrid(stats: s.lifetimeStats),
-                    const SizedBox(height: 24),
-
-                    // ── RECENT ACHIEVEMENTS ──
-                    if (s.achievements.isNotEmpty) ...[
-                      const SGSectionHeader(title: 'Achievements'),
-                      const SizedBox(height: 8),
-                      _AchievementsList(achievements: s.achievements),
                       const SizedBox(height: 32),
-                    ],
 
-                    // ── LOGOUT BUTTON ──
-                    SGButton(
-                      label: 'LOG OUT',
-                      danger: true,
-                      outlined: true,
-                      onTap: widget.onLogout,
-                      icon: Icons.logout_rounded,
-                    ),
-                  ]),
+                      // Player Identity Centerpiece Card
+                      Center(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: AppTheme.glassBorder, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 8)),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Radial Aura Glow Behind Avatar
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    width: 140,
+                                    height: 140,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          AppTheme.accent.withValues(alpha: 0.15),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  _AvatarWidget(
+                                    imagePath: _profileImagePath,
+                                    onTap: _showImageSourcePicker,
+                                    initial: user.isNotEmpty ? user[0].toUpperCase() : 'P',
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                user.toUpperCase(),
+                                style: AppTheme.h1().copyWith(
+                                  fontSize: 28,
+                                  letterSpacing: -0.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                characterTitle.toUpperCase(),
+                                style: AppTheme.mono(
+                                  color: AppTheme.accent,
+                                  size: 12,
+                                ).copyWith(
+                                  letterSpacing: 2.0,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Level and Coins Chips Row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.cyan.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.25), width: 1),
+                                    ),
+                                    child: Text(
+                                      'LEVEL ${s.level}',
+                                      style: AppTheme.mono(color: AppTheme.cyan, size: 10).copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.amber.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(color: AppTheme.amber.withValues(alpha: 0.25), width: 1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.monetization_on_rounded, size: 12, color: AppTheme.amber),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${s.coins} COINS',
+                                          style: AppTheme.mono(color: AppTheme.amber, size: 10).copyWith(fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Achievements section
+                      if (s.achievements.isNotEmpty) ...[
+                        const SGSectionHeader(title: 'Medals of Valor'),
+                        const SizedBox(height: 10),
+                        _AchievementsDeck(achievements: s.achievements),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -228,6 +329,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
+// ── CUSTOM ROUNDED PROFILE AVATAR WIDGET ──
 class _AvatarWidget extends StatelessWidget {
   final String imagePath;
   final VoidCallback onTap;
@@ -246,72 +348,55 @@ class _AvatarWidget extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer Ring
+          // Single Outer Neon Gradient Border Wrapper
           Container(
-            width: 110,
-            height: 110,
+            width: 104,
+            height: 104,
+            padding: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
-            ),
-          ),
-          // Inner Spinning/Glow Ring
-          Container(
-            width: 100,
-            height: 100,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(22),
               gradient: SweepGradient(
                 colors: [
                   AppTheme.accent,
-                  AppTheme.accent.withValues(alpha: 0.1),
+                  AppTheme.accent.withValues(alpha: 0.2),
+                  AppTheme.purple,
                   AppTheme.accent,
                 ],
               ),
             ),
             child: Container(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(19.5),
                 color: AppTheme.black,
+                image: imagePath.isNotEmpty
+                    ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover)
+                    : null,
               ),
-            ),
-          ),
-          // Actual Image
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surface,
-              image: imagePath.isNotEmpty
-                  ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover)
+              child: imagePath.isEmpty
+                  ? Center(
+                      child: Text(
+                        initial,
+                        style: AppTheme.h1(color: AppTheme.accent).copyWith(fontSize: 34, fontWeight: FontWeight.w900),
+                      ),
+                    )
                   : null,
             ),
-            child: imagePath.isEmpty
-                ? Center(
-                    child: Text(
-                      initial,
-                      style: AppTheme.h1(color: AppTheme.accent).copyWith(fontSize: 32),
-                    ),
-                  )
-                : null,
           ),
-          // Camera Icon
+          // Futuristic Edit Badge
           Positioned(
-            bottom: 4,
-            right: 4,
+            bottom: 0,
+            right: 0,
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: AppTheme.accent,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.black, width: 2),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: AppTheme.black, width: 2.0),
                 boxShadow: [
-                  BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 2),
+                  BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
                 ],
               ),
-              child: Icon(Icons.camera_alt_rounded, size: 14, color: AppTheme.black),
+              child: Icon(Icons.camera_alt_rounded, size: 12, color: AppTheme.black),
             ),
           ),
         ],
@@ -320,233 +405,75 @@ class _AvatarWidget extends StatelessWidget {
   }
 }
 
-class _RankCard extends StatelessWidget {
-  final String rank;
-
-  const _RankCard({required this.rank});
-
-  @override
-  Widget build(BuildContext context) {
-    return SGCard(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [AppTheme.accent.withValues(alpha: 0.2), Colors.transparent],
-                  ),
-                ),
-              ),
-              Image.asset(
-                'Assets/Rank Shields/$rank Rank.png',
-                height: 70,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.shield_rounded, color: AppTheme.accent, size: 60),
-              ),
-            ],
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('CURRENT RANK', style: AppTheme.caption(color: AppTheme.text3)),
-                const SizedBox(height: 4),
-                Text(
-                  '$rank RANK',
-                  style: AppTheme.h1().copyWith(fontSize: 24, letterSpacing: 1),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cyan.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'ON TRACK FOR NEXT RANK',
-                    style: AppTheme.label(color: AppTheme.cyan).copyWith(fontSize: 9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressCard extends StatelessWidget {
-  final int xp;
-  final int xpNeeded;
-  final double progress;
-
-  const _ProgressCard({
-    required this.xp,
-    required this.xpNeeded,
-    required this.progress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SGCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('XP PROGRESS', style: AppTheme.label(color: AppTheme.text2)),
-              Text('$xp / $xpNeeded', style: AppTheme.mono(color: AppTheme.accent, size: 14)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 8,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppTheme.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppTheme.line),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: progress,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.6)],
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: [
-                    BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${(progress * 100).toInt()}% to next level',
-            style: AppTheme.caption(color: AppTheme.text3),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsGrid extends StatelessWidget {
-  final Map<String, int> stats;
-
-  const _StatsGrid({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = stats.entries.toList();
-    if (entries.isEmpty) {
-      return SGCard(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.fitness_center_rounded, color: AppTheme.text3.withValues(alpha: 0.3), size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'NO TRAINING DATA YET',
-                style: AppTheme.label(color: AppTheme.text3),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Complete exercises to track your progress',
-                style: AppTheme.caption(color: AppTheme.text3),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: entries.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.6,
-      ),
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return SGCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                entry.key.replaceAll('_', ' ').toUpperCase(),
-                style: AppTheme.caption(color: AppTheme.text2),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                entry.value.toString(),
-                style: AppTheme.mono(color: AppTheme.text1, size: 20),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _AchievementsList extends StatelessWidget {
+// ── HONORS DECK (ACHIEVEMENTS LIST) ──
+class _AchievementsDeck extends StatelessWidget {
   final List<String> achievements;
 
-  const _AchievementsList({required this.achievements});
+  const _AchievementsDeck({required this.achievements});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 100,
+      height: 110,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: achievements.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        physics: const BouncingScrollPhysics(),
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
+          final achievementName = achievements[index].toUpperCase();
           return Container(
-            width: 80,
-            padding: const EdgeInsets.all(12),
+            width: 100,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.surface.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.line),
+              color: AppTheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.amber.withValues(alpha: 0.3), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.amber.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Icon(Icons.emoji_events_rounded, color: AppTheme.amber, size: 28),
-                const SizedBox(height: 8),
-                Text(
-                  achievements[index].toUpperCase(),
-                  style: AppTheme.caption(color: AppTheme.text1).copyWith(fontSize: 8),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                // Glowing Background Effect
+                Positioned(
+                  top: -10,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [AppTheme.amber.withValues(alpha: 0.15), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Content Column
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.emoji_events_rounded, color: AppTheme.amber, size: 30),
+                    const SizedBox(height: 8),
+                    Text(
+                      achievementName,
+                      style: AppTheme.caption(color: AppTheme.text1).copyWith(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -556,4 +483,3 @@ class _AchievementsList extends StatelessWidget {
     );
   }
 }
-

@@ -1,9 +1,6 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_dynamic_icon_plus/flutter_dynamic_icon_plus.dart';
 import '../services/storage.dart';
 
 export 'package:flutter/material.dart';
@@ -20,10 +17,6 @@ class AppTheme {
   static Future<void> init() async {
     isDarkNotifier.value = Storage.getData('is_dark_mode', defaultValue: true);
     _updateSystemUI();
-    // Re-enable the saved icon alias on startup.
-    // Both aliases start as disabled in AndroidManifest so Flutter tooling
-    // can find MainActivity directly. We activate the correct alias here.
-    try { await _updateAppIcon(); } catch (_) {}
   }
 
   static void toggleTheme() {
@@ -44,34 +37,6 @@ class AppTheme {
       systemStatusBarContrastEnforced: false,
     ));
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  }
-
-  static Future<bool> _updateAppIcon({String? iconName}) async {
-    try {
-      if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return false;
-      if (await FlutterDynamicIconPlus.supportsAlternateIcons) {
-        final String name = iconName ?? Storage.getAppIcon();
-        await FlutterDynamicIconPlus.setAlternateIconName(iconName: name);
-        debugPrint('App icon switched to: $name');
-        return true;
-      }
-    } on MissingPluginException catch (_) {
-      debugPrint('Dynamic icon plugin not found. Restart with a full rebuild.');
-    } catch (e) {
-      debugPrint('Failed to switch app icon: $e');
-    }
-    return false;
-  }
-
-  static Future<void> switchAppIcon(String iconName) async {
-    await Storage.setAppIcon(iconName);
-    final success = await _updateAppIcon(iconName: iconName);
-    
-    if (success) {
-      // Exit app to apply changes on some Android versions (as requested)
-      await Future.delayed(const Duration(milliseconds: 500));
-      SystemNavigator.pop(); 
-    }
   }
 
   // ── Colors ───────────────────────────────────────────────────────────────
@@ -101,7 +66,7 @@ class AppTheme {
   static Color get line      => glassBorder;
   static Color get muted     => text3;
   static Color get white     => text1;
-  static Color get green     => cyan;
+  static Color get green     => isDark ? const Color(0xFF00E676) : const Color(0xFF16A34A);
   static Color get accentDim => isDark ? accent.withOpacity(0.2) : const Color(0xFF334155);
 
   static final List<BoxShadow> cardShadow = [

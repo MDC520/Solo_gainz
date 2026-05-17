@@ -2,12 +2,9 @@ import '../models/user_stats.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../theme/background.dart';
-import '../widgets/player.dart';
 import 'dart:math' as math;
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -311,17 +308,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _finishingOverlay() {
-    String rankFile = 'E Rank.png';
+    final rankFile = 'E Rank.png';
+    final playerName = (_nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : "PLAYER").toUpperCase();
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 800),
       builder: (context, val, child) => Container(
-        color: AppTheme.black.withValues(alpha: val),
+        color: AppTheme.black.withValues(alpha: val * 0.95),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Glassmorphic RPG Console Card
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
                 duration: const Duration(milliseconds: 1200),
@@ -329,56 +328,189 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 builder: (context, v, _) => Opacity(
                   opacity: v,
                   child: Transform.scale(
-                    scale: 0.9 + (0.1 * v),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 180,
-                          width: 180,
-                          child: Image.asset('Assets/Rank Shields/$rankFile'),
+                    scale: 0.92 + (0.08 * v),
+                    child: Container(
+                      width: 320,
+                      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface.withValues(alpha: 0.4 * v),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(
+                          color: AppTheme.glassBorder.withValues(alpha: 0.25 * v),
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 40),
-                        Text('SYSTEM INITIALIZED',
-                            style:
-                                AppTheme.label(color: AppTheme.accent).copyWith(
-                              letterSpacing: 6,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            )),
-                        const SizedBox(height: 16),
-                        Text('WELCOME, PLAYER',
-                            style: AppTheme.h1().copyWith(
-                              fontSize: 36,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.accent.withValues(alpha: 0.08 * v),
+                            blurRadius: 30,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // Radiant pulsing aura behind the shield
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 190,
+                                height: 190,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      AppTheme.accent.withValues(alpha: 0.15 * v),
+                                      AppTheme.purple.withValues(alpha: 0.05 * v),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Rotating border outline simulation
+                              Container(
+                                width: 154,
+                                height: 154,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppTheme.accent.withValues(alpha: 0.25 * v),
+                                    width: 1.5,
+                                    style: BorderStyle.solid,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: 130,
+                                width: 130,
+                                child: Image.asset(
+                                  'Assets/Rank Shields/$rankFile',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) =>
+                                      Icon(Icons.shield_rounded, color: AppTheme.accent, size: 90),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          // SYSTEM INITIALIZED read-out
+                          Text(
+                            'SYSTEM INITIALIZED',
+                            style: AppTheme.label(color: AppTheme.cyan).copyWith(
+                              letterSpacing: 4,
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
-                            )),
-                      ],
+                              shadows: [
+                                Shadow(color: AppTheme.cyan.withValues(alpha: 0.5), blurRadius: 8),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Dynamic welcoming shader gradient
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: [AppTheme.text1, AppTheme.accent, AppTheme.purple],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds),
+                            child: Text(
+                              'WELCOME, $playerName',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.h1(color: Colors.white).copyWith(
+                                fontSize: playerName.length > 8 ? 24 : 28,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 60),
-              // Cinematic progress bar
+              const SizedBox(height: 48),
+              
+              // Cinematic progress bar + dynamic status diagnostics
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
                 duration: const Duration(milliseconds: 3850),
-                builder: (context, progress, _) => SizedBox(
-                  width: 240,
-                  child: Column(
-                    children: [
-                      LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: AppTheme.line.withValues(alpha: 0.1),
-                        color: AppTheme.accent,
-                        minHeight: 2,
-                      ),
-                      const SizedBox(height: 8),
-                      Text('${(progress * 100).toInt()}%',
-                          style: AppTheme.caption(color: AppTheme.accent)
-                              .copyWith(fontFamily: 'monospace')),
-                    ],
-                  ),
-                ),
+                builder: (context, progress, _) {
+                  String getDiagnosticMsg(double p) {
+                    if (p < 0.20) return 'INITIALIZING CORE ENGINE...';
+                    if (p < 0.40) return 'CALIBRATING FITNESS READERS...';
+                    if (p < 0.60) return 'SYNCHRONIZING USER DATABASE...';
+                    if (p < 0.80) return 'SECURING SHIELDS & PROTOCOLS...';
+                    if (p < 1.0) return 'FORGING PLAYER ATTRIBUTES...';
+                    return 'CORE STATUS: COMPLETED. ASCEND!';
+                  }
+                  
+                  return SizedBox(
+                    width: 260,
+                    child: Column(
+                      children: [
+                        // Diagnostic message in green monospace
+                        Text(
+                          getDiagnosticMsg(progress),
+                          textAlign: TextAlign.center,
+                          style: AppTheme.mono(
+                            color: progress == 1.0 ? AppTheme.accent : AppTheme.text3,
+                            size: 9.5,
+                          ).copyWith(
+                            letterSpacing: 0.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Dual neon track progress bar
+                        Container(
+                          height: 10,
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.5)),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: progress,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [AppTheme.accent, AppTheme.cyan],
+                                ),
+                                borderRadius: BorderRadius.circular(3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.accent.withValues(alpha: 0.4),
+                                    blurRadius: 4,
+                                    spreadRadius: 0.5,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        
+                        // Progress Percentage
+                        Text(
+                          '${(progress * 100).toInt()}% LOADED',
+                          style: AppTheme.mono(color: AppTheme.accent, size: 10).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -579,7 +711,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 120,
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(28),
                       border: Border.all(
                         color: _profileImagePath != null
                             ? AppTheme.accent
@@ -605,7 +737,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: AppTheme.accent,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppTheme.bg, width: 2),
                       ),
                       child: Icon(

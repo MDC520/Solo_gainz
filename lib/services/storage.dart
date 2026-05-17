@@ -15,7 +15,6 @@ class Storage {
   static const String customQuestsKey = 'custom_quests';
   static const String inventoryKey = 'inventory_slots';
   static const String maxSlotsKey = 'max_slots';
-  static const String appIconKey = 'app_icon_name';
 
   static late final Box _box;
   static bool _isInit = false;
@@ -271,14 +270,15 @@ class Storage {
   static bool isOnboarded() => getData('is_onboarded', defaultValue: false);
   static String? getCurrentUser() => getData('player_name', defaultValue: 'Player');
   static Future<void> setPlayerName(String name) => saveData('player_name', name);
-  static String? getProfileImage() => getData('profile_image');
-  static Future<void> setProfileImage(String path) => saveData('profile_image', path);
-  static bool isNavbarFloating() => getData('is_navbar_floating', defaultValue: true);
+  static String? getProfileImage() => getData('profile_image') ?? getData('profile_image_path');
+  static Future<void> setProfileImage(String path) async {
+    await saveData('profile_image', path);
+    await saveData('profile_image_path', path);
+  }
+  static bool isNavbarFloating() => getData('is_navbar_floating', defaultValue: false);
   static Future<void> setNavbarFloating(bool value) => saveData('is_navbar_floating', value);
   static bool isNavbarHidden() => getData('is_navbar_hidden', defaultValue: false);
   static Future<void> setNavbarHidden(bool value) => saveData('is_navbar_hidden', value);
-  static String getAppIcon() => getData(appIconKey, defaultValue: 'DarkIcon');
-  static Future<void> setAppIcon(String value) => saveData(appIconKey, value);
 
   // Backup & Restore
   static const int _dataVersion = 1;
@@ -311,7 +311,6 @@ class Storage {
         'daily_goal': getData('daily_goal', defaultValue: 'medium'),
         'last_daily_reward_date': getData('last_daily_reward_date'),
         'is_dark_mode': getData('is_dark_mode', defaultValue: true),
-        'app_icon_name': getAppIcon(),
       },
     });
   }
@@ -354,7 +353,6 @@ class Storage {
         await saveData('daily_goal', settings['daily_goal'] ?? 'medium');
         if (settings['last_daily_reward_date'] != null) await saveData('last_daily_reward_date', settings['last_daily_reward_date']);
         if (settings['is_dark_mode'] != null) await saveData('is_dark_mode', settings['is_dark_mode']);
-        if (settings['app_icon_name'] != null) await setAppIcon(settings['app_icon_name']);
       }
     } catch (_) {}
   }

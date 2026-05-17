@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../theme/background.dart';
@@ -70,14 +71,8 @@ class BuyScreen extends StatelessWidget {
     stats.coins += bundle.coins;
     await Storage.saveUserStats(stats);
     await Storage.saveData('coins', stats.coins);
-    // await Storage.syncData();
 
     if (!context.mounted) return;
-
-    AppTheme.showSnackBar(
-      context,
-      'Purchased ${bundle.title} for ${bundle.price}.',
-    );
 
     Navigator.pop(context, bundle.coins);
   }
@@ -87,57 +82,54 @@ class BuyScreen extends StatelessWidget {
     return LivelyBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
+        body: CustomScrollView(
+          physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            // ── Premium Consistent Header ──
+            SliverToBoxAdapter(
+              child: SafeArea(
+                bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Coin Shop', style: AppTheme.h1()),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Fuel your grind and gain the edge.',
-                                  style: AppTheme.caption(),
-                                ),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppTheme.line, width: 1.5),
-                              ),
-                              child: Icon(
-                                Icons.close,
-                                size: 20,
-                                color: AppTheme.text2,
-                              ),
-                            ),
+                          Text('Coin Shop', style: AppTheme.h1()),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Fuel your grind and gain the edge.',
+                            style: AppTheme.caption(color: AppTheme.text2),
                           ),
                         ],
+                      ),
+                      // Rounded Close Button matching settings & quest screen
+                      SGTouchable(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: AppTheme.text2,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
+            ),
+
+            // ── Grid of Bundles ──
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 60),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -153,45 +145,70 @@ class BuyScreen extends StatelessWidget {
                       onTap: () => _purchase(context, bundle),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(16),
+                          color: AppTheme.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppTheme.line,
-                            width: 1.2,
+                            color: AppTheme.silver,
+                            width: 1.5,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // Title
                                 Text(
                                   bundle.title.toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: AppTheme.label().copyWith(
                                     color: bundle.color,
                                     letterSpacing: 1.2,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 11,
+                                    fontSize: 10.5,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
 
-                                // Icon / Coins graphic
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.generating_tokens_rounded,
-                                      size: 48,
-                                      color: AppTheme.white,
+                                // Premium Dollar Medallion Icon with Glow Shadow
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        bundle.color.withOpacity(0.3),
+                                        bundle.color.withOpacity(0.05),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                  ],
+                                    border: Border.all(
+                                      color: bundle.color.withOpacity(0.4),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.attach_money_rounded,
+                                      size: 28,
+                                      color: bundle.color,
+                                    ),
+                                  ),
                                 ),
 
-                                // Amount
+                                // Amount of Coins
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -206,11 +223,12 @@ class BuyScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'T COINS',
+                                      'COINS',
                                       style: AppTheme.label().copyWith(
                                         fontSize: 9,
                                         color: AppTheme.text2,
                                         fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
                                       ),
                                     )
                                   ],
@@ -220,29 +238,27 @@ class BuyScreen extends StatelessWidget {
                                 Text(
                                   bundle.subtitle,
                                   style: AppTheme.caption(color: AppTheme.text2).copyWith(
-                                    fontSize: 10,
+                                    fontSize: 9.5,
                                   ),
                                   textAlign: TextAlign.center,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
 
-                                const SizedBox(height: 4),
-
-                                // Price tag
+                                // Price tag matching bundle's color
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.cyan,
+                                    color: bundle.color,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Center(
                                     child: Text(
                                       bundle.price,
                                       style: AppTheme.label().copyWith(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
                                         color: Colors.black,
                                       ),
                                     ),
@@ -260,7 +276,6 @@ class BuyScreen extends StatelessWidget {
               ),
             ),
           ],
-          ),
         ),
       ),
     );

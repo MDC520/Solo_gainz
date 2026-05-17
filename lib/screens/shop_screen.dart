@@ -5,7 +5,6 @@ import '../services/storage.dart';
 import '../theme/theme.dart';
 import '../widgets/chest_sprite.dart';
 
-
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
   @override
@@ -15,10 +14,6 @@ class ShopPage extends StatefulWidget {
 class _ShopPageState extends State<ShopPage> {
   late UserStats _s;
   int _tab = 0;
-  int _woodenQty = 1;
-  int _ironQty = 1;
-  int _goldQty = 1;
-
 
   static const _tabs = ['Boosts', 'Premium', 'Cosmetics', 'Chests'];
 
@@ -42,97 +37,204 @@ class _ShopPageState extends State<ShopPage> {
     });
   }
 
-
-
   // ── Chest Purchase Flow ──────────────────────────────────────
-  void _buyChest(String chestType, String chestName, int unitPrice, int qty) {
-    final totalPrice = unitPrice * qty;
+  void _buyChest(String chestType, String chestName, int price) {
     final availableSlots =
         Storage.getInventorySlots().where((s) => s == null).length;
+    final isFull = availableSlots < 1;
+    final canBuy = _s.coins >= price;
+    final spriteType = chestType.split('_').first;
 
-    // 1. Check inventory space
-    if (availableSlots < qty) {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('Not Enough Space', style: AppTheme.h3()),
-          content: Text(
-            'You only have $availableSlots empty slots, but you want to buy $qty chests.',
-            style: AppTheme.body(),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: Text('OK', style: AppTheme.label(color: AppTheme.accent)),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
-      return;
+    // Map description
+    String description = '';
+    if (chestType.contains('wooden')) {
+      description = 'A sturdy wooden chest. Rewards \$6–399. Rare drops above \$100.';
+    } else if (chestType.contains('iron')) {
+      description = 'A reinforced iron chest. Rewards \$6–399. Better drop rates.';
+    } else {
+      description = 'The ultimate treasure. Rewards \$500–5000. Guaranteed epic loot.';
     }
 
-    // 2. Check coins
-    if (_s.coins < totalPrice) {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          title: Text('Not enough coins', style: AppTheme.h3()),
-          content: Text(
-            'You need \$${totalPrice - _s.coins} more to buy $qty chests.',
-            style: AppTheme.body(),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: Text('OK', style: AppTheme.label(color: AppTheme.accent)),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    // 3. Confirmation popup
-    showCupertinoDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text('Buy $chestName${qty > 1 ? " x$qty" : ""}',
-            style: AppTheme.h3()),
-        content: Text(
-          'This will cost \$$totalPrice.\nThe chest${qty > 1 ? "s" : ""} will be placed in your inventory.',
-          style: AppTheme.body(),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: Text('Cancel', style: AppTheme.body(color: AppTheme.text2)),
-            onPressed: () => Navigator.pop(ctx),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.black.withOpacity(0.95),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+            border: Border(
+              top: BorderSide(color: AppTheme.silver.withOpacity(0.3), width: 1.5),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
           ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            child:
-                Text('Purchase', style: AppTheme.label(color: AppTheme.accent)),
-            onPressed: () async {
-              // Deduct coins
-              _s.coins -= totalPrice;
-              await Storage.saveUserStats(_s);
-              // await Storage.syncData(); // Optional: trigger local backup
-              // Add chests to inventory
-              for (int i = 0; i < qty; i++) {
-                await Storage.addChestToInventory(chestType);
-              }
-              if (!context.mounted) return;
-              Navigator.pop(ctx);
-              _load();
-              // Show chest arrival animation
-              _showChestArrival(chestType, chestName, qty);
-            },
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag Handle
+                  Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: AppTheme.silver.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Large Item Square
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.silver.withOpacity(0.25), width: 1.5),
+                    ),
+                    child: Center(
+                      child: ChestSprite(
+                        chestType: spriteType,
+                        animation: 'Idle',
+                        fps: 8,
+                        size: 76,
+                        alignment: Alignment.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title & Price Info
+                  Text(
+                    chestName,
+                    style: AppTheme.h2().copyWith(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Price: ',
+                        style: AppTheme.caption(color: AppTheme.text2).copyWith(fontSize: 14),
+                      ),
+                      Text(
+                        '\$$price',
+                        style: AppTheme.mono(size: 16, color: AppTheme.accent).copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Description
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      description,
+                      textAlign: TextAlign.center,
+                      style: AppTheme.body().copyWith(
+                        color: AppTheme.text2,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Action Button
+                  if (isFull)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.red.withOpacity(0.2), width: 1.5),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'INVENTORY FULL',
+                          style: AppTheme.label(color: AppTheme.red).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (!canBuy)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.red.withOpacity(0.2), width: 1.5),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'NOT ENOUGH COINS (NEED \$${price - _s.coins} MORE)',
+                          style: AppTheme.label(color: AppTheme.red).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SGTouchable(
+                      onTap: () async {
+                        Navigator.pop(ctx); // Close sheet first
+                        // Deduct coins
+                        _s.coins -= price;
+                        await Storage.saveUserStats(_s);
+                        // Add chest to inventory
+                        await Storage.addChestToInventory(chestType);
+                        _load();
+                        // Show chest arrival animation
+                        _showChestArrival(chestType, chestName);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'CONFIRM PURCHASE',
+                            style: AppTheme.label(color: Colors.black).copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  void _showChestArrival(String chestType, String chestName, int qty) {
+  void _showChestArrival(String chestType, String chestName) {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -142,7 +244,7 @@ class _ShopPageState extends State<ShopPage> {
         return _ChestArrivalPopup(
           chestType: chestType,
           chestName: chestName,
-          qty: qty,
+          qty: 1,
           onDone: () => Navigator.pop(ctx),
         );
       },
@@ -162,119 +264,119 @@ class _ShopPageState extends State<ShopPage> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Gear Shop', style: AppTheme.h1()),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Exchange coins for elite upgrades.',
-                            style: AppTheme.caption(color: AppTheme.text2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Gear Shop', style: AppTheme.h1()),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Exchange coins for elite upgrades.',
+                          style: AppTheme.caption(color: AppTheme.text2),
+                        ),
+                      ],
+                    ),
+                    // Balance chip
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
                           ),
-                        ],
-                      ),
-                      // Balance chip
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppTheme.text1.withValues(alpha: 0.1), width: 1),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.attach_money_rounded,
+                                size: 16,
+                                color: AppTheme.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${_s.coins}',
+                                style: AppTheme.label().copyWith(
+                                  color: AppTheme.text1,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: _openBuyCoins,
+                          child: Container(
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
                               color: AppTheme.surface,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppTheme.text1.withValues(alpha: 0.1), width: 1),
-                              boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.attach_money_rounded,
-                                  size: 16,
-                                  color: AppTheme.accent,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${_s.coins}',
-                                  style: AppTheme.label().copyWith(
-                                    color: AppTheme.text1,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: _openBuyCoins,
-                            child: Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppTheme.accent,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.add,
-                                size: 18,
+                              border: Border.all(
                                 color: AppTheme.accent,
+                                width: 1.5,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Segment tabs
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.silver, width: 1.5),
-                    ),
-                    child: CupertinoSlidingSegmentedControl<int>(
-                      backgroundColor: AppTheme.surface,
-                      thumbColor: AppTheme.accent,
-                      groupValue: _tab,
-                      onValueChanged: (v) {
-                        if (v != null) setState(() => _tab = v);
-                      },
-                      children: {
-                        for (int i = 0; i < _tabs.length; i++)
-                          i: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              _tabs[i],
-                              style: AppTheme.label(
-                                color: _tab == i ? Colors.white : AppTheme.text2,
-                              ),
-                              textAlign: TextAlign.center,
+                            child: Icon(
+                              Icons.add,
+                              size: 18,
+                              color: AppTheme.accent,
                             ),
                           ),
-                      },
+                        ),
+                      ],
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Segment tabs
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.silver, width: 1.5),
                   ),
-                ],
-              ),
+                  child: CupertinoSlidingSegmentedControl<int>(
+                    backgroundColor: AppTheme.surface,
+                    thumbColor: AppTheme.accent,
+                    groupValue: _tab,
+                    onValueChanged: (v) {
+                      if (v != null) setState(() => _tab = v);
+                    },
+                    children: {
+                      for (int i = 0; i < _tabs.length; i++)
+                        i: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            _tabs[i],
+                            style: AppTheme.label(
+                              color: _tab == i ? Colors.white : AppTheme.text2,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
         if (isChestTab)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
@@ -283,33 +385,23 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'wooden',
                   name: 'Wooden Chest',
-                  desc: 'A sturdy wooden chest. Rewards \$6–399. Rare drops above \$100.',
                   price: 900,
-                  qty: _woodenQty,
-                  onQtyChanged: (v) => setState(() => _woodenQty = v),
                 ),
                 const SizedBox(height: 16),
                 _chestCard(
                   chestType: 'iron',
                   name: 'Iron Chest',
-                  desc: 'A reinforced iron chest. Rewards \$6–399. Better drop rates.',
                   price: 1600,
-                  qty: _ironQty,
-                  onQtyChanged: (v) => setState(() => _ironQty = v),
                 ),
                 const SizedBox(height: 16),
                 _chestCard(
                   chestType: 'gold',
                   name: 'Gold Chest',
-                  desc: 'The ultimate treasure. Rewards \$500–5000. Guaranteed epic loot.',
                   price: 4500,
-                  qty: _goldQty,
-                  onQtyChanged: (v) => setState(() => _goldQty = v),
                 ),
               ]),
             ),
           )
-        
         else
           SliverFillRemaining(
             hasScrollBody: false,
@@ -343,22 +435,19 @@ class _ShopPageState extends State<ShopPage> {
   Widget _chestCard({
     required String chestType,
     required String name,
-    required String desc,
     required int price,
-    required int qty,
-    required ValueChanged<int> onQtyChanged,
   }) {
-    final totalCost = price * qty;
-    final canTotal = _s.coins >= totalCost;
+    final canBuy = _s.coins >= price;
     final chestTypeKey = '${chestType}_chest';
     final availableSlots = Storage.getInventorySlots().where((s) => s == null).length;
+    final isFull = availableSlots == 0;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.black,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.text1.withValues(alpha: 0.15), width: 1.5),
+        border: Border.all(color: AppTheme.silver, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -367,160 +456,76 @@ class _ShopPageState extends State<ShopPage> {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Chest Visual
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppTheme.glassMedium,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.line, width: 1),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Ground / Shadow
-                    Positioned(
-                      bottom: 8,
-                      child: Container(
-                        width: 40,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: const BorderRadius.all(Radius.elliptical(40, 6)),
-                        ),
-                      ),
-                    ),
-                    // Chest
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: ChestSprite(
-                        chestType: chestType,
-                        animation: 'Idle',
-                        fps: 8,
-                        size: 56,
-                      ),
-                    ),
-                  ],
-                ),
+          // Item square container enclosing the chest visual centered perfectly
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.silver.withOpacity(0.15), width: 1.2),
+            ),
+            child: Center(
+              child: ChestSprite(
+                chestType: chestType,
+                animation: 'Idle',
+                fps: 8,
+                size: 44,
+                alignment: Alignment.center,
               ),
-              const SizedBox(width: 16),
-              // Name & Desc
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: AppTheme.h3()),
-                    const SizedBox(height: 4),
-                    Text(
-                      desc,
-                      style: AppTheme.caption(color: AppTheme.text2),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 16),
-          // Actions Row (Compact)
-          Row(
-            children: [
-              // Quantity selector
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.bg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.line, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    _qtyBtn(
-                      icon: Icons.remove,
-                      onTap: qty > 1 ? () => onQtyChanged(qty - 1) : null,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '$qty',
-                        style: AppTheme.mono(size: 16, color: AppTheme.white)
-                            .copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    _qtyBtn(
-                      icon: Icons.add,
-                      onTap: qty < availableSlots && qty < 99 ? () => onQtyChanged(qty + 1) : null,
-                    ),
-                  ],
+          const SizedBox(width: 16),
+          // Chest Title: guaranteed to be in the same line
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.h3().copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Compact Buy Button: guaranteed to be in the same line
+          SGTouchable(
+            onTap: () => _buyChest(chestTypeKey, name, price),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: (canBuy && !isFull) ? AppTheme.accent : AppTheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: (canBuy && !isFull) ? AppTheme.accent : AppTheme.text1.withValues(alpha: 0.15),
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Buy Button
-              Expanded(
-                child: SGTouchable(
-                  onTap: () => _buyChest(chestTypeKey, name, price, qty),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: canTotal && availableSlots >= qty ? AppTheme.accent : AppTheme.text1.withValues(alpha: 0.2), width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          availableSlots == 0 ? 'FULL' : 'BUY FOR ',
-                          style: AppTheme.label(color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2),
-                        ),
-                        if (availableSlots > 0) ...[
-                          Text(
-                            '$totalCost',
-                            style: AppTheme.mono(size: 14, color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2)
-                                .copyWith(fontWeight: FontWeight.w900),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.attach_money_rounded,
-                            size: 14,
-                            color: canTotal && availableSlots >= qty ? Colors.black : AppTheme.text2,
-                          ),
-                        ],
-                      ],
-                    ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isFull ? 'FULL' : 'BUY \$',
+                    style: AppTheme.label(
+                      color: (canBuy && !isFull) ? Colors.black : Colors.white.withOpacity(0.9),
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 13.5),
                   ),
-                ),
+                  if (!isFull)
+                    Text(
+                      '$price',
+                      style: AppTheme.mono(
+                        size: 14.5,
+                        color: (canBuy && !isFull) ? Colors.black : Colors.white,
+                      ).copyWith(fontWeight: FontWeight.w900),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _qtyBtn({required IconData icon, VoidCallback? onTap}) {
-    final disabled = onTap == null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          color: disabled ? Colors.transparent : AppTheme.surface,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Icon(icon,
-            size: 14,
-            color: disabled
-                ? AppTheme.text2.withValues(alpha: 0.3)
-                : AppTheme.text1),
       ),
     );
   }
@@ -560,37 +565,33 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
   void initState() {
     super.initState();
 
-    // Chest flies in from far away
+    // High-impact fast entry (300ms)
     _arriveCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 300),
     );
 
-    _scale = Tween<double>(begin: 0.1, end: 1.0).animate(
-      CurvedAnimation(parent: _arriveCtrl, curve: Curves.elasticOut),
-    );
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-          parent: _arriveCtrl,
-          curve: const Interval(0.0, 0.4, curve: Curves.easeIn)),
-    );
-    _slide = Tween<Offset>(begin: const Offset(0, 3), end: Offset.zero).animate(
+    _scale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _arriveCtrl, curve: Curves.easeOutBack),
     );
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _arriveCtrl, curve: Curves.easeIn),
+    );
+    _slide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _arriveCtrl, curve: Curves.easeOutCubic),
+    );
 
-    // Glow pulse
+    // Dynamic glow pulse
     _glowCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
-    _glowAnim = Tween<double>(begin: 0.3, end: 0.8).animate(
+    _glowAnim = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
     );
 
     _arriveCtrl.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) setState(() => _showButton = true);
-      });
+      if (mounted) setState(() => _showButton = true);
     });
   }
 
@@ -603,126 +604,145 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
 
   @override
   Widget build(BuildContext context) {
-    final chestSpriteType =
-        widget.chestType == 'wooden_chest' ? 'wooden' : 'iron';
-    final glowColor =
-        chestSpriteType == 'wooden' ? AppTheme.amber : AppTheme.cyan;
+    final chestSpriteType = widget.chestType.split('_').first.toLowerCase();
+    
+    Color glowColor;
+    if (chestSpriteType == 'wooden') {
+      glowColor = AppTheme.amber;
+    } else if (chestSpriteType == 'iron') {
+      glowColor = AppTheme.cyan;
+    } else {
+      glowColor = AppTheme.accent; // Gold!
+    }
 
     return Material(
       type: MaterialType.transparency,
       child: DefaultTextStyle(
         style: AppTheme.body(),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title
-              AnimatedBuilder(
-                animation: _arriveCtrl,
-                builder: (context, child) => Opacity(
-                  opacity: _opacity.value,
-                  child: Text(
-                    widget.qty > 1
-                        ? '${widget.qty} Chests Acquired!'
-                        : 'Chest Acquired!',
-                    style: AppTheme.h1(color: AppTheme.accent)
-                        .copyWith(fontSize: 24),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Animated chest with glow
-              AnimatedBuilder(
-                animation: Listenable.merge([_arriveCtrl, _glowCtrl]),
-                builder: (context, child) => SlideTransition(
-                  position: _slide,
-                  child: ScaleTransition(
-                    scale: _scale,
-                    child: Opacity(
-                      opacity: _opacity.value.clamp(0.0, 1.0),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Glow Effect
-                          Transform.scale(
-                            scale: _glowAnim.value * 2.0,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: glowColor.withValues(
-                                        alpha: 0.4 * _glowAnim.value),
-                                    blurRadius: 40,
-                                    spreadRadius: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // Chest
-                          SizedBox(
-                            width: 160,
-                            height: 160,
-                            child: Center(
-                              child: ChestSprite(
-                                chestType: chestSpriteType,
-                                animation: 'Idle',
-                                fps: 10,
-                                size: 120,
-                              ),
-                            ),
-                          ),
-                        ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: ScaleTransition(
+              scale: _scale,
+              child: FadeTransition(
+                opacity: _opacity,
+                child: Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    color: AppTheme.black.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: AppTheme.silver,
+                      width: 2.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 15,
                       ),
-                    ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Subtitle Header
+                      Text(
+                        'LOOT UNLOCKED',
+                        style: AppTheme.label().copyWith(
+                          color: glowColor,
+                          letterSpacing: 3.0,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Title Text
+                      Text(
+                        widget.qty > 1
+                            ? '${widget.qty} CHESTS ACQUIRED!'
+                            : 'CHEST ACQUIRED!',
+                        style: AppTheme.h2().copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Perfectly Centered Glowing Sprite Visual
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Chest Sprite centered inside square
+                            ChestSprite(
+                              chestType: chestSpriteType,
+                              animation: 'Idle',
+                              fps: 12,
+                              size: 110,
+                              alignment: Alignment.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Chest Name Label
+                      Text(
+                        widget.chestName,
+                        style: AppTheme.h1().copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Stored securely in your inventory',
+                        style: AppTheme.caption(color: AppTheme.text2),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 36),
+
+                      // Action Button (Continue)
+                      AnimatedOpacity(
+                        opacity: _showButton ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: SGTouchable(
+                          onTap: widget.onDone,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.accent.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                'CONTINUE',
+                                style: AppTheme.label(color: Colors.black).copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              AnimatedBuilder(
-                animation: _arriveCtrl,
-                builder: (context, child) => Opacity(
-                  opacity: _opacity.value,
-                  child: Text(
-                    '${widget.chestName}${widget.qty > 1 ? " x${widget.qty}" : ""}',
-                    style: AppTheme.h2(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              AnimatedBuilder(
-                animation: _arriveCtrl,
-                builder: (context, child) => Opacity(
-                  opacity: _opacity.value,
-                  child: Text(
-                    'Added to your inventory',
-                    style: AppTheme.caption(color: AppTheme.text2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              // Done button
-              AnimatedOpacity(
-                opacity: _showButton ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 400),
-                child: SGTouchable(
-                  onTap: widget.onDone,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text('Continue',
-                        style: AppTheme.label(color: Colors.white)),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

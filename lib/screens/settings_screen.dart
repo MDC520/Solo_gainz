@@ -1,5 +1,5 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../services/storage.dart';
 import '../theme/theme.dart';
@@ -13,99 +13,47 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _transitionCompleted = false;
 
-  void _showHelp() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: AppTheme.bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: AppTheme.glassBorder),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Support', style: AppTheme.h2()),
-            const SizedBox(height: 8),
-            Text('Need help or found a bug? Send us an email.', style: AppTheme.body()),
-            const SizedBox(height: 24),
-            SGButton(
-              label: 'EMAIL US',
-              icon: Icons.mail,
-              onTap: () {
-                Navigator.pop(ctx);
-                _contactSupport();
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    // BUTTERY SMOOTH TRANSITIONS: Defer heavy widgets
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) {
+        setState(() => _transitionCompleted = true);
+      }
+    });
   }
 
-  Future<void> _contactSupport() async {
-    final Uri uri = Uri(scheme: 'mailto', path: 'originalsadiqteam@gmail.com', query: 'subject=Solo Gainz Support');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
-  Future<void> _launchAbout() async {
-    final Uri url = Uri.parse('https://sologainz.netlify.app');
-    if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
-  }
-
-
-  Widget _buildSettingItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    Widget? trailing,
-    VoidCallback? onTap,
-    bool isDestructive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 22, color: color),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTheme.h3().copyWith(fontSize: 16, color: isDestructive ? color : null)),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: AppTheme.caption(color: AppTheme.muted)),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing
-            else if (onTap != null) Icon(Icons.chevron_right, size: 20, color: AppTheme.muted),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
+  Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 64, right: 16),
-      child: Divider(color: AppTheme.line, height: 1),
+      padding: const EdgeInsets.fromLTRB(6, 24, 6, 12),
+      child: Row(
+        children: [
+          // Cyberpunk glowing start dash
+          Container(
+            width: 3,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppTheme.accent,
+              borderRadius: BorderRadius.circular(1.5),
+              boxShadow: [
+                BoxShadow(color: AppTheme.accent.withOpacity(0.5), blurRadius: 4),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: AppTheme.label(color: AppTheme.text2).copyWith(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -113,140 +61,270 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: AppTheme.isDarkNotifier,
-      builder: (context, _) => LivelyBackground(
-        isMoving: false,
-        child: Scaffold(
+      builder: (context, _) {
+        final bodyWidget = Scaffold(
           backgroundColor: Colors.transparent,
           body: CustomScrollView(
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             slivers: [
+              // ── Redesigned Header to match quest_screen.dart exactly ──
               SliverToBoxAdapter(
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SGTouchable(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppTheme.line),
-                            ),
-                            child: Icon(Icons.arrow_back_ios_new, size: 20, color: AppTheme.text1),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Settings', style: AppTheme.h1().copyWith(fontSize: 32)),
+                            Text(
+                              'Settings',
+                              style: AppTheme.h1(),
+                            ),
                             const SizedBox(height: 4),
-                            Text('App preferences & system', style: AppTheme.caption(color: AppTheme.text2)),
+                            Text(
+                              'App preferences & system core.',
+                              style: AppTheme.caption(color: AppTheme.text2),
+                            ),
                           ],
+                        ),
+                        // Right-aligned close button styled exactly like quest_screen.dart
+                        SGTouchable(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.close, color: AppTheme.text2, size: 20),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
+
+              // ── Settings Rows ──
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 60),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    const SGSectionHeader(title: 'Interface'),
-                    SGCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          _buildSettingItem(
-                            icon: Icons.dark_mode_rounded,
-                            title: 'Dark Mode',
-                            subtitle: 'Enable Aura & Glass theme',
-                            color: AppTheme.purple,
-                            trailing: CupertinoSwitch(
-                              value: AppTheme.isDark,
-                              activeTrackColor: AppTheme.accent,
-                              onChanged: (_) => AppTheme.toggleTheme(),
+                    _buildSectionHeader('Interface Theme'),
+                    const SizedBox(height: 8),
+                    // Theme capsule choice
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SGTouchable(
+                            onTap: () {
+                              if (!AppTheme.isDark) AppTheme.toggleTheme();
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                color: AppTheme.isDark ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppTheme.isDark ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: AppTheme.isDark
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.accent.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.nights_stay_rounded,
+                                    color: AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'OBSIDIAN DARK',
+                                    style: AppTheme.mono(
+                                      color: AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                      size: 11,
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          _buildDivider(),
-                          _buildSettingItem(
-                            icon: Icons.auto_awesome_motion,
-                            title: 'Floating Interface',
-                            subtitle: 'Enable beautiful aura effects',
-                            color: AppTheme.cyan,
-                            trailing: CupertinoSwitch(
-                              value: Storage.isNavbarFloating(),
-                              activeTrackColor: AppTheme.accent,
-                              onChanged: (v) async {
-                                await Storage.setNavbarFloating(v);
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SGTouchable(
+                            onTap: () {
+                              if (AppTheme.isDark) AppTheme.toggleTheme();
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                color: !AppTheme.isDark ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: !AppTheme.isDark ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: !AppTheme.isDark
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.accent.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.wb_sunny_rounded,
+                                    color: !AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'SILVER LIGHT',
+                                    style: AppTheme.mono(
+                                      color: !AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                      size: 11,
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Float Navigator / Normal Navigator'),
+                    const SizedBox(height: 8),
+                    // Navigator Mode capsule choice
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SGTouchable(
+                            onTap: () async {
+                              if (!Storage.isNavbarFloating()) {
+                                await Storage.setNavbarFloating(true);
                                 if (mounted) setState(() {});
-                              },
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                color: Storage.isNavbarFloating() ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: Storage.isNavbarFloating()
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.accent.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome_motion_rounded,
+                                    color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'FLOAT NAVIGATOR',
+                                    style: AppTheme.mono(
+                                      color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                      size: 11,
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SGTouchable(
+                            onTap: () async {
+                              if (Storage.isNavbarFloating()) {
+                                await Storage.setNavbarFloating(false);
+                                if (mounted) setState(() {});
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                color: !Storage.isNavbarFloating() ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: !Storage.isNavbarFloating()
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.accent.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.view_headline_rounded,
+                                    color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'NORMAL NAVIGATOR',
+                                    style: AppTheme.mono(
+                                      color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                      size: 11,
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
-                    const SGSectionHeader(title: 'App Customization'),
-                    SGCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          _buildSettingItem(
-                            icon: Icons.grid_view_rounded,
-                            title: 'Dark Icon (Default)',
-                            subtitle: 'Classic Solo Gainz aesthetic',
-                            color: AppTheme.purple,
-                            trailing: Storage.getAppIcon() == 'DarkIcon' ? Icon(Icons.check_circle, color: AppTheme.accent) : null,
-                            onTap: () => AppTheme.switchAppIcon('DarkIcon'),
-                          ),
-                          _buildDivider(),
-                          _buildSettingItem(
-                            icon: Icons.grid_view_outlined,
-                            title: 'Light Icon',
-                            subtitle: 'Clean white aesthetic',
-                            color: AppTheme.cyan,
-                            trailing: Storage.getAppIcon() == 'LightIcon' ? Icon(Icons.check_circle, color: AppTheme.accent) : null,
-                            onTap: () => AppTheme.switchAppIcon('LightIcon'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const SGSectionHeader(title: 'System'),
-                    SGCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          _buildSettingItem(
-                            icon: Icons.help_outline,
-                            title: 'Support',
-                            subtitle: 'Contact us or view FAQs',
-                            color: AppTheme.amber,
-                            onTap: _showHelp,
-                          ),
-                          _buildDivider(),
-                          _buildSettingItem(
-                            icon: Icons.info_outline,
-                            title: 'About',
-                            subtitle: 'Version 1.0.0-Alpha',
-                            color: AppTheme.purple,
-                            onTap: _launchAbout,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 60),
+
+                    const SizedBox(height: 48),
                     Center(
                       child: Text(
-                        'All progress is stored locally on this device.',
-                        style: AppTheme.caption(color: AppTheme.muted),
+                        'Solo Gainz © 2026. Keep grinding.',
+                        style: AppTheme.mono(color: AppTheme.text3, size: 9.5).copyWith(
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ]),
@@ -254,8 +332,21 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ],
           ),
-        ),
-      ),
+        );
+
+        // Defer drawing heavy animators until the route transition ends
+        if (!_transitionCompleted) {
+          return Container(
+            color: AppTheme.black,
+            child: bodyWidget,
+          );
+        }
+
+        return LivelyBackground(
+          isMoving: false,
+          child: bodyWidget,
+        );
+      },
     );
   }
 }

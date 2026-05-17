@@ -1121,7 +1121,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
           sliver: _tab == 0 ? _buildDailyList() : _buildCustomList(),
         ),
         SliverPadding(
@@ -1606,7 +1606,7 @@ class _QuestCardState extends State<_QuestCard> {
             border: Border.all(
               color: _isEditingLocal
                   ? Colors.transparent
-                  : AppTheme.text1,
+                  : AppTheme.silver,
               width: 1.5,
             ),
           ),
@@ -1621,7 +1621,7 @@ class _QuestCardState extends State<_QuestCard> {
                     decoration: BoxDecoration(
                       color: widget.color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.text1.withValues(alpha: 0.3), width: 1.5),
+                      border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3), width: 1.5),
                     ),
                     child: Center(
                       child: iconIndex > 0
