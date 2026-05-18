@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../widgets/player.dart';
+import 'storage.dart';
+import 'theme.dart';
+import 'player.dart';
 import 'inventory_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -619,7 +618,7 @@ class _HomePageState extends State<HomePage> {
                       height: 6,
                       margin: const EdgeInsets.only(left: 4),
                       decoration: BoxDecoration(
-                        color: isActive ? AppTheme.accent : AppTheme.text2.withOpacity(0.3),
+                        color: isActive ? AppTheme.accent : AppTheme.text2.withValues(alpha: 0.3),
                         shape: BoxShape.rectangle, // "squared dots"
                       ),
                     );
@@ -661,26 +660,26 @@ class _HomePageState extends State<HomePage> {
                     if (isToday) {
                       if (completed) {
                         borderColor = AppTheme.green;
-                        backgroundColor = AppTheme.green.withOpacity(0.18);
+                        backgroundColor = AppTheme.green.withValues(alpha: 0.18);
                       } else {
                         borderColor = Colors.blue;
-                        backgroundColor = Colors.blue.withOpacity(0.15);
+                        backgroundColor = Colors.blue.withValues(alpha: 0.15);
                       }
                       textColor = AppTheme.accent; // lighted up active day
                     } else if (isFuture) {
-                      borderColor = AppTheme.line.withOpacity(0.25);
-                      backgroundColor = AppTheme.surface.withOpacity(0.2);
-                      textColor = AppTheme.text2.withOpacity(0.5);
+                      borderColor = AppTheme.line.withValues(alpha: 0.25);
+                      backgroundColor = AppTheme.surface.withValues(alpha: 0.2);
+                      textColor = AppTheme.text2.withValues(alpha: 0.5);
                     } else {
                       // Past days in current week or any days in previous weeks:
                       if (completed) {
-                        borderColor = AppTheme.green.withOpacity(0.6);
-                        backgroundColor = AppTheme.surface.withOpacity(0.4);
+                        borderColor = AppTheme.green.withValues(alpha: 0.6);
+                        backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
                       } else {
-                        borderColor = AppTheme.red.withOpacity(0.4);
-                        backgroundColor = AppTheme.surface.withOpacity(0.4);
+                        borderColor = AppTheme.red.withValues(alpha: 0.4);
+                        backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
                       }
-                      textColor = AppTheme.text2.withOpacity(0.8);
+                      textColor = AppTheme.text2.withValues(alpha: 0.8);
                     }
 
                     return GestureDetector(
@@ -760,14 +759,18 @@ class _HomePageState extends State<HomePage> {
                             color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: AppTheme.accent, width: 1.5),
-                            image: _profileImagePath != null
+                            image: _profileImagePath != null &&
+                                    _profileImagePath!.isNotEmpty &&
+                                    File(_profileImagePath!).existsSync()
                                 ? DecorationImage(
                                     image: FileImage(File(_profileImagePath!)),
                                     fit: BoxFit.cover,
                                   )
                                 : null,
                           ),
-                          child: _profileImagePath == null
+                          child: _profileImagePath == null ||
+                                  _profileImagePath!.isEmpty ||
+                                  !File(_profileImagePath!).existsSync()
                               ? Icon(Icons.person_rounded,
                                   color: AppTheme.text3, size: 32)
                               : null,
@@ -940,7 +943,7 @@ class _HomePageState extends State<HomePage> {
                           right: 16,
                           child: CustomPaint(
                             painter: ComicBubblePainter(
-                              color: AppTheme.surface.withOpacity(0.95),
+                              color: AppTheme.surface.withValues(alpha: 0.95),
                               borderColor: AppTheme.accent,
                             ),
                             child: Padding(

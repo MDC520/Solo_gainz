@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/storage.dart';
+import 'storage.dart';
 
 export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
@@ -50,14 +50,14 @@ class AppTheme {
   static Color get silver     => isDark ? const Color(0xFF94A3B8) : const Color(0xFF1F2937);
 
   // ── Glass & Borders ──────────────────────────────────────────────────────
-  static Color get glassLight  => isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02);
-  static Color get glassMedium => isDark ? Colors.white.withOpacity(0.10) : Colors.black.withOpacity(0.05);
-  static Color get glassBorder => isDark ? Colors.white.withOpacity(0.15) : const Color(0xFF111827);
+  static Color get glassLight  => isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02);
+  static Color get glassMedium => isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.05);
+  static Color get glassBorder => isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFF111827);
 
   // ── Text ─────────────────────────────────────────────────────────────────
   static Color get text1 => isDark ? const Color(0xFFFDFCF7) : const Color(0xFF111827);
-  static Color get text2 => isDark ? const Color(0xFFFDFCF7).withOpacity(0.7) : const Color(0xFF4B5563);
-  static Color get text3 => isDark ? const Color(0xFFFDFCF7).withOpacity(0.4) : const Color(0xFF9CA3AF);
+  static Color get text2 => isDark ? const Color(0xFFFDFCF7).withValues(alpha: 0.7) : const Color(0xFF4B5563);
+  static Color get text3 => isDark ? const Color(0xFFFDFCF7).withValues(alpha: 0.4) : const Color(0xFF9CA3AF);
 
   // ── Aliases ──────────────────────────────────────────────────────────────
   static Color get bg        => black;
@@ -67,10 +67,10 @@ class AppTheme {
   static Color get muted     => text3;
   static Color get white     => text1;
   static Color get green     => isDark ? const Color(0xFF00E676) : const Color(0xFF16A34A);
-  static Color get accentDim => isDark ? accent.withOpacity(0.2) : const Color(0xFF334155);
+  static Color get accentDim => isDark ? accent.withValues(alpha: 0.2) : const Color(0xFF334155);
 
   static final List<BoxShadow> cardShadow = [
-    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
   ];
 
   // ── Haptics ──────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ class AppTheme {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: body(color: text1)),
-        backgroundColor: isError ? red.withOpacity(0.1) : accent.withOpacity(0.1),
+        backgroundColor: isError ? red.withValues(alpha: 0.1) : accent.withValues(alpha: 0.1),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -116,6 +116,14 @@ class AppTheme {
   );
   static TextStyle mono({Color? color, double size = 14}) => GoogleFonts.spaceMono(
     fontSize: size, fontWeight: FontWeight.w700, color: color ?? text1, letterSpacing: -0.5,
+  );
+  /// BoldPixels pixel-art font — use for game titles, scores, level numbers, HUD elements.
+  static TextStyle pixel({Color? color, double size = 16, double letterSpacing = 1.0}) => TextStyle(
+    fontFamily: 'BoldPixels',
+    fontSize: size,
+    color: color ?? text1,
+    letterSpacing: letterSpacing,
+    height: 1.2,
   );
 
   // ── Theme Data ───────────────────────────────────────────────────────────
@@ -211,10 +219,10 @@ class SGCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: padding ?? const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppTheme.surface.withOpacity(0.8),
+      color: AppTheme.surface.withValues(alpha: 0.8),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: glowColor?.withOpacity(0.5) ?? AppTheme.glassBorder,
+        color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder,
         width: 1.5,
       ),
     ),
@@ -265,9 +273,9 @@ class SGButton extends StatelessWidget {
   Widget _buildOutlined(Color color) => Container(
     height: height,
     decoration: BoxDecoration(
-      color: color.withOpacity(0.05),
+      color: color.withValues(alpha: 0.05),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+      border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
     ),
     child: Center(
       child: loading

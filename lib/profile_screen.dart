@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../theme/background.dart';
+import 'storage.dart';
+import 'theme.dart';
+import 'background.dart';
 import 'settings_screen.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -37,29 +36,44 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
-    if (image != null) {
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: image.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 85,
-        maxWidth: 512,
-        maxHeight: 512,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Profile Picture',
-            toolbarColor: AppTheme.bg,
-            toolbarWidgetColor: Colors.white,
-            activeControlsWidgetColor: AppTheme.accent,
-          ),
-          IOSUiSettings(title: 'Crop Profile Picture'),
-        ],
-      );
-      if (croppedFile != null) {
-        setState(() => _profileImagePath = croppedFile.path);
-        await Storage.setProfileImage(croppedFile.path);
-        if (mounted) AppTheme.showSnackBar(context, 'Profile picture updated!');
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image =
+          await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+      if (image != null) {
+        final croppedFile = await ImageCropper().cropImage(
+          sourcePath: image.path,
+          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+          compressQuality: 85,
+          maxWidth: 512,
+          maxHeight: 512,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop & Rotate Profile Picture',
+              toolbarColor: AppTheme.bg,
+              toolbarWidgetColor: Colors.white,
+              activeControlsWidgetColor: AppTheme.accent,
+              initAspectRatio: CropAspectRatioPreset.square,
+              lockAspectRatio: true,
+              hideBottomControls: false,
+            ),
+            IOSUiSettings(
+              title: 'Crop & Rotate Profile Picture',
+              aspectRatioLockEnabled: true,
+              resetAspectRatioEnabled: false,
+            ),
+          ],
+        );
+        if (croppedFile != null) {
+          final permPath = await Storage.setProfileImage(croppedFile.path);
+          setState(() => _profileImagePath = permPath);
+          if (mounted) AppTheme.showSnackBar(context, 'Profile picture updated!');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking or cropping image: $e');
+      if (mounted) {
+        AppTheme.showSnackBar(context, 'Failed to update profile picture.');
       }
     }
   }
@@ -157,7 +171,9 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final user = Storage.getCurrentUser() ?? 'Player';
-    if (_s == null) return Center(child: CircularProgressIndicator(color: AppTheme.accent));
+    if (_s == null) {
+      return Center(child: CircularProgressIndicator(color: AppTheme.accent));
+    }
     final s = _s!;
     final characterTitle = _getCharacterTitle(s.level, s.rank);
 
@@ -190,15 +206,20 @@ class _ProfilePageState extends State<ProfilePage> {
                             ],
                           ),
                           SGTouchable(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SettingsPage())),
                             child: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: AppTheme.surface,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.text1, width: 1.5),
+                                border: Border.all(
+                                    color: AppTheme.text1, width: 1.5),
                               ),
-                              child: Icon(Icons.settings_rounded, size: 18, color: AppTheme.text2),
+                              child: Icon(Icons.settings_rounded,
+                                  size: 18, color: AppTheme.text2),
                             ),
                           ),
                         ],
@@ -209,13 +230,18 @@ class _ProfilePageState extends State<ProfilePage> {
                       Center(
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 32, horizontal: 20),
                           decoration: BoxDecoration(
                             color: AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: AppTheme.glassBorder, width: 1.5),
+                            border: Border.all(
+                                color: AppTheme.glassBorder, width: 1.5),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 8)),
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8)),
                             ],
                           ),
                           child: Column(
@@ -232,7 +258,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                       shape: BoxShape.circle,
                                       gradient: RadialGradient(
                                         colors: [
-                                          AppTheme.accent.withValues(alpha: 0.15),
+                                          AppTheme.accent
+                                              .withValues(alpha: 0.15),
                                           Colors.transparent,
                                         ],
                                       ),
@@ -241,7 +268,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   _AvatarWidget(
                                     imagePath: _profileImagePath,
                                     onTap: _showImageSourcePicker,
-                                    initial: user.isNotEmpty ? user[0].toUpperCase() : 'P',
+                                    initial: user.isNotEmpty
+                                        ? user[0].toUpperCase()
+                                        : 'P',
                                   ),
                                 ],
                               ),
@@ -266,39 +295,57 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // Level and Coins Chips Row
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.cyan.withValues(alpha: 0.08),
+                                      color:
+                                          AppTheme.cyan.withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.25), width: 1),
+                                      border: Border.all(
+                                          color: AppTheme.cyan
+                                              .withValues(alpha: 0.25),
+                                          width: 1),
                                     ),
                                     child: Text(
                                       'LEVEL ${s.level}',
-                                      style: AppTheme.mono(color: AppTheme.cyan, size: 10).copyWith(fontWeight: FontWeight.bold),
+                                      style: AppTheme.mono(
+                                              color: AppTheme.cyan, size: 10)
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.amber.withValues(alpha: 0.08),
+                                      color: AppTheme.amber
+                                          .withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(color: AppTheme.amber.withValues(alpha: 0.25), width: 1),
+                                      border: Border.all(
+                                          color: AppTheme.amber
+                                              .withValues(alpha: 0.25),
+                                          width: 1),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.monetization_on_rounded, size: 12, color: AppTheme.amber),
+                                        Icon(Icons.monetization_on_rounded,
+                                            size: 12, color: AppTheme.amber),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${s.coins} COINS',
-                                          style: AppTheme.mono(color: AppTheme.amber, size: 10).copyWith(fontWeight: FontWeight.bold),
+                                          style: AppTheme.mono(
+                                                  color: AppTheme.amber,
+                                                  size: 10)
+                                              .copyWith(
+                                                  fontWeight: FontWeight.bold),
                                         ),
                                       ],
                                     ),
@@ -368,15 +415,17 @@ class _AvatarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(19.5),
                 color: AppTheme.black,
-                image: imagePath.isNotEmpty
-                    ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover)
+                image: imagePath.isNotEmpty && File(imagePath).existsSync()
+                    ? DecorationImage(
+                        image: FileImage(File(imagePath)), fit: BoxFit.cover)
                     : null,
               ),
-              child: imagePath.isEmpty
+              child: imagePath.isEmpty || !File(imagePath).existsSync()
                   ? Center(
                       child: Text(
                         initial,
-                        style: AppTheme.h1(color: AppTheme.accent).copyWith(fontSize: 34, fontWeight: FontWeight.w900),
+                        style: AppTheme.h1(color: AppTheme.accent).copyWith(
+                            fontSize: 34, fontWeight: FontWeight.w900),
                       ),
                     )
                   : null,
@@ -393,10 +442,14 @@ class _AvatarWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: AppTheme.black, width: 2.0),
                 boxShadow: [
-                  BoxShadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+                  BoxShadow(
+                      color: AppTheme.accent.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1),
                 ],
               ),
-              child: Icon(Icons.camera_alt_rounded, size: 12, color: AppTheme.black),
+              child: Icon(Icons.camera_alt_rounded,
+                  size: 12, color: AppTheme.black),
             ),
           ),
         ],
@@ -428,7 +481,8 @@ class _AchievementsDeck extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppTheme.surface.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.amber.withValues(alpha: 0.3), width: 1.5),
+              border: Border.all(
+                  color: AppTheme.amber.withValues(alpha: 0.3), width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.amber.withValues(alpha: 0.05),
@@ -449,17 +503,21 @@ class _AchievementsDeck extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [AppTheme.amber.withValues(alpha: 0.15), Colors.transparent],
+                        colors: [
+                          AppTheme.amber.withValues(alpha: 0.15),
+                          Colors.transparent
+                        ],
                       ),
                     ),
                   ),
                 ),
-                
+
                 // Content Column
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.emoji_events_rounded, color: AppTheme.amber, size: 30),
+                    Icon(Icons.emoji_events_rounded,
+                        color: AppTheme.amber, size: 30),
                     const SizedBox(height: 8),
                     Text(
                       achievementName,

@@ -32,7 +32,7 @@
     <application
         android:label="Solo Gainz"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon_dark"
+        android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:largeHeap="false"
@@ -72,7 +72,7 @@
             android:name=".DarkIcon"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/launcher_icon_dark"
+            android:icon="@mipmap/ic_launcher"
             android:label="Solo Gainz"
             android:targetActivity=".MainActivity">
             <intent-filter>
@@ -85,7 +85,7 @@
             android:name=".LightIcon"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/launcher_icon" 
+            android:icon="@mipmap/ic_launcher" 
             android:label="Solo Gainz"
             android:targetActivity=".MainActivity">
             <intent-filter>
@@ -118,6 +118,23 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_coins_info" />
         </receiver>
+
+        <!-- Scheduled notifications receivers -->
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:exported="false" />
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- Image Cropper Activity -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
     </application>
 

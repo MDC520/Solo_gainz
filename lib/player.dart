@@ -12,7 +12,7 @@ class Player extends StatefulWidget {
 
   /// Optional fixed size – defaults to expanding to fill parent.
   final double? size;
-  
+
   /// Tint color for the sprite.
   final Color? color;
 
@@ -128,7 +128,7 @@ class _PlayerState extends State<Player> {
     final interval = Duration(milliseconds: (1000 / widget.fps).round());
     _timer = Timer.periodic(interval, (_) {
       if (!mounted || _frames.isEmpty || widget.paused) return;
-      
+
       if (_frame >= _frames.length) {
         setState(() => _frame = 0);
         return;

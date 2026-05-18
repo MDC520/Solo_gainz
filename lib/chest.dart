@@ -2,27 +2,27 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// Animated chest sprite widget.
-/// Loops through PNG frames for idle, or plays once for open animation.
+/// Loops through PNG frames for idle animation, or plays once for open animation.
 class ChestSprite extends StatefulWidget {
-  /// 'wooden' or 'iron'
+  /// The type of chest: 'wooden', 'iron', 'gold', or 'mysterious'
   final String chestType;
 
-  /// 'Idle' or 'Open'
+  /// The active animation state: 'Idle' or 'Open'
   final String animation;
 
-  /// Frames per second
+  /// Frames per second for the sprite animation
   final double fps;
 
-  /// Optional alignment
+  /// Alignment of the chest inside its container layout
   final Alignment alignment;
 
-  /// Optional fixed size
+  /// Optional fixed square size of the chest sprite widget
   final double? size;
 
-  /// If true, plays once and stops on last frame (for open animation)
+  /// If true, plays once and stops on last frame (useful for chest opening sequence)
   final bool playOnce;
 
-  /// Called when a play-once animation finishes
+  /// Callback triggered when a play-once animation reaches its final frame
   final VoidCallback? onComplete;
 
   const ChestSprite({
@@ -68,23 +68,26 @@ class _ChestSpriteState extends State<ChestSprite> {
   }
 
   void _buildFrameList() {
-    // Map chestType to folder name
-    String folder;
-    String animFolder;
+    final String folder;
+    final String animFolder;
     final type = widget.chestType.toLowerCase();
-    
+
+    // Map chestType string and animation state to local asset paths
     if (type.contains('wooden')) {
       folder = 'Wooden Chest';
       animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
     } else if (type.contains('iron')) {
       folder = 'Iron Chest';
       animFolder = widget.animation == 'Open' ? 'Open' : 'Idle';
+    } else if (type.contains('mysterious')) {
+      folder = 'Mysterious Chest';
+      animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
     } else {
       folder = 'Gold Chest';
       animFolder = widget.animation == 'Open' ? 'oepn' : 'idle';
     }
 
-    // Each animation has 5 frames: 1.png through 5.png
+    // Each animation loop in Assets consists of 5 frames (1.png through 5.png)
     _frames = List.generate(5, (i) {
       return 'Assets/Chests/$folder/$animFolder/${i + 1}.png';
     });
@@ -98,7 +101,7 @@ class _ChestSpriteState extends State<ChestSprite> {
 
       final nextFrame = _frame + 1;
       if (widget.playOnce && nextFrame >= _frames.length) {
-        // Stay on last frame
+        // Halt and lock on the last open frame
         setState(() {
           _frame = _frames.length - 1;
           _finished = true;
@@ -112,7 +115,7 @@ class _ChestSpriteState extends State<ChestSprite> {
     });
   }
 
-  /// Skip to the last frame immediately
+  /// Skip directly to the last frame (immediately triggers opened state)
   void skipToEnd() {
     _timer?.cancel();
     if (mounted) {
@@ -141,12 +144,12 @@ class _ChestSpriteState extends State<ChestSprite> {
       filterQuality: FilterQuality.none,
       gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) {
-        debugPrint('Error loading chest sprite: $error');
+        debugPrint('Error loading chest sprite asset: $error at ${_frames[_frame]}');
         return SizedBox(
           width: widget.size,
           height: widget.size,
           child: const Center(
-            child: Icon(Icons.inventory_2, color: Colors.red, size: 40),
+            child: Icon(Icons.inventory_2_outlined, color: Colors.redAccent, size: 36),
           ),
         );
       },

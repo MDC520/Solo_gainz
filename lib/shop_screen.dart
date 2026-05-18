@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 
-import '../screens/buy_screen.dart';
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../widgets/chest_sprite.dart';
+import 'buy_screen.dart';
+import 'storage.dart';
+import 'theme.dart';
+import 'chest.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -48,11 +48,17 @@ class _ShopPageState extends State<ShopPage> {
     // Map description
     String description = '';
     if (chestType.contains('wooden')) {
-      description = 'A sturdy wooden chest. Rewards \$6–399. Rare drops above \$100.';
+      description =
+          'A sturdy wooden chest. Rewards \$2–350. Chance of rare/jackpot loot!';
     } else if (chestType.contains('iron')) {
-      description = 'A reinforced iron chest. Rewards \$6–399. Better drop rates.';
+      description =
+          'A reinforced iron chest. Rewards \$15–600. Higher quality drops.';
+    } else if (chestType.contains('gold')) {
+      description =
+          'A magnificent gold chest. Rewards \$50–2000. Guaranteed epic drops.';
     } else {
-      description = 'The ultimate treasure. Rewards \$500–5000. Guaranteed epic loot.';
+      description =
+          'A powerful and mysterious vault. Rewards \$150–5000. Pure high-tier gacha luck!';
     }
 
     showModalBottomSheet(
@@ -62,17 +68,18 @@ class _ShopPageState extends State<ShopPage> {
       builder: (ctx) {
         return Container(
           decoration: BoxDecoration(
-            color: AppTheme.black.withOpacity(0.95),
+            color: AppTheme.black.withValues(alpha: 0.95),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
             border: Border(
-              top: BorderSide(color: AppTheme.silver.withOpacity(0.3), width: 1.5),
+              top: BorderSide(
+                  color: AppTheme.silver.withValues(alpha: 0.3), width: 1.5),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -89,7 +96,7 @@ class _ShopPageState extends State<ShopPage> {
                     width: 48,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.silver.withOpacity(0.2),
+                      color: AppTheme.silver.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
@@ -102,7 +109,8 @@ class _ShopPageState extends State<ShopPage> {
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.silver.withOpacity(0.25), width: 1.5),
+                      border: Border.all(
+                          color: AppTheme.silver.withValues(alpha: 0.25), width: 1.5),
                     ),
                     child: Center(
                       child: ChestSprite(
@@ -119,7 +127,8 @@ class _ShopPageState extends State<ShopPage> {
                   // Title & Price Info
                   Text(
                     chestName,
-                    style: AppTheme.h2().copyWith(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: AppTheme.h2()
+                        .copyWith(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -127,11 +136,13 @@ class _ShopPageState extends State<ShopPage> {
                     children: [
                       Text(
                         'Price: ',
-                        style: AppTheme.caption(color: AppTheme.text2).copyWith(fontSize: 14),
+                        style: AppTheme.caption(color: AppTheme.text2)
+                            .copyWith(fontSize: 14),
                       ),
                       Text(
                         '\$$price',
-                        style: AppTheme.mono(size: 16, color: AppTheme.accent).copyWith(
+                        style: AppTheme.mono(size: 16, color: AppTheme.accent)
+                            .copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -161,7 +172,8 @@ class _ShopPageState extends State<ShopPage> {
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.red.withOpacity(0.2), width: 1.5),
+                        border: Border.all(
+                            color: AppTheme.red.withValues(alpha: 0.2), width: 1.5),
                       ),
                       child: Center(
                         child: Text(
@@ -180,7 +192,8 @@ class _ShopPageState extends State<ShopPage> {
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.red.withOpacity(0.2), width: 1.5),
+                        border: Border.all(
+                            color: AppTheme.red.withValues(alpha: 0.2), width: 1.5),
                       ),
                       child: Center(
                         child: Text(
@@ -292,9 +305,13 @@ class _ShopPageState extends State<ShopPage> {
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppTheme.text1.withValues(alpha: 0.1), width: 1),
+                            border: Border.all(
+                                color: AppTheme.text1.withValues(alpha: 0.1),
+                                width: 1),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 8),
                             ],
                           ),
                           child: Row(
@@ -385,19 +402,25 @@ class _ShopPageState extends State<ShopPage> {
                 _chestCard(
                   chestType: 'wooden',
                   name: 'Wooden Chest',
-                  price: 900,
+                  price: 80,
                 ),
                 const SizedBox(height: 16),
                 _chestCard(
                   chestType: 'iron',
                   name: 'Iron Chest',
-                  price: 1600,
+                  price: 150,
                 ),
                 const SizedBox(height: 16),
                 _chestCard(
                   chestType: 'gold',
                   name: 'Gold Chest',
-                  price: 4500,
+                  price: 400,
+                ),
+                const SizedBox(height: 16),
+                _chestCard(
+                  chestType: 'mysterious',
+                  name: 'What a Chest',
+                  price: 900,
                 ),
               ]),
             ),
@@ -417,7 +440,8 @@ class _ShopPageState extends State<ShopPage> {
                   const SizedBox(height: 16),
                   Text(
                     'COMING SOON',
-                    style: AppTheme.h2().copyWith(letterSpacing: 4, color: AppTheme.text2),
+                    style: AppTheme.h2()
+                        .copyWith(letterSpacing: 4, color: AppTheme.text2),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -439,7 +463,8 @@ class _ShopPageState extends State<ShopPage> {
   }) {
     final canBuy = _s.coins >= price;
     final chestTypeKey = '${chestType}_chest';
-    final availableSlots = Storage.getInventorySlots().where((s) => s == null).length;
+    final availableSlots =
+        Storage.getInventorySlots().where((s) => s == null).length;
     final isFull = availableSlots == 0;
 
     return Container(
@@ -465,7 +490,8 @@ class _ShopPageState extends State<ShopPage> {
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.silver.withOpacity(0.15), width: 1.2),
+              border: Border.all(
+                  color: AppTheme.silver.withValues(alpha: 0.15), width: 1.2),
             ),
             child: Center(
               child: ChestSprite(
@@ -500,7 +526,9 @@ class _ShopPageState extends State<ShopPage> {
                 color: (canBuy && !isFull) ? AppTheme.accent : AppTheme.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: (canBuy && !isFull) ? AppTheme.accent : AppTheme.text1.withValues(alpha: 0.15),
+                  color: (canBuy && !isFull)
+                      ? AppTheme.accent
+                      : AppTheme.text1.withValues(alpha: 0.15),
                   width: 1.5,
                 ),
               ),
@@ -510,7 +538,9 @@ class _ShopPageState extends State<ShopPage> {
                   Text(
                     isFull ? 'FULL' : 'BUY \$',
                     style: AppTheme.label(
-                      color: (canBuy && !isFull) ? Colors.black : Colors.white.withOpacity(0.9),
+                      color: (canBuy && !isFull)
+                          ? Colors.black
+                          : Colors.white.withValues(alpha: 0.9),
                     ).copyWith(fontWeight: FontWeight.bold, fontSize: 13.5),
                   ),
                   if (!isFull)
@@ -518,7 +548,8 @@ class _ShopPageState extends State<ShopPage> {
                       '$price',
                       style: AppTheme.mono(
                         size: 14.5,
-                        color: (canBuy && !isFull) ? Colors.black : Colors.white,
+                        color:
+                            (canBuy && !isFull) ? Colors.black : Colors.white,
                       ).copyWith(fontWeight: FontWeight.w900),
                     ),
                 ],
@@ -554,10 +585,8 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
   late AnimationController _arriveCtrl;
   late Animation<double> _scale;
   late Animation<double> _opacity;
-  late Animation<Offset> _slide;
 
   late AnimationController _glowCtrl;
-  late Animation<double> _glowAnim;
 
   bool _showButton = false;
 
@@ -577,18 +606,12 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _arriveCtrl, curve: Curves.easeIn),
     );
-    _slide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
-      CurvedAnimation(parent: _arriveCtrl, curve: Curves.easeOutCubic),
-    );
 
     // Dynamic glow pulse
     _glowCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
-    _glowAnim = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
-    );
 
     _arriveCtrl.forward().then((_) {
       if (mounted) setState(() => _showButton = true);
@@ -605,14 +628,16 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
   @override
   Widget build(BuildContext context) {
     final chestSpriteType = widget.chestType.split('_').first.toLowerCase();
-    
+
     Color glowColor;
     if (chestSpriteType == 'wooden') {
       glowColor = AppTheme.amber;
     } else if (chestSpriteType == 'iron') {
       glowColor = AppTheme.cyan;
+    } else if (chestSpriteType == 'gold') {
+      glowColor = AppTheme.purple;
     } else {
-      glowColor = AppTheme.accent; // Gold!
+      glowColor = AppTheme.accent; // Mysterious!
     }
 
     return Material(
@@ -629,7 +654,7 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                 child: Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppTheme.black.withOpacity(0.95),
+                    color: AppTheme.black.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
                       color: AppTheme.silver,
@@ -637,7 +662,7 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 15,
                       ),
                     ],
@@ -720,7 +745,7 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.accent.withOpacity(0.3),
+                                  color: AppTheme.accent.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -729,7 +754,8 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                             child: Center(
                               child: Text(
                                 'CONTINUE',
-                                style: AppTheme.label(color: Colors.black).copyWith(
+                                style: AppTheme.label(color: Colors.black)
+                                    .copyWith(
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.5,
                                 ),

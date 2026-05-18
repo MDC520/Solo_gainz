@@ -1,11 +1,12 @@
-
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../theme/background.dart';
+import 'storage.dart';
+import 'notifications.dart';
+import 'theme.dart';
+import 'background.dart';
 import 'dart:math' as math;
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onDone;
@@ -90,10 +91,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
     await Storage.saveData('notifications_enabled', _notificationsEnabled);
     if (_notificationsEnabled) {
-      final timeStr = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
       await Storage.saveData('notification_time', timeStr);
     }
-
+    await NotificationService.scheduleDailyReminder();
 
     final stats = Storage.getUserStats();
     stats.rank = rank;
@@ -116,7 +118,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await Storage.saveDailyTemplates(quests);
     await Storage.saveDailyQuests(quests);
     await Storage.saveData('is_onboarded', true);
-
 
     // Wait for the animation to feel good (Requested 3.85 seconds)
     // We subtract a bit for the sync time, but keep it roughly 3.85 total if possible
@@ -309,7 +310,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _finishingOverlay() {
     final rankFile = 'E Rank.png';
-    final playerName = (_nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : "PLAYER").toUpperCase();
+    final playerName =
+        (_nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : "PLAYER")
+            .toUpperCase();
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -331,12 +334,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     scale: 0.92 + (0.08 * v),
                     child: Container(
                       width: 320,
-                      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 36, horizontal: 24),
                       decoration: BoxDecoration(
                         color: AppTheme.surface.withValues(alpha: 0.4 * v),
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(
-                          color: AppTheme.glassBorder.withValues(alpha: 0.25 * v),
+                          color:
+                              AppTheme.glassBorder.withValues(alpha: 0.25 * v),
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -360,8 +365,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
                                     colors: [
-                                      AppTheme.accent.withValues(alpha: 0.15 * v),
-                                      AppTheme.purple.withValues(alpha: 0.05 * v),
+                                      AppTheme.accent
+                                          .withValues(alpha: 0.15 * v),
+                                      AppTheme.purple
+                                          .withValues(alpha: 0.05 * v),
                                       Colors.transparent,
                                     ],
                                   ),
@@ -374,7 +381,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.accent.withValues(alpha: 0.25 * v),
+                                    color: AppTheme.accent
+                                        .withValues(alpha: 0.25 * v),
                                     width: 1.5,
                                     style: BorderStyle.solid,
                                   ),
@@ -386,32 +394,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 child: Image.asset(
                                   'Assets/Rank Shields/$rankFile',
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) =>
-                                      Icon(Icons.shield_rounded, color: AppTheme.accent, size: 90),
+                                  errorBuilder: (_, __, ___) => Icon(
+                                      Icons.shield_rounded,
+                                      color: AppTheme.accent,
+                                      size: 90),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 32),
-                          
+
                           // SYSTEM INITIALIZED read-out
                           Text(
                             'SYSTEM INITIALIZED',
-                            style: AppTheme.label(color: AppTheme.cyan).copyWith(
+                            style:
+                                AppTheme.label(color: AppTheme.cyan).copyWith(
                               letterSpacing: 4,
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
                               shadows: [
-                                Shadow(color: AppTheme.cyan.withValues(alpha: 0.5), blurRadius: 8),
+                                Shadow(
+                                    color: AppTheme.cyan.withValues(alpha: 0.5),
+                                    blurRadius: 8),
                               ],
                             ),
                           ),
                           const SizedBox(height: 12),
-                          
+
                           // Dynamic welcoming shader gradient
                           ShaderMask(
                             shaderCallback: (bounds) => LinearGradient(
-                              colors: [AppTheme.text1, AppTheme.accent, AppTheme.purple],
+                              colors: [
+                                AppTheme.text1,
+                                AppTheme.accent,
+                                AppTheme.purple
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ).createShader(bounds),
@@ -434,7 +451,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
               const SizedBox(height: 48),
-              
+
               // Cinematic progress bar + dynamic status diagnostics
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
@@ -448,7 +465,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     if (p < 1.0) return 'FORGING PLAYER ATTRIBUTES...';
                     return 'CORE STATUS: COMPLETED. ASCEND!';
                   }
-                  
+
                   return SizedBox(
                     width: 260,
                     child: Column(
@@ -458,7 +475,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           getDiagnosticMsg(progress),
                           textAlign: TextAlign.center,
                           style: AppTheme.mono(
-                            color: progress == 1.0 ? AppTheme.accent : AppTheme.text3,
+                            color: progress == 1.0
+                                ? AppTheme.accent
+                                : AppTheme.text3,
                             size: 9.5,
                           ).copyWith(
                             letterSpacing: 0.5,
@@ -466,7 +485,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Dual neon track progress bar
                         Container(
                           height: 10,
@@ -475,7 +494,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.5)),
+                            border: Border.all(
+                                color: AppTheme.glassBorder
+                                    .withValues(alpha: 0.5)),
                           ),
                           child: FractionallySizedBox(
                             alignment: Alignment.centerLeft,
@@ -488,7 +509,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 borderRadius: BorderRadius.circular(3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.accent.withValues(alpha: 0.4),
+                                    color:
+                                        AppTheme.accent.withValues(alpha: 0.4),
                                     blurRadius: 4,
                                     spreadRadius: 0.5,
                                   ),
@@ -498,11 +520,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        
+
                         // Progress Percentage
                         Text(
                           '${(progress * 100).toInt()}% LOADED',
-                          style: AppTheme.mono(color: AppTheme.accent, size: 10).copyWith(
+                          style: AppTheme.mono(color: AppTheme.accent, size: 10)
+                              .copyWith(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.0,
                           ),
@@ -607,10 +630,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         imageQuality: 85,
       );
       if (image != null) {
-        setState(() => _profileImagePath = image.path);
+        final croppedFile = await ImageCropper().cropImage(
+          sourcePath: image.path,
+          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+          compressQuality: 85,
+          maxWidth: 512,
+          maxHeight: 512,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop & Rotate Profile Picture',
+              toolbarColor: AppTheme.bg,
+              toolbarWidgetColor: Colors.white,
+              activeControlsWidgetColor: AppTheme.accent,
+              initAspectRatio: CropAspectRatioPreset.square,
+              lockAspectRatio: true,
+              hideBottomControls: false,
+            ),
+            IOSUiSettings(
+              title: 'Crop & Rotate Profile Picture',
+              aspectRatioLockEnabled: true,
+              resetAspectRatioEnabled: false,
+            ),
+          ],
+        );
+        if (croppedFile != null) {
+          setState(() => _profileImagePath = croppedFile.path);
+        }
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      debugPrint('Error picking or cropping image: $e');
+      if (mounted) {
+        AppTheme.showSnackBar(context, 'Failed to pick or crop image.');
+      }
     }
   }
 
@@ -713,19 +764,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       color: AppTheme.surface,
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: _profileImagePath != null
+                        color: _profileImagePath != null &&
+                                _profileImagePath!.isNotEmpty &&
+                                File(_profileImagePath!).existsSync()
                             ? AppTheme.accent
                             : AppTheme.line,
                         width: 2,
                       ),
-                      image: _profileImagePath != null
+                      image: _profileImagePath != null &&
+                              _profileImagePath!.isNotEmpty &&
+                              File(_profileImagePath!).existsSync()
                           ? DecorationImage(
                               image: FileImage(File(_profileImagePath!)),
                               fit: BoxFit.cover,
                             )
                           : null,
                     ),
-                    child: _profileImagePath == null
+                    child: _profileImagePath == null ||
+                            _profileImagePath!.isEmpty ||
+                            !File(_profileImagePath!).existsSync()
                         ? Icon(Icons.person_outline_rounded,
                             size: 64, color: AppTheme.text3)
                         : null,
@@ -741,7 +798,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         border: Border.all(color: AppTheme.bg, width: 2),
                       ),
                       child: Icon(
-                        _profileImagePath == null
+                        _profileImagePath == null ||
+                                _profileImagePath!.isEmpty ||
+                                !File(_profileImagePath!).existsSync()
                             ? Icons.add_a_photo_rounded
                             : Icons.edit_rounded,
                         size: 16,
@@ -804,7 +863,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
 
   Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
@@ -903,7 +961,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           setState(() => _notificationsEnabled = false);
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Notification permission denied.', style: AppTheme.body(color: Colors.white))),
+                              SnackBar(
+                                  content: Text(
+                                      'Notification permission denied.',
+                                      style:
+                                          AppTheme.body(color: Colors.white))),
                             );
                           }
                         }
@@ -931,11 +993,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     SGTouchable(
                       onTap: _selectTime,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppTheme.cyan.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.cyan.withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: AppTheme.cyan.withValues(alpha: 0.3)),
                         ),
                         child: Text(_reminderTime.format(context),
                             style: AppTheme.label(color: AppTheme.cyan)),
@@ -1284,7 +1348,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
 }
 
 // ── Rank Deck (Pro Redesign) ──────────────────────────────────
@@ -1399,8 +1462,7 @@ class _WavingHandState extends State<WavingHand>
           child: child,
         );
       },
-      child: Icon(Icons.front_hand_rounded,
-            size: 82, color: AppTheme.accent),
+      child: Icon(Icons.front_hand_rounded, size: 82, color: AppTheme.accent),
     );
   }
 }

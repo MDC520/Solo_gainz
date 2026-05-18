@@ -6,8 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../services/storage.dart';
-import '../theme/theme.dart';
+import 'storage.dart';
+import 'theme.dart';
 
 class QuestPage extends StatefulWidget {
   const QuestPage({super.key});

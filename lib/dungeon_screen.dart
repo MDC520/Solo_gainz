@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
-import '../widgets/player.dart';
-import '../theme/theme.dart';
-import '../theme/background.dart';
+import 'player.dart';
+import 'theme.dart';
+import 'background.dart';
 import 'training_screen.dart';
 
 class DungeonPage extends StatefulWidget {

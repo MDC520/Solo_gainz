@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/scheduler.dart';
-import '../theme/theme.dart';
-import '../widgets/player.dart';
+import 'theme.dart';
+import 'player.dart';
+import 'engine_screen.dart' hide ColliderTarget, ColliderFrameData, CombatData;
 
 // ── Combat Data (inlined) ────────────────────────────────────────────────────
 enum ColliderTarget { player, attack, kickAttack, bag, box, clone, cloneAttack }
@@ -30,16 +31,15 @@ class CombatData {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-
-class EngineScreen extends StatefulWidget {
+class TrainingScreen extends StatefulWidget {
   final bool isLoading;
-  const EngineScreen({super.key, this.isLoading = false});
+  const TrainingScreen({super.key, this.isLoading = false});
 
   @override
-  State<EngineScreen> createState() => _EngineScreenState();
+  State<TrainingScreen> createState() => _TrainingScreenState();
 }
 
-class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMixin {
+class _TrainingScreenState extends State<TrainingScreen> with TickerProviderStateMixin {
   bool _loading = true;
   double _playerWorldX = 100.0;
   double _velocityX = 0.0;
@@ -1772,32 +1772,23 @@ class _EngineScreenState extends State<EngineScreen> with TickerProviderStateMix
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Collider Toggle — auto-freezes all animations for frame-by-frame editing
+                      // Collider Toggle (Now navigates to Engine Screen)
                       SGTouchable(
-                        onTap: () {
-                          setState(() {
-                            _showColliders = !_showColliders;
-                            if (_showColliders) {
-                              _isFrozen = true;
-                              _bgCtrl.stop();
-                              _currentEditFrame = 0;
-                            } else {
-                              _isFrozen = false;
-                              _bgCtrl.repeat();
-                            }
-                          });
+                        onTap: () async {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const EngineScreen()));
+                          if (mounted) setState(() {});
                         },
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _showColliders ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface.withValues(alpha: 0.8),
+                            color: AppTheme.surface.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _showColliders ? AppTheme.accent : AppTheme.line, width: 2),
+                            border: Border.all(color: AppTheme.line, width: 2),
                           ),
                           child: Icon(
-                            _showColliders ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                            color: _showColliders ? AppTheme.accent : AppTheme.text2,
+                            Icons.visibility_off_rounded,
+                            color: AppTheme.text2,
                             size: 20,
                           ),
                         ),
@@ -2637,6 +2628,8 @@ class _Clone {
     }
 
     if (isGettingUp) {
+      // isGettingUp is cleared by onGetUpComplete or a fallback timer if needed
+      // But we'll use a timer here just in case onComplete fails
       if (getUpStartTime != null) {
         final elapsed = DateTime.now().difference(getUpStartTime!).inMilliseconds;
         if (elapsed > 400) { // Matches ~3 frames at 8fps
@@ -2688,7 +2681,7 @@ class _Clone {
     if (isKick) {
       isHit = false; // Override hit
       isKnockback = true;
-      isGettingUp = false;
+      isGettingUp = false; // Reset if somehow hit during getup (shouldn't happen with isRecovering)
       flip = (dir > 0); // Face the player during knockback
       hitStartTime = DateTime.now();
       x += dir * 80;

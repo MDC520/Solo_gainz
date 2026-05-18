@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../theme/background.dart';
+import 'storage.dart';
+import 'notifications.dart';
+import 'theme.dart';
+import 'background.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,16 +13,56 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _transitionCompleted = false;
+  bool _notificationsEnabled = true;
+  String _notificationTime = '08:00';
 
   @override
   void initState() {
     super.initState();
+    _notificationsEnabled = Storage.getData('notifications_enabled', defaultValue: true);
+    _notificationTime = Storage.getData('notification_time', defaultValue: '08:00');
     // BUTTERY SMOOTH TRANSITIONS: Defer heavy widgets
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) {
         setState(() => _transitionCompleted = true);
       }
     });
+  }
+
+  Future<void> _selectTime() async {
+    final parts = _notificationTime.split(':');
+    final initialTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppTheme.cyan,
+              onPrimary: AppTheme.black,
+              surface: AppTheme.surface,
+              onSurface: AppTheme.text1,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final timeStr = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      await Storage.saveData('notification_time', timeStr);
+      await NotificationService.scheduleDailyReminder();
+      setState(() {
+        _notificationTime = timeStr;
+      });
+      if (mounted) {
+        AppTheme.success();
+        AppTheme.showSnackBar(context, 'Daily reminder time set to $timeStr.');
+      }
+    }
   }
 
   Widget _buildSectionHeader(String title) {
@@ -39,7 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
               color: AppTheme.accent,
               borderRadius: BorderRadius.circular(1.5),
               boxShadow: [
-                BoxShadow(color: AppTheme.accent.withOpacity(0.5), blurRadius: 4),
+                BoxShadow(
+                    color: AppTheme.accent.withValues(alpha: 0.5), blurRadius: 4),
               ],
             ),
           ),
@@ -65,7 +105,8 @@ class _SettingsPageState extends State<SettingsPage> {
         final bodyWidget = Scaffold(
           backgroundColor: Colors.transparent,
           body: CustomScrollView(
-            physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            physics: const ClampingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
             slivers: [
               // ── Redesigned Header to match quest_screen.dart exactly ──
               SliverToBoxAdapter(
@@ -99,7 +140,8 @@ class _SettingsPageState extends State<SettingsPage> {
                               color: AppTheme.surface,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.close, color: AppTheme.text2, size: 20),
+                            child: Icon(Icons.close,
+                                color: AppTheme.text2, size: 20),
                           ),
                         ),
                       ],
@@ -127,16 +169,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               decoration: BoxDecoration(
-                                color: AppTheme.isDark ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                color: AppTheme.isDark
+                                    ? AppTheme.surface
+                                    : AppTheme.surface.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: AppTheme.isDark ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  color: AppTheme.isDark
+                                      ? AppTheme.accent
+                                      : AppTheme.silver.withValues(alpha: 0.15),
                                   width: 1.5,
                                 ),
                                 boxShadow: AppTheme.isDark
                                     ? [
                                         BoxShadow(
-                                          color: AppTheme.accent.withOpacity(0.1),
+                                          color:
+                                              AppTheme.accent.withValues(alpha: 0.1),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         )
@@ -147,14 +194,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   Icon(
                                     Icons.nights_stay_rounded,
-                                    color: AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                    color: AppTheme.isDark
+                                        ? AppTheme.accent
+                                        : AppTheme.text3,
                                     size: 24,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'OBSIDIAN DARK',
                                     style: AppTheme.mono(
-                                      color: AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                      color: AppTheme.isDark
+                                          ? AppTheme.accent
+                                          : AppTheme.text3,
                                       size: 11,
                                     ).copyWith(fontWeight: FontWeight.bold),
                                   ),
@@ -173,16 +224,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               decoration: BoxDecoration(
-                                color: !AppTheme.isDark ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                color: !AppTheme.isDark
+                                    ? AppTheme.surface
+                                    : AppTheme.surface.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: !AppTheme.isDark ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  color: !AppTheme.isDark
+                                      ? AppTheme.accent
+                                      : AppTheme.silver.withValues(alpha: 0.15),
                                   width: 1.5,
                                 ),
                                 boxShadow: !AppTheme.isDark
                                     ? [
                                         BoxShadow(
-                                          color: AppTheme.accent.withOpacity(0.1),
+                                          color:
+                                              AppTheme.accent.withValues(alpha: 0.1),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         )
@@ -193,14 +249,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   Icon(
                                     Icons.wb_sunny_rounded,
-                                    color: !AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                    color: !AppTheme.isDark
+                                        ? AppTheme.accent
+                                        : AppTheme.text3,
                                     size: 24,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'SILVER LIGHT',
                                     style: AppTheme.mono(
-                                      color: !AppTheme.isDark ? AppTheme.accent : AppTheme.text3,
+                                      color: !AppTheme.isDark
+                                          ? AppTheme.accent
+                                          : AppTheme.text3,
                                       size: 11,
                                     ).copyWith(fontWeight: FontWeight.bold),
                                   ),
@@ -230,16 +290,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               decoration: BoxDecoration(
-                                color: Storage.isNavbarFloating() ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                color: Storage.isNavbarFloating()
+                                    ? AppTheme.surface
+                                    : AppTheme.surface.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  color: Storage.isNavbarFloating()
+                                      ? AppTheme.accent
+                                      : AppTheme.silver.withValues(alpha: 0.15),
                                   width: 1.5,
                                 ),
                                 boxShadow: Storage.isNavbarFloating()
                                     ? [
                                         BoxShadow(
-                                          color: AppTheme.accent.withOpacity(0.1),
+                                          color:
+                                              AppTheme.accent.withValues(alpha: 0.1),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         )
@@ -250,14 +315,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   Icon(
                                     Icons.auto_awesome_motion_rounded,
-                                    color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                    color: Storage.isNavbarFloating()
+                                        ? AppTheme.accent
+                                        : AppTheme.text3,
                                     size: 24,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'FLOAT NAVIGATOR',
                                     style: AppTheme.mono(
-                                      color: Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                      color: Storage.isNavbarFloating()
+                                          ? AppTheme.accent
+                                          : AppTheme.text3,
                                       size: 11,
                                     ).copyWith(fontWeight: FontWeight.bold),
                                   ),
@@ -279,16 +348,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               decoration: BoxDecoration(
-                                color: !Storage.isNavbarFloating() ? AppTheme.surface : AppTheme.surface.withOpacity(0.15),
+                                color: !Storage.isNavbarFloating()
+                                    ? AppTheme.surface
+                                    : AppTheme.surface.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.silver.withOpacity(0.15),
+                                  color: !Storage.isNavbarFloating()
+                                      ? AppTheme.accent
+                                      : AppTheme.silver.withValues(alpha: 0.15),
                                   width: 1.5,
                                 ),
                                 boxShadow: !Storage.isNavbarFloating()
                                     ? [
                                         BoxShadow(
-                                          color: AppTheme.accent.withOpacity(0.1),
+                                          color:
+                                              AppTheme.accent.withValues(alpha: 0.1),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         )
@@ -299,14 +373,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   Icon(
                                     Icons.view_headline_rounded,
-                                    color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                    color: !Storage.isNavbarFloating()
+                                        ? AppTheme.accent
+                                        : AppTheme.text3,
                                     size: 24,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'NORMAL NAVIGATOR',
                                     style: AppTheme.mono(
-                                      color: !Storage.isNavbarFloating() ? AppTheme.accent : AppTheme.text3,
+                                      color: !Storage.isNavbarFloating()
+                                          ? AppTheme.accent
+                                          : AppTheme.text3,
                                       size: 11,
                                     ).copyWith(fontWeight: FontWeight.bold),
                                   ),
@@ -318,11 +396,109 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
 
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Daily Reminders'),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.line),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cyan.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.notifications_active_rounded,
+                                    color: AppTheme.cyan, size: 22),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Enable Reminders', style: AppTheme.h3()),
+                                    Text('Get notified daily to train',
+                                        style: AppTheme.caption(color: AppTheme.text3)),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _notificationsEnabled,
+                                onChanged: (v) async {
+                                  if (v) {
+                                    final granted = await NotificationService.requestPermissions();
+                                    if (!context.mounted) return;
+                                    if (granted) {
+                                      await Storage.saveData('notifications_enabled', true);
+                                      await NotificationService.scheduleDailyReminder();
+                                      setState(() => _notificationsEnabled = true);
+                                      if (mounted) AppTheme.success();
+                                    } else {
+                                      AppTheme.showSnackBar(context, 'Notification permission denied.');
+                                    }
+                                  } else {
+                                    await Storage.saveData('notifications_enabled', false);
+                                    await NotificationService.scheduleDailyReminder();
+                                    setState(() => _notificationsEnabled = false);
+                                  }
+                                },
+                                activeThumbColor: AppTheme.cyan,
+                                activeTrackColor: AppTheme.cyan.withValues(alpha: 0.3),
+                                inactiveTrackColor: AppTheme.surface,
+                                inactiveThumbColor: AppTheme.text2,
+                              ),
+                            ],
+                          ),
+                          if (_notificationsEnabled) ...[
+                            const SizedBox(height: 16),
+                            Divider(color: AppTheme.line, height: 1),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(Icons.access_time_rounded,
+                                    color: AppTheme.text2, size: 18),
+                                const SizedBox(width: 10),
+                                Text('Reminder Time',
+                                    style: AppTheme.body(color: AppTheme.text1)),
+                                const Spacer(),
+                                SGTouchable(
+                                  onTap: _selectTime,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.cyan.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color: AppTheme.cyan.withValues(alpha: 0.3)),
+                                    ),
+                                    child: Text(
+                                      _notificationTime,
+                                      style: AppTheme.label(color: AppTheme.cyan),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
                     const SizedBox(height: 48),
                     Center(
                       child: Text(
                         'Solo Gainz © 2026. Keep grinding.',
-                        style: AppTheme.mono(color: AppTheme.text3, size: 9.5).copyWith(
+                        style: AppTheme.mono(color: AppTheme.text3, size: 9.5)
+                            .copyWith(
                           letterSpacing: 0.5,
                         ),
                       ),

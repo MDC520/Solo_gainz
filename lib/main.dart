@@ -1,16 +1,17 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:ui';
-import 'theme/background.dart';
-import 'screens/splash_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/quest_screen.dart';
-import 'screens/dungeon_screen.dart';
-import 'screens/shop_screen.dart';
-import 'screens/profile_screen.dart';
-import 'services/storage.dart';
-import 'services/security_service.dart';
-import 'theme/theme.dart';
+import 'background.dart';
+import 'splash_screen.dart';
+import 'home_screen.dart';
+import 'onboarding_screen.dart';
+import 'quest_screen.dart';
+import 'dungeon_screen.dart';
+import 'shop_screen.dart';
+import 'profile_screen.dart';
+import 'storage.dart';
+import 'security_service.dart';
+import 'notifications.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,7 @@ Future<void> main() async {
       Storage.init(),
       SecurityService.init(),
     ]);
+    await NotificationService.init(); // Initialize notifications
     await AppTheme.init(); // Load saved theme & activate icon alias
   } catch (e) {
     debugPrint('Init error: $e');

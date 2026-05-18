@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-import '../services/storage.dart';
-import '../theme/theme.dart';
-import '../theme/background.dart';
+import 'storage.dart';
+import 'theme.dart';
+import 'background.dart';
 
 class _Bundle {
   final int coins;
@@ -83,7 +82,8 @@ class BuyScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: CustomScrollView(
-          physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const ClampingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             // ── Premium Consistent Header ──
             SliverToBoxAdapter(
@@ -145,7 +145,7 @@ class BuyScreen extends StatelessWidget {
                       onTap: () => _purchase(context, bundle),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.black.withOpacity(0.6),
+                          color: AppTheme.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: AppTheme.silver,
@@ -153,7 +153,7 @@ class BuyScreen extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -188,14 +188,14 @@ class BuyScreen extends StatelessWidget {
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
                                       colors: [
-                                        bundle.color.withOpacity(0.3),
-                                        bundle.color.withOpacity(0.05),
+                                        bundle.color.withValues(alpha: 0.3),
+                                        bundle.color.withValues(alpha: 0.05),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     border: Border.all(
-                                      color: bundle.color.withOpacity(0.4),
+                                      color: bundle.color.withValues(alpha: 0.4),
                                       width: 1.5,
                                     ),
                                   ),
@@ -211,7 +211,8 @@ class BuyScreen extends StatelessWidget {
                                 // Amount of Coins
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
                                   textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
@@ -237,7 +238,8 @@ class BuyScreen extends StatelessWidget {
                                 // Subtitle
                                 Text(
                                   bundle.subtitle,
-                                  style: AppTheme.caption(color: AppTheme.text2).copyWith(
+                                  style: AppTheme.caption(color: AppTheme.text2)
+                                      .copyWith(
                                     fontSize: 9.5,
                                   ),
                                   textAlign: TextAlign.center,
@@ -248,7 +250,8 @@ class BuyScreen extends StatelessWidget {
                                 // Price tag matching bundle's color
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
                                     color: bundle.color,
                                     borderRadius: BorderRadius.circular(12),

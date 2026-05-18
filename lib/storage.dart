@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:path_provider/path_provider.dart';
 import 'security_service.dart';
+import 'notifications.dart';
 
 part 'storage.g.dart';
 
@@ -279,7 +282,11 @@ class Storage {
   }
 
   static Future<void> addXp(int amount) async {
-    final stats = getUserStats()..xp += amount;
+    final stats = getUserStats();
+    final int originalLevel = stats.level;
+    final String originalRank = stats.rank;
+
+    stats.xp += amount;
     while (true) {
       final need = RankSystem.getXpNeededForNextLevel(stats.rank);
       if (stats.xp >= need) {
@@ -294,6 +301,13 @@ class Storage {
       }
     }
     await saveUserStats(stats);
+
+    // Trigger gamified milestones notifications
+    if (stats.rank != originalRank) {
+      NotificationService.showRankUp(stats.rank);
+    } else if (stats.level > originalLevel) {
+      NotificationService.showLevelUp(stats.level);
+    }
   }
 
   static Future<void> addLifetimeStat(String key, int amount) async {
@@ -326,8 +340,16 @@ class Storage {
 
   static List<DailyQuest> getDailyQuests() => (_box.get(dailyQuestsKey) as List?)?.cast<DailyQuest>().toList() ?? [];
   static Future<void> saveDailyQuests(List<DailyQuest> quests) async {
+    final oldQuests = getDailyQuests();
+    final bool oldAllCompleted = oldQuests.isNotEmpty && oldQuests.every((q) => q.completed);
+
     await _box.put(dailyQuestsKey, quests);
     await _updateHomeWidget(quests);
+
+    final bool newAllCompleted = quests.isNotEmpty && quests.every((q) => q.completed);
+    if (newAllCompleted && !oldAllCompleted) {
+      NotificationService.showQuestsCompleted();
+    }
   }
   
   static Future<void> _updateHomeWidget(List<DailyQuest> quests) async {
@@ -442,6 +464,7 @@ class Storage {
     if (chestType == 'wooden_chest') return const Duration(hours: 2);
     if (chestType == 'iron_chest') return const Duration(hours: 4);
     if (chestType == 'gold_chest') return const Duration(hours: 8);
+    if (chestType == 'mysterious_chest') return const Duration(hours: 12);
     return const Duration(hours: 2);
   }
 
@@ -488,9 +511,45 @@ class Storage {
   static String? getCurrentUser() => getData('player_name', defaultValue: 'Player');
   static Future<void> setPlayerName(String name) => saveData('player_name', name);
   static String? getProfileImage() => getData('profile_image') ?? getData('profile_image_path');
-  static Future<void> setProfileImage(String path) async {
-    await saveData('profile_image', path);
-    await saveData('profile_image_path', path);
+  static Future<String> setProfileImage(String tempPath) async {
+    try {
+      final file = File(tempPath);
+      if (await file.exists()) {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final extIndex = tempPath.lastIndexOf('.');
+        final extension = extIndex != -1 ? tempPath.substring(extIndex) : '.jpg';
+        final newFileName = 'profile_pic_${DateTime.now().millisecondsSinceEpoch}$extension';
+        final permanentFile = File('${appDocDir.path}/$newFileName');
+
+        // Copy the file to permanent storage
+        await file.copy(permanentFile.path);
+
+        // Delete old profile image if it exists to clean up space
+        final oldPath = getProfileImage();
+        if (oldPath != null && oldPath.isNotEmpty) {
+          final oldFile = File(oldPath);
+          if (await oldFile.exists()) {
+            try {
+              await oldFile.delete();
+            } catch (e) {
+              debugPrint('Error deleting old profile image: $e');
+            }
+          }
+        }
+
+        // Save the new permanent path
+        await saveData('profile_image', permanentFile.path);
+        await saveData('profile_image_path', permanentFile.path);
+        return permanentFile.path;
+      }
+    } catch (e) {
+      debugPrint('Error saving permanent profile image: $e');
+    }
+
+    // Fallback if copy fails
+    await saveData('profile_image', tempPath);
+    await saveData('profile_image_path', tempPath);
+    return tempPath;
   }
   static bool isNavbarFloating() => getData('is_navbar_floating', defaultValue: false);
   static Future<void> setNavbarFloating(bool value) => saveData('is_navbar_floating', value);
