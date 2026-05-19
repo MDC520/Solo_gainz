@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'responsive.dart';
 
 /// Animated chest sprite widget.
 /// Loops through PNG frames for idle animation, or plays once for open animation.
@@ -94,7 +95,8 @@ class _ChestSpriteState extends State<ChestSprite> {
   }
 
   void _startTimer() {
-    final interval = Duration(milliseconds: (1000 / widget.fps).round());
+    final adjustedFps = Responsive.fps(widget.fps);
+    final interval = Duration(milliseconds: (1000 / adjustedFps).round());
     _timer = Timer.periodic(interval, (_) {
       if (!mounted || _frames.isEmpty) return;
       if (widget.playOnce && _finished) return;
@@ -135,19 +137,20 @@ class _ChestSpriteState extends State<ChestSprite> {
 
   @override
   Widget build(BuildContext context) {
+    final renderSize = widget.size != null ? Responsive.w(widget.size!) : widget.size;
     return Image.asset(
       _frames[_frame],
       fit: BoxFit.contain,
-      width: widget.size,
-      height: widget.size,
+      width: renderSize,
+      height: renderSize,
       alignment: widget.alignment,
       filterQuality: FilterQuality.none,
       gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) {
         debugPrint('Error loading chest sprite asset: $error at ${_frames[_frame]}');
         return SizedBox(
-          width: widget.size,
-          height: widget.size,
+          width: renderSize,
+          height: renderSize,
           child: const Center(
             child: Icon(Icons.inventory_2_outlined, color: Colors.redAccent, size: 36),
           ),

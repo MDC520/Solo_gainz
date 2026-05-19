@@ -27,8 +27,8 @@ Future<void> main() async {
     systemStatusBarContrastEnforced: false,
   ));
 
-  // Enable full immersive display
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // Enable full edge-to-edge display
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Lock to portrait
   await SystemChrome.setPreferredOrientations([
@@ -66,7 +66,9 @@ class SoloGainzApp extends StatelessWidget {
           title: 'Solo Gainz',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.theme,
-          home: const _AppRoot(),
+          home: ResponsiveBuilder(
+            builder: (_) => const _AppRoot(),
+          ),
         );
       },
     );
@@ -170,8 +172,8 @@ class AppShellState extends State<AppShell>
     super.dispose();
   }
 
-  static const double _gap = 16.0;
-  static const double _navH = 64.0;
+  static final double _gap = Responsive.h(16);
+  static final double _navH = Responsive.h(64);
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +205,11 @@ class AppShellState extends State<AppShell>
               Scaffold(
                 backgroundColor: Colors.transparent,
                 extendBody: true,
-                body: IndexedStack(index: _idx, children: _pages),
+                body: SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: IndexedStack(index: _idx, children: _pages),
+                ),
                 bottomNavigationBar: AnimatedSlide(
                   offset: isHidden ? const Offset(0, 1.5) : Offset.zero,
                   duration: const Duration(milliseconds: 500),
@@ -254,12 +260,12 @@ class AppShellState extends State<AppShell>
                               children: [
                                 Icon(
                                   sel ? item.$1 : item.$2,
-                                  size: 20,
+                                  size: Responsive.icon(20),
                                   color: sel ? AppTheme.accent : AppTheme.text3,
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: Responsive.h(4)),
                                 Text(item.$3, style: GoogleFonts.outfit(
-                                  fontSize: 10,
+                                  fontSize: Responsive.sp(10),
                                   fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                                   color: sel ? AppTheme.accent : AppTheme.text3,
                                   letterSpacing: 0.5,

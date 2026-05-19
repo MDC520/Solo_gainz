@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'storage.dart';
+import 'responsive.dart';
 
 export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
 export 'package:google_fonts/google_fonts.dart';
+export 'responsive.dart';
 
 class AppTheme {
   AppTheme._();
@@ -97,30 +99,29 @@ class AppTheme {
 
   // ── Typography ───────────────────────────────────────────────────────────
   static TextStyle h1({Color? color}) => GoogleFonts.outfit(
-    fontSize: 32, fontWeight: FontWeight.w800, color: color ?? text1, letterSpacing: -1.0, height: 1.1,
+    fontSize: Responsive.sp(32), fontWeight: FontWeight.w800, color: color ?? text1, letterSpacing: -1.0, height: 1.1,
   );
   static TextStyle h2({Color? color}) => GoogleFonts.outfit(
-    fontSize: 20, fontWeight: FontWeight.w600, color: color ?? text1, letterSpacing: -0.5, height: 1.2,
+    fontSize: Responsive.sp(20), fontWeight: FontWeight.w600, color: color ?? text1, letterSpacing: -0.5, height: 1.2,
   );
   static TextStyle h3({Color? color}) => GoogleFonts.outfit(
-    fontSize: 16, fontWeight: FontWeight.w500, color: color ?? text1, letterSpacing: -0.2, height: 1.3,
+    fontSize: Responsive.sp(16), fontWeight: FontWeight.w500, color: color ?? text1, letterSpacing: -0.2, height: 1.3,
   );
   static TextStyle label({Color? color}) => GoogleFonts.outfit(
-    fontSize: 13, fontWeight: FontWeight.w700, color: color ?? text1, letterSpacing: 1.0,
+    fontSize: Responsive.sp(13), fontWeight: FontWeight.w700, color: color ?? text1, letterSpacing: 1.0,
   );
   static TextStyle body({Color? color}) => GoogleFonts.outfit(
-    fontSize: 15, fontWeight: FontWeight.w300, color: color ?? text2, height: 1.6,
+    fontSize: Responsive.sp(15), fontWeight: FontWeight.w300, color: color ?? text2, height: 1.6,
   );
   static TextStyle caption({Color? color}) => GoogleFonts.outfit(
-    fontSize: 11, fontWeight: FontWeight.w400, color: color ?? text3, letterSpacing: 0.5,
+    fontSize: Responsive.sp(11), fontWeight: FontWeight.w400, color: color ?? text3, letterSpacing: 0.5,
   );
   static TextStyle mono({Color? color, double size = 14}) => GoogleFonts.spaceMono(
-    fontSize: size, fontWeight: FontWeight.w700, color: color ?? text1, letterSpacing: -0.5,
+    fontSize: Responsive.sp(size), fontWeight: FontWeight.w700, color: color ?? text1, letterSpacing: -0.5,
   );
-  /// BoldPixels pixel-art font — use for game titles, scores, level numbers, HUD elements.
-  static TextStyle pixel({Color? color, double size = 16, double letterSpacing = 1.0}) => TextStyle(
-    fontFamily: 'BoldPixels',
-    fontSize: size,
+  /// PressStart2P pixel-art font — use for game titles, scores, level numbers, HUD elements.
+  static TextStyle pixel({Color? color, double size = 16, double letterSpacing = 1.0}) => GoogleFonts.pressStart2p(
+    fontSize: Responsive.sp(size),
     color: color ?? text1,
     letterSpacing: letterSpacing,
     height: 1.2,
@@ -217,13 +218,13 @@ class SGCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: padding ?? const EdgeInsets.all(20),
+    padding: padding ?? EdgeInsets.all(Responsive.w(20)),
     decoration: BoxDecoration(
       color: AppTheme.surface.withValues(alpha: 0.8),
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: BorderRadius.circular(Responsive.r(radius)),
       border: Border.all(
         color: glowColor?.withValues(alpha: 0.5) ?? AppTheme.glassBorder,
-        width: 1.5,
+        width: Responsive.dp(1.5),
       ),
     ),
     child: child,
@@ -258,30 +259,30 @@ class SGButton extends StatelessWidget {
   }
 
   Widget _buildSolid(Color color) => Container(
-    height: height,
-    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
+    height: Responsive.h(height),
+    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Responsive.r(16))),
     child: Center(
       child: loading
-        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+        ? SizedBox(width: Responsive.w(20), height: Responsive.h(20), child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
         : Row(mainAxisSize: MainAxisSize.min, children: [
-            if (icon != null) ...[Icon(icon, size: 20, color: Colors.white), const SizedBox(width: 10)],
+            if (icon != null) ...[Icon(icon, size: Responsive.icon(20), color: Colors.white), SizedBox(width: Responsive.w(10))],
             Text(label, style: AppTheme.label(color: Colors.white)),
           ]),
     ),
   );
 
   Widget _buildOutlined(Color color) => Container(
-    height: height,
+    height: Responsive.h(height),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.05),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+      borderRadius: BorderRadius.circular(Responsive.r(16)),
+      border: Border.all(color: color.withValues(alpha: 0.5), width: Responsive.dp(1.5)),
     ),
     child: Center(
       child: loading
-        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: color))
+        ? SizedBox(width: Responsive.w(20), height: Responsive.h(20), child: CircularProgressIndicator(strokeWidth: 2, color: color))
         : Row(mainAxisSize: MainAxisSize.min, children: [
-            if (icon != null) ...[Icon(icon, size: 20, color: color), const SizedBox(width: 10)],
+            if (icon != null) ...[Icon(icon, size: Responsive.icon(20), color: color), SizedBox(width: Responsive.w(10))],
             Text(label, style: AppTheme.label(color: color)),
           ]),
     ),
@@ -297,13 +298,13 @@ class SGSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: EdgeInsets.only(bottom: Responsive.h(16)),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(children: [
-          Container(width: 3, height: 14, decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(width: 10),
+          Container(width: Responsive.w(3), height: Responsive.h(14), decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(2))),
+          SizedBox(width: Responsive.w(10)),
           Text(title.toUpperCase(), style: AppTheme.label(color: AppTheme.text2)),
         ]),
         if (trailing != null) trailing!,

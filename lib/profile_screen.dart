@@ -85,24 +85,24 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(Responsive.r(28))),
           border: Border(top: BorderSide(color: AppTheme.glassBorder)),
         ),
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+        padding: Responsive.fromLTRB(24, 16, 24, 36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36,
-              height: 4,
+              width: Responsive.w(36),
+              height: Responsive.h(4),
               decoration: BoxDecoration(
                 color: AppTheme.line,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Responsive.r(2)),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.h(24)),
             Text('Profile Photo', style: AppTheme.h2()),
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.h(24)),
             Row(
               children: [
                 Expanded(
@@ -118,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: Responsive.w(16)),
                 Expanded(
                   child: SGTouchable(
                     onTap: () {
@@ -142,16 +142,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _imageSourceCard(IconData icon, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: Responsive.symmetric(vertical: 24),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+        borderRadius: BorderRadius.circular(Responsive.r(20)),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: Responsive.dp(1.5)),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 32, color: color),
-          const SizedBox(height: 12),
+          Icon(icon, size: Responsive.icon(32), color: color),
+          SizedBox(height: Responsive.h(12)),
           Text(label, style: AppTheme.label(color: color)),
         ],
       ),
@@ -186,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 50, 20, 120),
+                  padding: Responsive.fromLTRB(20, 50, 20, 120),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -198,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Player Profile', style: AppTheme.h1()),
-                              const SizedBox(height: 4),
+                              SizedBox(height: Responsive.h(4)),
                               Text(
                                 'View status and achievements.',
                                 style: AppTheme.caption(color: AppTheme.text2),
@@ -211,40 +211,40 @@ class _ProfilePageState extends State<ProfilePage> {
                                 MaterialPageRoute(
                                     builder: (_) => const SettingsPage())),
                             child: Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: Responsive.all(10),
                               decoration: BoxDecoration(
                                 color: AppTheme.surface,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(Responsive.r(12)),
                                 border: Border.all(
-                                    color: AppTheme.text1, width: 1.5),
+                                    color: AppTheme.text1, width: Responsive.dp(1.5)),
                               ),
                               child: Icon(Icons.settings_rounded,
-                                  size: 18, color: AppTheme.text2),
+                                  size: Responsive.icon(18), color: AppTheme.text2),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: Responsive.h(32)),
 
                       // Player Identity Centerpiece Card
                       Center(
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 32, horizontal: 20),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                                color: AppTheme.glassBorder, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 8)),
-                            ],
-                          ),
-                          child: Column(
+                          child: Container(
+                            width: double.infinity,
+                            padding: Responsive.symmetric(
+                                vertical: 32, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(Responsive.r(24)),
+                              border: Border.all(
+                                  color: AppTheme.glassBorder, width: Responsive.dp(1.5)),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8)),
+                              ],
+                            ),
+                            child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               // Radial Aura Glow Behind Avatar
@@ -252,8 +252,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 alignment: Alignment.center,
                                 children: [
                                   Container(
-                                    width: 140,
-                                    height: 140,
+                                    width: Responsive.h(140),
+                                    height: Responsive.h(140),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       gradient: RadialGradient(
@@ -274,17 +274,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
-                              Text(
-                                user.toUpperCase(),
-                                style: AppTheme.h1().copyWith(
-                                  fontSize: 28,
-                                  letterSpacing: -0.5,
+                                SizedBox(height: Responsive.h(20)),
+                                Text(
+                                  user.toUpperCase(),
+                                  style: AppTheme.h1().copyWith(
+                                    fontSize: Responsive.sp(28),
+                                    letterSpacing: -0.5,
                                   fontWeight: FontWeight.w900,
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
+                                ),
+                                SizedBox(height: Responsive.h(4)),
+                                Text(
                                 characterTitle.toUpperCase(),
                                 style: AppTheme.mono(
                                   color: AppTheme.accent,
@@ -293,24 +293,24 @@ class _ProfilePageState extends State<ProfilePage> {
                                   letterSpacing: 2.0,
                                   fontWeight: FontWeight.w800,
                                 ),
-                              ),
-                              const SizedBox(height: 16),
+                                ),
+                                SizedBox(height: Responsive.h(16)),
 
                               // Level and Coins Chips Row
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: Responsive.symmetric(
                                         horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
                                       color:
                                           AppTheme.cyan.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(30),
+                                      borderRadius: BorderRadius.circular(Responsive.r(30)),
                                       border: Border.all(
                                           color: AppTheme.cyan
                                               .withValues(alpha: 0.25),
-                                          width: 1),
+                                          width: Responsive.dp(1)),
                                     ),
                                     child: Text(
                                       'LEVEL ${s.level}',
@@ -320,25 +320,25 @@ class _ProfilePageState extends State<ProfilePage> {
                                               fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: Responsive.w(12)),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: Responsive.symmetric(
                                         horizontal: 14, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: AppTheme.amber
                                           .withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(30),
+                                      borderRadius: BorderRadius.circular(Responsive.r(30)),
                                       border: Border.all(
                                           color: AppTheme.amber
                                               .withValues(alpha: 0.25),
-                                          width: 1),
+                                          width: Responsive.dp(1)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.monetization_on_rounded,
-                                            size: 12, color: AppTheme.amber),
-                                        const SizedBox(width: 4),
+                                            size: Responsive.icon(12), color: AppTheme.amber),
+                                        SizedBox(width: Responsive.w(4)),
                                         Text(
                                           '${s.coins} COINS',
                                           style: AppTheme.mono(
@@ -356,12 +356,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      SizedBox(height: Responsive.h(28)),
 
                       // Achievements section
                       if (s.achievements.isNotEmpty) ...[
                         const SGSectionHeader(title: 'Medals of Valor'),
-                        const SizedBox(height: 10),
+                        SizedBox(height: Responsive.h(10)),
                         _AchievementsDeck(achievements: s.achievements),
                       ],
                     ],
@@ -397,11 +397,11 @@ class _AvatarWidget extends StatelessWidget {
         children: [
           // Single Outer Neon Gradient Border Wrapper
           Container(
-            width: 104,
-            height: 104,
-            padding: const EdgeInsets.all(2.5),
+            width: Responsive.h(104),
+            height: Responsive.h(104),
+            padding: Responsive.all(2.5),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(Responsive.r(22)),
               gradient: SweepGradient(
                 colors: [
                   AppTheme.accent,
@@ -413,7 +413,7 @@ class _AvatarWidget extends StatelessWidget {
             ),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(19.5),
+                borderRadius: BorderRadius.circular(Responsive.r(19.5)),
                 color: AppTheme.black,
                 image: imagePath.isNotEmpty && File(imagePath).existsSync()
                     ? DecorationImage(
@@ -425,7 +425,7 @@ class _AvatarWidget extends StatelessWidget {
                       child: Text(
                         initial,
                         style: AppTheme.h1(color: AppTheme.accent).copyWith(
-                            fontSize: 34, fontWeight: FontWeight.w900),
+                            fontSize: Responsive.sp(34), fontWeight: FontWeight.w900),
                       ),
                     )
                   : null,
@@ -436,11 +436,11 @@ class _AvatarWidget extends StatelessWidget {
             bottom: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: Responsive.all(6),
               decoration: BoxDecoration(
                 color: AppTheme.accent,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: AppTheme.black, width: 2.0),
+                borderRadius: BorderRadius.circular(Responsive.r(9)),
+                border: Border.all(color: AppTheme.black, width: Responsive.dp(2.0)),
                 boxShadow: [
                   BoxShadow(
                       color: AppTheme.accent.withValues(alpha: 0.3),
@@ -449,7 +449,7 @@ class _AvatarWidget extends StatelessWidget {
                 ],
               ),
               child: Icon(Icons.camera_alt_rounded,
-                  size: 12, color: AppTheme.black),
+                  size: Responsive.icon(12), color: AppTheme.black),
             ),
           ),
         ],
@@ -467,22 +467,22 @@ class _AchievementsDeck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 110,
+      height: Responsive.h(110),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: achievements.length,
         physics: const BouncingScrollPhysics(),
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, __) => SizedBox(width: Responsive.w(14)),
         itemBuilder: (context, index) {
           final achievementName = achievements[index].toUpperCase();
           return Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            width: Responsive.w(100),
+            padding: Responsive.symmetric(horizontal: 10, vertical: 12),
             decoration: BoxDecoration(
               color: AppTheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(Responsive.r(20)),
               border: Border.all(
-                  color: AppTheme.amber.withValues(alpha: 0.3), width: 1.5),
+                  color: AppTheme.amber.withValues(alpha: 0.3), width: Responsive.dp(1.5)),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.amber.withValues(alpha: 0.05),
@@ -496,10 +496,10 @@ class _AchievementsDeck extends StatelessWidget {
               children: [
                 // Glowing Background Effect
                 Positioned(
-                  top: -10,
+                  top: Responsive.h(-10),
                   child: Container(
-                    width: 44,
-                    height: 44,
+                    width: Responsive.h(44),
+                    height: Responsive.h(44),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -517,12 +517,12 @@ class _AchievementsDeck extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.emoji_events_rounded,
-                        color: AppTheme.amber, size: 30),
-                    const SizedBox(height: 8),
+                        color: AppTheme.amber, size: Responsive.icon(30)),
+                    SizedBox(height: Responsive.h(8)),
                     Text(
                       achievementName,
                       style: AppTheme.caption(color: AppTheme.text1).copyWith(
-                        fontSize: 8.5,
+                        fontSize: Responsive.sp(8.5),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.2,
                         height: 1.2,

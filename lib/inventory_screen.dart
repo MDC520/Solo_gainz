@@ -6,6 +6,7 @@ import 'main.dart';
 import 'chest.dart';
 import 'open_screen.dart';
 import 'background.dart';
+import 'history_screen.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -57,7 +58,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   child: SafeArea(
                     bottom: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      padding: Responsive.fromLTRB(20, 16, 20, 0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -72,19 +73,39 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       AppTheme.caption(color: AppTheme.text2)),
                             ],
                           ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: AppTheme.glassBorder, width: 1.5),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                                child: Container(
+                                  padding: Responsive.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppTheme.glassBorder, width: 1.5),
+                                  ),
+                                  child: Icon(Icons.history,
+                                      size: Responsive.icon(20), color: AppTheme.white),
+                                ),
                               ),
-                              child: Icon(Icons.close,
-                                  size: 20, color: AppTheme.white),
-                            ),
+                              SizedBox(width: Responsive.w(12)),
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  padding: Responsive.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppTheme.glassBorder, width: 1.5),
+                                  ),
+                                  child: Icon(Icons.close,
+                                      size: Responsive.icon(20), color: AppTheme.white),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -92,7 +113,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 40, 20, 120),
+                  padding: Responsive.fromLTRB(20, 40, 20, 120),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => _buildBench(index * 4),
@@ -110,68 +131,47 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Widget _buildBench(int startIndex) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 30),
+      padding: EdgeInsets.only(bottom: Responsive.h(30)),
       child: SizedBox(
-        height: 140,
+        height: Responsive.h(140),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Positioned(
               bottom: 0,
-              left: -15,
-              right: -15,
-              child: Column(
-                children: [
-                  Container(
-                    height: 28,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.isDark
-                              ? const Color(0xFF4B5563)
-                              : const Color(0xFF94A3B8),
-                          AppTheme.isDark
-                              ? const Color(0xFF1F2937)
-                              : const Color(0xFF475569),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: AppTheme.isDark
-                            ? Colors.black
-                            : Colors.white.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+              left: -Responsive.w(15),
+              right: -Responsive.w(15),
+              child: Container(
+                height: Responsive.h(28),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppTheme.isDark
+                          ? const Color(0xFF4B5563)
+                          : const Color(0xFF94A3B8),
+                      AppTheme.isDark
+                          ? const Color(0xFF1F2937)
+                          : const Color(0xFF475569),
+                    ],
                   ),
-                  Container(
-                    height: 12,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.isDark
-                          ? Colors.black.withValues(alpha: 0.6)
-                          : Colors.black.withValues(alpha: 0.3),
-                      borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(8)),
-                    ),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: AppTheme.isDark
+                        ? Colors.black
+                        : Colors.white.withValues(alpha: 0.2),
+                    width: 1.5,
                   ),
-                ],
+                  boxShadow: const [],
+                ),
               ),
             ),
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              height: 118,
+              bottom: Responsive.h(28),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: List.generate(4, (i) {
@@ -205,11 +205,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
             child: Opacity(
               opacity: 0.15,
               child: Container(
-                height: 104,
                 alignment: Alignment.bottomCenter,
-                padding: const EdgeInsets.only(bottom: 45),
+                padding: EdgeInsets.only(bottom: Responsive.h(25)),
                 child: Icon(Icons.add_circle_outline,
-                    color: AppTheme.text1, size: 30),
+                    color: AppTheme.text1, size: Responsive.icon(30)),
               ),
             ),
           );
@@ -268,37 +267,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         SizedBox(
-          height: 28,
+          height: Responsive.h(28),
           child: Center(
             child: _buildSlotFooter(status, index, type),
           ),
         ),
-        const SizedBox(height: 6),
-        Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Positioned(
-              bottom: 0,
-              child: Container(
-                width: 40,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius:
-                      const BorderRadius.all(Radius.elliptical(40, 6)),
-                ),
-              ),
-            ),
-            Hero(
-              tag: 'chest_$index',
-              child: ChestSprite(
-                chestType: spriteType,
-                animation: 'Idle',
-                fps: 8,
-                size: 78,
-              ),
-            ),
-          ],
+        SizedBox(height: Responsive.h(6)),
+        Hero(
+          tag: 'chest_$index',
+          child: ChestSprite(
+            chestType: spriteType,
+            animation: 'Idle',
+            fps: 8,
+            size: 78, // Already scaled inside ChestSprite based on size parameter
+          ),
         ),
       ],
     );
@@ -315,22 +297,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _buildSlotFooter(String status, int index, String type) {
-    final isUnlocking = status == 'unlocking';
     final isReady = status == 'ready';
+    final isUnlocking = status == 'unlocking';
 
     if (isReady) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: Responsive.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: AppTheme.cyan.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(Responsive.r(4)),
           boxShadow: [
             BoxShadow(
                 color: AppTheme.cyan.withValues(alpha: 0.3), blurRadius: 8),
           ],
         ),
         child: Text('READY',
-            style: AppTheme.label(color: Colors.white).copyWith(fontSize: 9)),
+            style: AppTheme.label(color: Colors.white).copyWith(fontSize: Responsive.sp(9))),
       );
     }
 
@@ -349,28 +331,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: Responsive.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color:
             AppTheme.isDark ? const Color(0xFF0A0A0A) : const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(Responsive.r(4)),
         border: Border.all(
             color: isUnlocking
                 ? AppTheme.amber
-                : (type == 'mysterious_chest'
-                    ? const Color(0xFF5C10A6) // Deep luxurious dark purple border
-                    : (AppTheme.isDark
-                        ? AppTheme.glassBorder
-                        : Colors.white.withValues(alpha: 0.2))),
-            width: 1.5),
+                : (AppTheme.isDark
+                    ? AppTheme.glassBorder
+                    : Colors.white.withValues(alpha: 0.2)),
+            width: Responsive.dp(1.5)),
       ),
       child: Text(timeStr,
           style: AppTheme.mono(
                   color: isUnlocking
                       ? AppTheme.amber
-                      : (type == 'mysterious_chest'
-                          ? const Color(0xFFD3ADFF) // Soft glowing lavender text
-                          : AppTheme.text3),
+                      : AppTheme.text3,
                   size: 11)
               .copyWith(fontWeight: FontWeight.w900)),
     );
@@ -437,7 +415,6 @@ class _ChestUnlockSheet extends StatefulWidget {
 
 class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
   int _visibleSegments = 0;
-  int _purpleSegments = 0; // Staggered count of segments morphed to premium dark purple
   bool _showInfo = false; // Toggle for complex gacha gacha info split-screen view
 
   static const _segmentColors = [
@@ -487,16 +464,6 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
     for (int i = 1; i <= _filledSegments; i++) {
       await Future.delayed(const Duration(milliseconds: 180));
       if (mounted) setState(() => _visibleSegments = i);
-    }
-    // If it is a Mysterious Chest, perform a breathtaking sequential staggered morph to dark purple!
-    if (widget.chestType == 'mysterious_chest') {
-      await Future.delayed(const Duration(milliseconds: 500)); // Dramatic build-up pause
-      for (int i = 1; i <= 5; i++) {
-        await Future.delayed(const Duration(milliseconds: 130)); // 130ms cascade wave
-        if (mounted) {
-          setState(() => _purpleSegments = i);
-        }
-      }
     }
   }
 
@@ -733,20 +700,17 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      (widget.chestType == 'mysterious_chest' && _purpleSegments > 0) ? '????????' : 'LOOT TIER',
+                      'LOOT TIER',
                       style: AppTheme.caption().copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: (widget.chestType == 'mysterious_chest' && _purpleSegments > 0) ? const Color(0xFF5C10A6) : null,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
-                      (widget.chestType == 'mysterious_chest' && _purpleSegments > 0) ? Icons.help_outline : Icons.arrow_downward,
+                      Icons.arrow_downward,
                       size: 12,
-                      color: (widget.chestType == 'mysterious_chest' && _purpleSegments > 0)
-                          ? const Color(0xFF5C10A6)
-                          : AppTheme.text2.withValues(alpha: 0.5),
+                      color: AppTheme.text2.withValues(alpha: 0.5),
                     ),
                   ],
                 ),
@@ -804,9 +768,6 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
   }
 
   Widget _buildBattery() {
-    final isMysterious = widget.chestType == 'mysterious_chest';
-    final showPurple = isMysterious && _purpleSegments > 0;
-    final purpleColor = const Color(0xFF5C10A6); // Vibrant, deep dark amethyst purple
     return Row(
       children: [
         Expanded(
@@ -817,15 +778,14 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
               color: AppTheme.black,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: showPurple ? purpleColor : AppTheme.line,
+                color: AppTheme.line,
                 width: 1.5,
               ),
             ),
             child: Row(
               children: List.generate(5, (i) {
                 final isLit = i < _visibleSegments;
-                final isSegmentPurple = isMysterious && i < _purpleSegments;
-                final color = isSegmentPurple ? purpleColor : _segmentColors[i];
+                final color = _segmentColors[i];
                 return Expanded(
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 350), // Snappy and ultra-smooth color cascade shift
@@ -838,8 +798,8 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
                           ? [
                               BoxShadow(
                                 color: color.withValues(alpha: 0.6),
-                                blurRadius: isSegmentPurple ? 8 : 6, // Pulsing rich glow when purple!
-                                spreadRadius: isSegmentPurple ? 1.5 : 1,
+                                blurRadius: 6, // Pulsing rich glow
+                                spreadRadius: 1,
                               ),
                             ]
                           : null,
@@ -855,7 +815,7 @@ class _ChestUnlockSheetState extends State<_ChestUnlockSheet> {
           height: 14,
           margin: const EdgeInsets.only(left: 2),
           decoration: BoxDecoration(
-            color: showPurple ? purpleColor : AppTheme.line,
+            color: AppTheme.line,
             borderRadius:
                 const BorderRadius.horizontal(right: Radius.circular(3)),
           ),

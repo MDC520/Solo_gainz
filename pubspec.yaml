@@ -39,10 +39,6 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
 
-  fonts:
-    - family: BoldPixels
-      fonts:
-        - asset: Assets/Fonts/BoldPixels.ttf
   assets:
     - Assets/
     - Assets/Player Model/Idle/

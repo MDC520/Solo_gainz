@@ -3,6 +3,7 @@ import 'player.dart';
 import 'theme.dart';
 import 'background.dart';
 import 'training_screen.dart';
+import 'pvp.dart';
 
 class DungeonPage extends StatefulWidget {
   const DungeonPage({super.key});
@@ -79,6 +80,16 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
     });
   }
 
+  void _startPvp() {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PvpScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Dynamic styling based on progress
@@ -126,12 +137,12 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
           children: [
           // ── Header Section ───────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+            padding: Responsive.fromLTRB(20, 40, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Dungeons', style: AppTheme.h1()),
-                  const SizedBox(height: 4),
+                  SizedBox(height: Responsive.h(4)),
                   Text(
                     'Conquer the abyss and hone your skills.',
                     style: AppTheme.caption(color: AppTheme.text2),
@@ -139,7 +150,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.h(24)),
 
             // ── Content Section ──────────────────
             Expanded(
@@ -147,23 +158,23 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    const SizedBox(height: 12),
+                    SizedBox(height: Responsive.h(12)),
                     
                     // 1. Training Card (Full Width)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: Responsive.symmetric(horizontal: 20),
                       child: SGTouchable(
                         onTap: _startTraining,
                         child: Container(
                           width: double.infinity,
-                          height: 100,
+                          height: Responsive.h(100),
                           decoration: BoxDecoration(
-                            color: AppTheme.black, 
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.text1, width: 2),
+                            color: const Color(0xFF0A221C), // Deep premium dark green/teal
+                            borderRadius: BorderRadius.circular(Responsive.r(20)),
+                            border: Border.all(color: AppTheme.accent, width: Responsive.dp(2)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
+                                color: AppTheme.accent.withValues(alpha: 0.15),
                                 blurRadius: 15,
                                 offset: const Offset(0, 8),
                               ),
@@ -179,7 +190,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                     animation: _bgCtrl,
                                     builder: (context, child) {
                                       return CustomPaint(
-                                        painter: _NotebookPainter(_bgCtrl.value, lineColor: AppTheme.text1.withValues(alpha: 0.05)),
+                                        painter: _NotebookPainter(_bgCtrl.value, lineColor: AppTheme.accent.withValues(alpha: 0.22)),
                                       );
                                     },
                                   ),
@@ -207,13 +218,13 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                                   Transform.translate(
                                                     offset: const Offset(20, 0),
                                                     child: Container(
-                                                      width: 58,
-                                                      height: 58,
+                                                      width: Responsive.w(58),
+                                                      height: Responsive.w(58),
                                                       decoration: BoxDecoration(
                                                         gradient: const LinearGradient(
                                                           colors: [Color(0xFF795548), Color(0xFF4E342E)],
                                                         ),
-                                                        borderRadius: BorderRadius.circular(4),
+                                                        borderRadius: BorderRadius.circular(Responsive.r(4)),
                                                       ),
                                                       child: CustomPaint(painter: _CratePainter()),
                                                     ),
@@ -251,16 +262,16 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                           Transform.translate(
                                             offset: const Offset(20, 0), 
                                             child: Container(
-                                              width: 58,
-                                              height: 58,
+                                              width: Responsive.w(58),
+                                              height: Responsive.w(58),
                                               decoration: BoxDecoration(
                                                 gradient: const LinearGradient(
                                                   begin: Alignment.topLeft,
                                                   end: Alignment.bottomRight,
                                                   colors: [Color(0xFF795548), Color(0xFF4E342E)],
                                                 ),
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(color: const Color(0xFF2D1B18), width: 3),
+                                                borderRadius: BorderRadius.circular(Responsive.r(4)),
+                                                border: Border.all(color: const Color(0xFF2D1B18), width: Responsive.dp(3)),
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: Colors.black.withValues(alpha: 0.5),
@@ -298,11 +309,11 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                                 // Ground Line (Subtle Accent)
                                 Positioned(
-                                  bottom: 15,
-                                  left: 30,
-                                  right: 30,
+                                  bottom: Responsive.h(15),
+                                  left: Responsive.w(30),
+                                  right: Responsive.w(30),
                                   child: Container(
-                                    height: 1.5,
+                                    height: Responsive.dp(1.5),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
@@ -317,20 +328,20 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                                 // Minimal indicator
                                 Positioned(
-                                  top: 10,
-                                  right: 12,
+                                  top: Responsive.h(10),
+                                  right: Responsive.w(12),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         'TRAINING',
-                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
+                                        style: AppTheme.mono(color: AppTheme.accent, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
+                                      SizedBox(width: Responsive.w(4)),
+                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.accent, size: Responsive.icon(18)),
                                     ],
                                   ),
                                 ),
@@ -343,15 +354,15 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                     // Dashed Separator
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                      padding: Responsive.symmetric(vertical: 20, horizontal: 40),
                       child: Row(
                         children: List.generate(40, (index) => Expanded(
                           child: Container(
-                            height: 2,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            height: Responsive.dp(2),
+                            margin: EdgeInsets.symmetric(horizontal: Responsive.w(2)),
                             decoration: BoxDecoration(
                               color: AppTheme.text1.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(2),
+                              borderRadius: BorderRadius.circular(Responsive.r(2)),
                             ),
                           ),
                         )),
@@ -360,22 +371,29 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                     // 2. Story Mode Card (Full Width)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: Responsive.symmetric(horizontal: 20),
                       child: SGTouchable(
                         onTap: () {},
                         child: Container(
                           width: double.infinity,
-                          height: 100,
+                          height: Responsive.h(100),
                           decoration: BoxDecoration(
-                            color: AppTheme.black,
-                            borderRadius: BorderRadius.circular(20),
+                            color: const Color(0xFF1C0A2E), // Deep premium purple/violet
+                            borderRadius: BorderRadius.circular(Responsive.r(20)),
                             border: Border.all(
-                              color: AppTheme.text1, 
-                              width: 2,
+                              color: const Color(0xFFBB86FC), // Purple Accent
+                              width: Responsive.dp(2),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFBB86FC).withValues(alpha: 0.15),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(Responsive.r(18)),
                             child: Stack(
                               children: [
                                 // Animated Background Pattern
@@ -386,7 +404,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                       return CustomPaint(
                                         painter: _NotebookPainter(
                                           _bgCtrl.value, 
-                                          lineColor: accentColor.withValues(alpha: 0.08),
+                                          lineColor: const Color(0xFFBB86FC).withValues(alpha: 0.22),
                                         ),
                                       );
                                     },
@@ -413,31 +431,31 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                                 // Minimal indicator
                                 Positioned(
-                                  top: 10,
-                                  right: 12,
+                                  top: Responsive.h(10),
+                                  right: Responsive.w(12),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         'STORY',
-                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
+                                        style: AppTheme.mono(color: const Color(0xFFBB86FC), size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
+                                      SizedBox(width: Responsive.w(4)),
+                                      Icon(Icons.arrow_outward_rounded, color: const Color(0xFFBB86FC), size: Responsive.icon(18)),
                                     ],
                                   ),
                                 ),
 
                                 // Ground Line (Subtle White)
                                 Positioned(
-                                  bottom: 15,
-                                  left: 30,
-                                  right: 30,
+                                  bottom: Responsive.h(15),
+                                  left: Responsive.w(30),
+                                  right: Responsive.w(30),
                                   child: Container(
-                                    height: 1.5,
+                                    height: Responsive.dp(1.5),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
@@ -458,22 +476,29 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                     // 3. Combat Arena Card (Full Width)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: Responsive.symmetric(horizontal: 20, vertical: 10),
                       child: SGTouchable(
-                        onTap: () {},
+                        onTap: _startPvp,
                         child: Container(
                           width: double.infinity,
-                          height: 100,
+                          height: Responsive.h(100),
                           decoration: BoxDecoration(
-                            color: AppTheme.black,
-                            borderRadius: BorderRadius.circular(20),
+                            color: const Color(0xFF280B0B), // Deep premium red/crimson
+                            borderRadius: BorderRadius.circular(Responsive.r(20)),
                             border: Border.all(
-                              color: AppTheme.text1, 
-                              width: 2,
+                              color: Colors.redAccent, 
+                              width: Responsive.dp(2),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.redAccent.withValues(alpha: 0.15),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(Responsive.r(18)),
                             child: Stack(
                               children: [
                                 // Animated Background Pattern
@@ -484,7 +509,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                                       return CustomPaint(
                                         painter: _NotebookPainter(
                                           _bgCtrl.value, 
-                                          lineColor: Colors.orangeAccent.withValues(alpha: 0.08),
+                                          lineColor: Colors.redAccent.withValues(alpha: 0.22),
                                         ),
                                       );
                                     },
@@ -511,31 +536,31 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
 
                                 // Minimal indicator
                                 Positioned(
-                                  top: 10,
-                                  right: 12,
+                                  top: Responsive.h(10),
+                                  right: Responsive.w(12),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         'PVP',
-                                        style: AppTheme.mono(color: AppTheme.text2, size: 10).copyWith(
+                                        style: AppTheme.mono(color: Colors.redAccent, size: 10).copyWith(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1,
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(Icons.arrow_outward_rounded, color: AppTheme.text3, size: 18),
+                                      SizedBox(width: Responsive.w(4)),
+                                      Icon(Icons.arrow_outward_rounded, color: Colors.redAccent, size: Responsive.icon(18)),
                                     ],
                                   ),
                                 ),
 
                                 // Ground Line (Subtle White)
                                 Positioned(
-                                  bottom: 15,
-                                  left: 30,
-                                  right: 30,
+                                  bottom: Responsive.h(15),
+                                  left: Responsive.w(30),
+                                  right: Responsive.w(30),
                                   child: Container(
-                                    height: 1.5,
+                                    height: Responsive.dp(1.5),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
@@ -554,7 +579,7 @@ class _DungeonPageState extends State<DungeonPage> with SingleTickerProviderStat
                       ),
                     ),
 
-                    const SizedBox(height: 120), // Bottom padding for navbar
+                    SizedBox(height: Responsive.h(120)), // Bottom padding for navbar
                   ],
                 ),
               ),
@@ -582,10 +607,10 @@ class _NotebookPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 1.0;
+      ..strokeWidth = Responsive.dp(1.0);
 
     // Static Horizontal Lines (Notebook feel)
-    const double lineSpacing = 30.0;
+    final double lineSpacing = Responsive.h(30.0);
     for (double y = 0; y < size.height; y += lineSpacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
     }
@@ -607,27 +632,30 @@ class _CratePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final framePaint = Paint()
       ..color = const Color(0xFF2D1B18).withValues(alpha: 0.6)
-      ..strokeWidth = 4.0
+      ..strokeWidth = Responsive.dp(4.0)
       ..style = PaintingStyle.stroke;
 
     // Main X-Beam
-    canvas.drawLine(const Offset(8, 8), Offset(size.width - 8, size.height - 8), framePaint);
-    canvas.drawLine(Offset(size.width - 8, 8), Offset(8, size.height - 8), framePaint);
+    final o8 = Responsive.w(8.0);
+    canvas.drawLine(Offset(o8, o8), Offset(size.width - o8, size.height - o8), framePaint);
+    canvas.drawLine(Offset(size.width - o8, o8), Offset(o8, size.height - o8), framePaint);
 
     // Corner Studs (Metal nails)
     final studPaint = Paint()..color = const Color(0xFFBDBDBD).withValues(alpha: 0.3);
-    canvas.drawCircle(const Offset(6, 6), 1.5, studPaint);
-    canvas.drawCircle(Offset(size.width - 6, 6), 1.5, studPaint);
-    canvas.drawCircle(Offset(6, size.height - 6), 1.5, studPaint);
-    canvas.drawCircle(Offset(size.width - 6, size.height - 6), 1.5, studPaint);
+    final o6 = Responsive.w(6.0);
+    final r1_5 = Responsive.dp(1.5);
+    canvas.drawCircle(Offset(o6, o6), r1_5, studPaint);
+    canvas.drawCircle(Offset(size.width - o6, o6), r1_5, studPaint);
+    canvas.drawCircle(Offset(o6, size.height - o6), r1_5, studPaint);
+    canvas.drawCircle(Offset(size.width - o6, size.height - o6), r1_5, studPaint);
 
     // Corner L-Brackets
     final bracketPaint = Paint()
       ..color = const Color(0xFF2D1B18).withValues(alpha: 0.8)
-      ..strokeWidth = 2.0
+      ..strokeWidth = Responsive.dp(2.0)
       ..style = PaintingStyle.stroke;
     
-    double bSize = 10;
+    double bSize = Responsive.w(10.0);
     // Top-Left
     canvas.drawLine(Offset.zero, Offset(bSize, 0), bracketPaint);
     canvas.drawLine(Offset.zero, Offset(0, bSize), bracketPaint);

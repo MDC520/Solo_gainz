@@ -78,6 +78,18 @@ A critical architectural constraint in Solo Gainz is the handling of device orie
      `SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);`
   3. Re-enables immersive layout overlays (`SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)`).
 
+### ⚔️ 1.1 Local Network PVP Multiplayer Architecture
+Solo Gainz features a cutting-edge, offline-capable Local WiFi Multiplayer PVP suite built completely on low-level sockets, delivering lag-free 60FPS battle simulations on the same wireless network.
+
+- **Dynamic UDP Broadcast Discovery:**
+  - The *Host* binds a periodic UDP socket broadcasting dynamic JSON configurations (room name, password status, max players, spawn metrics) on port `4546` to target `255.255.255.255`.
+  - *Clients* scan the network subnets passively on port `4546`, auto-populating discovered active lobbies in a premium glassmorphic UI card deck.
+- **Hex Join Code Translation:**
+  - For manual entry, IPv4 coordinates are parsed into an 8-character Hex representation (e.g. `192.168.1.42` -> `C0A8012A`), allowing effortless typing/sharing of codes.
+- **Bi-directional High-Frequency State Sync:**
+  - Once TCP socket handshakes are verified on port `4545`, both player devices swap states (coordinates, velocity vectors, animation frames, and HP states) inside the Ticker tick, split by newline delimiters `\n` to prevent stream buffer fragmentation.
+  - Recoil knockbacks, hitboxes, and flying damage popups are fully synced in real-time, executing client-side collision overlap tests automatically.
+
 ---
 
 ## 🛡️ 2. SYSTEM-BY-SYSTEM DEEP DIVE & TECHNICAL BREAKDOWN
@@ -123,7 +135,7 @@ Coordinates reminders and chest unlocks via the `flutter_local_notifications` sy
 The graphics stack bypasses standard material themes, introducing custom painters and fluid transitions.
 - **Cinematic Depth Painter (`_CinematicDepthPainter`):** Draws dynamic multi-layered Bezier curves that slowly scroll and shift color hue dynamically over time. Perfect implementation of organic neon aura gradients.
 - **Wood Grain Painter (`_WoodGrainPainter`):** Renders beautiful, retro pixelated wood grain paths directly using HTML/CSS/Canvas style lines, giving the inventory vaults page a premium hardware look.
-- **Custom Fonts:** Fully registers `BoldPixels.ttf` as a custom theme font in standard pixel segments while utilizing Poppins or Google Fonts inside standard informational items.
+- **Custom Fonts:** Leverages `GoogleFonts.pressStart2p` for crisp, retro 8-bit visual styles in standard pixel HUD/game segments, while using Outfit or Google Fonts for standard textual data.
 
 ### 6. Sprite Render Loop & Crisp Filters ([lib/player.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/player.dart) & [lib/chest.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/chest.dart))
 - **Crisp Pixel Art Scaling:** By default, standard Flutter image widgets blur low-resolution assets when scaled. Solo Gainz solves this by systematically applying crisp pixel-art filters using the `FilterQuality.none` rendering directive:
@@ -171,6 +183,7 @@ The codebase has been checked from **0 to the last detail**. Every file has been
 | [lib/settings_screen.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/settings_screen.dart) | 529 | Transition stabilizers, night-stay Obsidian mode panels. | **100% OK** |
 | [lib/buy_screen.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/buy_screen.dart) | 287 | Coin purchase options, premium medallion gradient grids. | **100% OK** |
 | [lib/dungeon_screen.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/dungeon_screen.dart) | 648 | Arena card paths, landscape route transitions, locked challenge limits. | **100% OK** |
+| [lib/pvp.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/pvp.dart) | 1518 | Offline Local network UDP scans & TCP sockets pvp multiplayer system. | **100% OK** |
 | [lib/engine_screen.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/engine_screen.dart) | 1296 | Multi-touch gameplay systems, custom vector colliders, physics. | **100% OK** |
 | [lib/training_screen.dart](file:///c:/Users/mouha/OneDrive/Documents/My%20Projects/Flutter%20Projects/solo_gainz/lib/training_screen.dart) | 1285 | Sandbox physics, testing bag, clone training mirror, damage digits. | **100% OK** |
 

@@ -451,26 +451,26 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       children: [
                         Center(
                           child: Container(
-                            width: 32, height: 3.5,
+                            width: Responsive.w(32), height: Responsive.h(3.5),
                             decoration: BoxDecoration(
                               color: AppTheme.glassBorder,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: Responsive.h(20)),
                         Row(
                           children: [
                             Text(
                               isEditingQuest ? 'Refine Mission' : 'Forge Mission',
-                              style: AppTheme.h1().copyWith(fontSize: 22, letterSpacing: -0.5),
+                              style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22), letterSpacing: -0.5),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: Responsive.h(24)),
                         
                         _sheetLabel('MISSION NAME'),
-                        const SizedBox(height: 10),
+                        SizedBox(height: Responsive.h(10)),
                         Container(
                           decoration: BoxDecoration(
                             color: AppTheme.glassMedium,
@@ -479,16 +479,16 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           ),
                           child: CupertinoTextField(
                             controller: nameCtrl,
-                            style: AppTheme.body(color: AppTheme.text1).copyWith(fontSize: 14),
+                            style: AppTheme.body(color: AppTheme.text1).copyWith(fontSize: Responsive.sp(14)),
                             placeholder: 'e.g., Diamond Pushups',
-                            placeholderStyle: AppTheme.body(color: AppTheme.text2).copyWith(fontSize: 14),
+                            placeholderStyle: AppTheme.body(color: AppTheme.text2).copyWith(fontSize: Responsive.sp(14)),
                             cursorColor: AppTheme.accent,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: Responsive.symmetric(horizontal: 16, vertical: 14),
                             decoration: null,
                           ),
                         ),
                         
-                        const SizedBox(height: 20),
+                        SizedBox(height: Responsive.h(20)),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -498,7 +498,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _sheetLabel('TRACKING'),
-                                  const SizedBox(height: 10),
+                                  SizedBox(height: Responsive.h(10)),
                                   _buildSlidingToggle(
                                     options: ['Reps', 'Timer'],
                                     selected: system == 'reps' ? 'Reps' : 'Timer',
@@ -507,14 +507,14 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: Responsive.w(12)),
                             Expanded(
                               flex: 2,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _sheetLabel(system == 'reps' ? 'GOAL' : 'SEC'),
-                                  const SizedBox(height: 10),
+                                  SizedBox(height: Responsive.h(10)),
                                   Container(
                                     decoration: BoxDecoration(
                                       color: AppTheme.glassMedium,
@@ -523,13 +523,13 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                     ),
                                     child: CupertinoTextField(
                                       controller: goalCtrl,
-                                      style: AppTheme.mono(color: AppTheme.accent, size: 14),
+                                      style: AppTheme.mono(color: AppTheme.accent, size: 14), // mono uses responsive sp internally
                                       placeholder: '10',
                                       placeholderStyle: AppTheme.mono(color: AppTheme.text2, size: 14),
                                       keyboardType: TextInputType.number,
                                       cursorColor: AppTheme.accent,
                                       textAlign: TextAlign.center,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      padding: Responsive.symmetric(vertical: 12),
                                       decoration: null,
                                     ),
                                   ),
@@ -539,20 +539,20 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           ],
                         ),
 
-                        const SizedBox(height: 20),
+                        SizedBox(height: Responsive.h(20)),
                         _sheetLabel('FREQUENCY'),
-                        const SizedBox(height: 10),
+                        SizedBox(height: Responsive.h(10)),
                         _buildSlidingToggle(
                           options: ['Daily', 'One Time'],
                           selected: recur,
                           onSelect: (v) => setModalState(() => recur = v),
                         ),
 
-                        const SizedBox(height: 20),
+                        SizedBox(height: Responsive.h(20)),
                         _sheetLabel('ICON'),
-                        const SizedBox(height: 12),
+                        SizedBox(height: Responsive.h(12)),
                         SizedBox(
-                          height: 52,
+                          height: Responsive.h(52),
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: 6,
@@ -563,8 +563,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                 onTap: () => setModalState(() => selectedIcon = idx),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
-                                  margin: const EdgeInsets.only(right: 12),
-                                  width: 52, height: 52,
+                                  margin: EdgeInsets.only(right: Responsive.w(12)),
+                                  width: Responsive.h(52), height: Responsive.h(52),
                                   decoration: BoxDecoration(
                                     color: isSelected ? AppTheme.accent : AppTheme.glassMedium,
                                     borderRadius: BorderRadius.circular(16),
@@ -576,7 +576,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                   child: Icon(
                                     _getCustomQuestIcon(idx),
                                     color: isSelected ? Colors.white : AppTheme.text2,
-                                    size: 22,
+                                    size: Responsive.icon(22),
                                   ),
                                 ),
                               );
@@ -584,7 +584,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           ),
                         ),
                         
-                        const SizedBox(height: 32),
+                        SizedBox(height: Responsive.h(32)),
                         SGButton(
                           label: isEditingQuest ? 'UPDATE MISSION' : 'FORGE MISSION',
                           height: 50,
@@ -1148,7 +1148,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   }
 
   void _onReorderDaily(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) newIndex -= 1;
     if (oldIndex == newIndex) return;
     setState(() {
       final item = _quests.removeAt(oldIndex);
@@ -1158,7 +1157,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   }
 
   void _onReorderCustom(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) newIndex -= 1;
     if (oldIndex == newIndex) return;
     setState(() {
       final item = _customQuests.removeAt(oldIndex);
@@ -1170,7 +1168,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   Widget _buildDailyList() {
     return SliverReorderableList(
       itemCount: _quests.length,
-      onReorder: _onReorderDaily,
+      onReorderItem: _onReorderDaily,
       proxyDecorator: _proxyDecorator,
       itemBuilder: (context, i) {
         if (i >= _anims.length) return const SizedBox.shrink();
@@ -1258,7 +1256,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 120, height: 120,
+                width: Responsive.h(120), height: Responsive.h(120),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -1267,25 +1265,25 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 ),
                 child: Center(
                   child: Container(
-                    width: 60, height: 60,
+                    width: Responsive.h(60), height: Responsive.h(60),
                     decoration: BoxDecoration(
                       color: AppTheme.glassMedium,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.2),
                     ),
-                    child: Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: 28),
+                    child: Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: Responsive.icon(28)),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              Text('Uncharted Territory', style: AppTheme.h1().copyWith(fontSize: 22)),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(24)),
+              Text('Uncharted Territory', style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22))),
+              SizedBox(height: Responsive.h(8)),
               Text(
                 'Forge custom missions to define your own path and push beyond limits.',
-                style: AppTheme.body().copyWith(fontSize: 14),
+                style: AppTheme.body().copyWith(fontSize: Responsive.sp(14)),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: Responsive.h(32)),
               SGButton(
                 label: 'FORGE MISSION',
                 height: 48,
@@ -1300,7 +1298,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 
     return SliverReorderableList(
       itemCount: _customQuests.length,
-      onReorder: _onReorderCustom,
+      onReorderItem: _onReorderCustom,
       proxyDecorator: _proxyDecorator,
       itemBuilder: (context, i) {
         if (i >= _customAnims.length) return const SizedBox.shrink();
@@ -1601,18 +1599,18 @@ class _QuestCardState extends State<_QuestCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          height: 110,
-          padding: const EdgeInsets.all(10),
+          height: Responsive.h(110),
+          padding: Responsive.all(10),
           decoration: BoxDecoration(
             color: _isEditingLocal
                 ? AppTheme.surface.withValues(alpha: 0.92)
                 : AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Responsive.r(16)),
             border: Border.all(
               color: _isEditingLocal
                   ? Colors.transparent
                   : AppTheme.silver,
-              width: 1.5,
+              width: Responsive.dp(1.5),
             ),
           ),
           child: Column(
@@ -1621,29 +1619,29 @@ class _QuestCardState extends State<_QuestCard> {
               Row(
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: Responsive.h(38),
+                    height: Responsive.h(38),
                     decoration: BoxDecoration(
                       color: widget.color.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3), width: 1.5),
+                      borderRadius: BorderRadius.circular(Responsive.r(10)),
+                      border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3), width: Responsive.dp(1.5)),
                     ),
                     child: Center(
                       child: iconIndex > 0
-                          ? Icon(_getCustomQuestIcon(iconIndex), color: AppTheme.text1, size: 20)
+                          ? Icon(_getCustomQuestIcon(iconIndex), color: AppTheme.text1, size: Responsive.icon(20))
                           : Text('${widget.questIndex + 1}', 
-                              style: AppTheme.h2(color: AppTheme.text1).copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                              style: AppTheme.h2(color: AppTheme.text1).copyWith(fontSize: Responsive.sp(18), fontWeight: FontWeight.w800)),
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Container(width: 1.5, height: 24, color: widget.color.withValues(alpha: 0.2)),
-                  const SizedBox(width: 14),
+                  SizedBox(width: Responsive.w(14)),
+                  Container(width: Responsive.dp(1.5), height: Responsive.h(24), color: widget.color.withValues(alpha: 0.2)),
+                  SizedBox(width: Responsive.w(14)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(quest.questName, style: AppTheme.h3().copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                        const SizedBox(height: 2),
+                        SizedBox(height: Responsive.h(2)),
                         Text(
                           isTimer
                               ? '${_formatTime(quest.currentProgress)} / ${_formatTime(quest.maxGoal)}'
@@ -1659,13 +1657,13 @@ class _QuestCardState extends State<_QuestCard> {
                     SGTouchable(
                       onTap: widget.onDelete,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: Responsive.all(8),
                         decoration: BoxDecoration(
                           color: AppTheme.red.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(Responsive.r(10)),
                           border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
                         ),
-                        child: Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.red),
+                        child: Icon(Icons.delete_outline_rounded, size: Responsive.icon(18), color: AppTheme.red),
                       ),
                     ),
                 ],
@@ -1701,7 +1699,7 @@ class _QuestCardState extends State<_QuestCard> {
     return Column(
       key: const ValueKey('normal'),
       children: [
-        const SizedBox(height: 12),
+        SizedBox(height: Responsive.h(12)),
         Row(
           children: [
             if (isTimer)
@@ -1716,34 +1714,34 @@ class _QuestCardState extends State<_QuestCard> {
                 onTap: () => widget.onUpdate(-1),
                 disabled: quest.currentProgress == 0,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: Responsive.w(8)),
               _ActionButton(
                 icon: Icons.add,
                 onTap: () => widget.onUpdate(1),
                 disabled: quest.currentProgress == quest.maxGoal,
               ),
             ],
-            const SizedBox(width: 16),
+            SizedBox(width: Responsive.w(16)),
             Expanded(child: _LinearProgress(pct: pct, color: widget.color)),
-            const SizedBox(width: 16),
+            SizedBox(width: Responsive.w(16)),
             SGTouchable(
               onTap: _confirmCompletion,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 34,
-                height: 34,
+                width: Responsive.h(34),
+                height: Responsive.h(34),
                 decoration: BoxDecoration(
                   color: AppTheme.accent.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(Responsive.r(10)),
                   border: Border.all(
                     color: AppTheme.accent.withValues(alpha: 0.4),
-                    width: 2,
+                    width: Responsive.dp(2),
                   ),
                 ),
                 child: null,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: Responsive.w(4)),
           ],
         ),
       ],
@@ -1754,49 +1752,49 @@ class _QuestCardState extends State<_QuestCard> {
     return Column(
       key: const ValueKey('edit'),
       children: [
-        const SizedBox(height: 10),
+        SizedBox(height: Responsive.h(10)),
         Row(
           children: [
             Expanded(
               child: SGTouchable(
                 onTap: widget.onEditName,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  padding: Responsive.symmetric(vertical: 9),
                   decoration: BoxDecoration(
                     color: AppTheme.accent.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35), width: 1.2),
+                    borderRadius: BorderRadius.circular(Responsive.r(10)),
+                    border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35), width: Responsive.dp(1.2)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.swap_horiz, size: 14, color: AppTheme.accent),
-                      const SizedBox(width: 6),
-                      Text('Change', style: AppTheme.label(color: AppTheme.accent).copyWith(fontSize: 11)),
+                      Icon(Icons.swap_horiz, size: Responsive.icon(14), color: AppTheme.accent),
+                      SizedBox(width: Responsive.w(6)),
+                      Text('Change', style: AppTheme.label(color: AppTheme.accent).copyWith(fontSize: Responsive.sp(11))),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: Responsive.w(8)),
             Expanded(
               child: SGTouchable(
                 onTap: widget.onEditSystem,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  padding: Responsive.symmetric(vertical: 9),
                   decoration: BoxDecoration(
                     color: AppTheme.amber.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.amber.withValues(alpha: 0.35), width: 1.2),
+                    borderRadius: BorderRadius.circular(Responsive.r(10)),
+                    border: Border.all(color: AppTheme.amber.withValues(alpha: 0.35), width: Responsive.dp(1.2)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.tune, size: 14, color: AppTheme.amber),
-                      const SizedBox(width: 6),
+                      Icon(Icons.tune, size: Responsive.icon(14), color: AppTheme.amber),
+                      SizedBox(width: Responsive.w(6)),
                       Text(
                         quest.system == 'timer' ? 'Timer' : quest.system == 'km' ? 'KM' : 'Reps',
-                        style: AppTheme.label(color: AppTheme.amber).copyWith(fontSize: 11),
+                        style: AppTheme.label(color: AppTheme.amber).copyWith(fontSize: Responsive.sp(11)),
                       ),
                     ],
                   ),
@@ -1823,18 +1821,18 @@ class _LinearProgress extends StatelessWidget {
         return Stack(
           children: [
             Container(
-              height: 4,
+              height: Responsive.h(4),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppTheme.text1.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(2),
-                border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: 0.5),
+                borderRadius: BorderRadius.circular(Responsive.r(2)),
+                border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: Responsive.dp(0.5)),
               ),
             ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 600),
               curve: Curves.easeOutCubic,
-              height: 4,
+              height: Responsive.h(4),
               width: constraints.maxWidth * pct,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -1842,7 +1840,7 @@ class _LinearProgress extends StatelessWidget {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(Responsive.r(3)),
                 boxShadow: [
                   BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4),
                 ],
@@ -1907,11 +1905,11 @@ class _ActionButtonState extends State<_ActionButton> {
         onTap: widget.onTap,
         disabled: widget.disabled,
         child: Container(
-          width: 32,
-          height: 32,
+          width: Responsive.h(32),
+          height: Responsive.h(32),
           decoration: BoxDecoration(
             color: widget.active ? AppTheme.accent : AppTheme.surface,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(Responsive.r(10)),
             border: Border.all(
               color: widget.active
                   ? AppTheme.accent
@@ -1920,7 +1918,7 @@ class _ActionButtonState extends State<_ActionButton> {
           ),
             child: Icon(
               widget.icon,
-              size: 20,
+              size: Responsive.icon(20),
               color: widget.active
                   ? Colors.white
                   : (widget.disabled ? AppTheme.text3 : AppTheme.text1),
@@ -1990,11 +1988,11 @@ class _CelebrationCardState extends State<_CelebrationCard>
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: Responsive.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: AppTheme.green.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.text1, width: 1.5),
+          borderRadius: BorderRadius.circular(Responsive.r(16)),
+          border: Border.all(color: AppTheme.text1, width: Responsive.dp(1.5)),
         ),
         child: Row(
           children: [
@@ -2006,9 +2004,9 @@ class _CelebrationCardState extends State<_CelebrationCard>
                   child: child,
                 );
               },
-              child: Icon(Icons.emoji_events, size: 22, color: AppTheme.green),
+              child: Icon(Icons.emoji_events, size: Responsive.icon(22), color: AppTheme.green),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: Responsive.w(12)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2016,7 +2014,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
                 children: [
                   Text('DAILY MISSIONS COMPLETE',
                       style: AppTheme.h3(color: AppTheme.green)
-                          .copyWith(fontSize: 12)),
+                          .copyWith(fontSize: Responsive.sp(12))),
                   Text('Next reset', style: AppTheme.caption()),
                 ],
               ),
@@ -2112,22 +2110,22 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
 
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 24,
-        left: 20,
-        right: 20,
+        bottom: MediaQuery.of(context).padding.bottom + Responsive.h(24),
+        left: Responsive.w(20),
+        right: Responsive.w(20),
       ),
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.green.withValues(alpha: 0.4), width: 2),
+          borderRadius: BorderRadius.circular(Responsive.r(20)),
+          border: Border.all(color: AppTheme.green.withValues(alpha: 0.4), width: Responsive.dp(2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // ── Top: Status Banner ──
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: Responsive.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -2137,7 +2135,7 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(Responsive.r(18))),
               ),
               child: Row(
                 children: [
@@ -2148,24 +2146,24 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                       child: child,
                     ),
                     child: Container(
-                      width: 36, height: 36,
+                      width: Responsive.h(36), height: Responsive.h(36),
                       decoration: BoxDecoration(
                         color: AppTheme.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(Responsive.r(10)),
                         border: Border.all(color: AppTheme.green.withValues(alpha: 0.4)),
                       ),
-                      child: const Icon(Icons.emoji_events, size: 20, color: Color(0xFF00E676)),
+                      child: Icon(Icons.emoji_events, size: Responsive.icon(20), color: const Color(0xFF00E676)),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: Responsive.w(12)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('ALL MISSIONS COMPLETE',
-                          style: AppTheme.label(color: AppTheme.green).copyWith(fontSize: 11, letterSpacing: 1.5),
+                          style: AppTheme.label(color: AppTheme.green).copyWith(fontSize: Responsive.sp(11), letterSpacing: 1.5),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: Responsive.h(2)),
                         Text('Next reset countdown',
                           style: AppTheme.caption(color: AppTheme.text2),
                         ),
@@ -2175,7 +2173,7 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                   AnimatedBuilder(
                     animation: _pulseAnim,
                     builder: (ctx, child) => Container(
-                      width: 8, height: 8,
+                      width: Responsive.h(8), height: Responsive.h(8),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppTheme.green.withValues(alpha: _pulseAnim.value),
@@ -2194,11 +2192,11 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
             ),
 
             // ── Divider ──
-            Container(height: 1, color: AppTheme.green.withValues(alpha: 0.15)),
+            Container(height: Responsive.h(1), color: AppTheme.green.withValues(alpha: 0.15)),
 
             // ── Bottom: Timer Split View ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+              padding: Responsive.fromLTRB(12, 16, 12, 16),
               child: Row(
                 children: [
                   _buildTimeUnit(hours, 'HRS'),
@@ -2216,8 +2214,8 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
             AnimatedBuilder(
               animation: _pulseAnim,
               builder: (ctx, child) => Container(
-                height: 3,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
+                height: Responsive.h(3),
+                margin: EdgeInsets.symmetric(horizontal: Responsive.w(16)),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
                   gradient: LinearGradient(
@@ -2230,7 +2228,7 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: Responsive.h(8)),
           ],
         ),
       ),
@@ -2243,12 +2241,12 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            padding: Responsive.symmetric(vertical: 10, horizontal: 4),
             decoration: BoxDecoration(
               color: isMs
                   ? AppTheme.green.withValues(alpha: 0.08)
                   : AppTheme.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Responsive.r(12)),
               border: Border.all(
                 color: isMs
                     ? AppTheme.green.withValues(alpha: 0.25)
@@ -2266,11 +2264,11 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: Responsive.h(6)),
           Text(
             label,
             style: AppTheme.caption(color: AppTheme.text3).copyWith(
-              fontSize: 9,
+              fontSize: Responsive.sp(9),
               letterSpacing: 1.5,
               fontWeight: FontWeight.w600,
             ),
@@ -2282,7 +2280,7 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
 
   Widget _buildSeparator() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: EdgeInsets.only(bottom: Responsive.h(18)),
       child: Text(
         ':',
         style: AppTheme.mono(color: AppTheme.text3, size: 20),
@@ -2295,13 +2293,13 @@ class _HintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: Responsive.symmetric(vertical: 16),
       alignment: Alignment.center,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.info_outline, size: 14, color: AppTheme.muted),
-          const SizedBox(width: 8),
+          Icon(Icons.info_outline, size: Responsive.icon(14), color: AppTheme.muted),
+          SizedBox(width: Responsive.w(8)),
           Text(
             'Complete all daily quests to finish your training.',
             style: AppTheme.caption(),

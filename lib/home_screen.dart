@@ -28,7 +28,6 @@ class _HomePageState extends State<HomePage> {
   List<WeekendQuestion> _currentWeekendQuestions = [];
   bool _isDialogueOpen = false;
   int? _selectedQuestionIndex;
-  List<int> _unusedJokeIndices = [];
 
   void _refreshWeekendQuestions() {
     final rand = Random();
@@ -120,8 +119,6 @@ class _HomePageState extends State<HomePage> {
     WeekendQuestion("Why is form first?", "Because injury stops all progress. Leave your ego at the door!"),
     WeekendQuestion("How to sleep better?", "Avoid screens 1 hour before bed and keep your room cool!"),
     WeekendQuestion("What is calorie count?", "Energy input. Track it if you want to dial in your body composition!"),
-    WeekendQuestion("Got a fitness joke?", "Why did the programmer quit the gym? Because he couldn't resolve the weights!"),
-    WeekendQuestion("Another joke?", "Why did the lifting coder use SQL? To execute a Squat Query Language!"),
     WeekendQuestion("Tell me a secret!", "If you complete a legendary chest, you might find secret easter eggs!"),
     WeekendQuestion("How's your code?", "Zero compiler warnings and 100% optimized for pure gainz!"),
     WeekendQuestion("What is gold chest?", "A premium chest containing rich resource payouts and high-tier gear!"),
@@ -143,7 +140,6 @@ class _HomePageState extends State<HomePage> {
 
   String _typedBubbleMessage = "";
   Timer? _typewriterTimer;
-  Timer? _idleChatterTimer;
 
   static const List<String> _idleMoves = [
     'Punch01',
@@ -215,34 +211,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  String _getRandomUniqueJoke() {
-    if (_unusedJokeIndices.isEmpty) {
-      _unusedJokeIndices = List<int>.generate(_jokes.length, (i) => i)..shuffle();
-    }
-    final index = _unusedJokeIndices.removeLast();
-    return _jokes[index];
-  }
-
-  void _startIdleChatter() {
-    _idleChatterTimer?.cancel();
-    _idleChatterTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      if (_bubbleMessage == null) {
-        final rand = Random();
-        final weekday = DateTime.now().weekday;
-        final isWeekend = weekday == 6 || weekday == 7;
-        final chatterChance = isWeekend ? 0.60 : 0.25;
-        if (rand.nextDouble() < chatterChance) {
-          final joke = _getRandomUniqueJoke();
-          _say(joke, stayDuration: const Duration(seconds: 3));
-        }
-      }
-    });
-  }
-
   void _say(String message, {Duration stayDuration = const Duration(seconds: 1)}) {
     _bubbleTimer?.cancel();
     _typewriterTimer?.cancel();
@@ -280,122 +248,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  static const List<String> _jokes = [
-    "Rest day? Never heard of her!",
-    "I'm sore, but I'm back!",
-    "No pain, no gainz!",
-    "Debugging my abs!",
-    "My calves are compiling!",
-    "Java? I prefer coffee!",
-    "Gym is my database!",
-    "Push-ups completed!",
-    "SQL: Squat Query Language!",
-    "Byte-sized biceps!",
-    "Cardio? Is that a Spanish word?",
-    "Squat till you drop!",
-    "CTRL+ALT+SWEAT!",
-    "Running on coffee and dreams!",
-    "Buffering my muscles...",
-    "Error 404: Fat not found!",
-    "My gym code is clean!",
-    "Flexing my code!",
-    "Sore today, SS-Rank tomorrow!",
-    "My mouse is heavy!",
-    "Sweating in binary!",
-    "Eat. Sleep. Code. Lift.",
-    "I don't sweat, I leak genius!",
-    "Running... from my bugs!",
-    "Biceps: loaded!",
-    "Gym hair, don't care!",
-    "Coded a new PR today!",
-    "404: Rest day not found!",
-    "One more rep!",
-    "Stronger than my wifi!",
-    "Glutes of steel!",
-    "Is sweat a fluid design?",
-    "Flexing my stack!",
-    "My level is over 9000!",
-    "Abs.exe is downloading...",
-    "Plank time = Slow time!",
-    "No lift, no gift!",
-    "Lifting spirits and weights!",
-    "Coder by day, beast by night!",
-    "I lift, therefore I am.",
-    "Running is my garbage collector!",
-    "Squats? 100% compiled!",
-    "My back is backed up!",
-    "Muscle memory is RAM!",
-    "Sweating out the fat!",
-    "Too buff to debug!",
-    "Gym time > Screen time!",
-    "Cardio completed! Send help.",
-    "Dumbbells and databases!",
-    "Work hard, play hard!",
-    "Crushing bugs and reps!",
-    "My core is fully stable!",
-    "Zero compiler warnings today!",
-    "Beast mode: Activated!",
-    "Sweat: the programmer's tears!",
-    "Heavy metal therapy!",
-    "My calves are modular!",
-    "Gains are non-blocking!",
-    "Lifting is a synchronized task!",
-    "PR: Personal Record & Pull Request!",
-    "I wear neon for high visibility!",
-    "My sweat is open source!",
-    "Quads of fire!",
-    "Lifting: it's an algorithm!",
-    "My posture is optimized!",
-    "Ready to deploy gainz!",
-    "No lag in my squats!",
-    "Bench press = best press!",
-    "I'm in compile state!",
-    "Biceps > Brackets!",
-    "Sweating out the syntax!",
-    "Deadlifts are database schema!",
-    "My core is multi-threaded!",
-    "Running is a background service!",
-    "Iron never lies!",
-    "Chasing pixel PRs!",
-    "Crushing iron!",
-    "Quests cleared, gains secured!",
-    "My abs are fully responsive!",
-    "Leveling up is my stack trace!",
-    "I squat, you watch!",
-    "No pain, no mainframe!",
-    "Coding at 1000 RPM!",
-    "My power level is rising!",
-    "Ready to rumble!",
-    "My muscles are compiled AOT!",
-    "Heavy lifts, clean codes!",
-    "I don't skip leg day!",
-    "Lifting is my loop!",
-    "My stamina is infinite!",
-    "Coder gainz!",
-    "Slay the day!",
-    "Zero exceptions found!",
-    "My code is jacked!",
-    "Buffering biceps...",
-    "Muscles loaded: 100%!",
-    "Stack overflow in my quads!",
-    "Outrun the bugs!",
-    "PR merged successfully!",
-    "Let's get this gainz!"
-  ];
-
   void _onDayTapped(String dayName, bool isToday, bool isFuture, double progress) {
     AppTheme.tap();
-    final rand = Random();
-    final weekday = DateTime.now().weekday;
-    final isWeekend = weekday == 6 || weekday == 7;
-    final jokeChance = isWeekend ? 0.80 : 0.35;
-
-    if (rand.nextDouble() < jokeChance) {
-      final joke = _getRandomUniqueJoke();
-      _say(joke, stayDuration: const Duration(seconds: 3));
-    } else {
-      _say("$dayName!", stayDuration: const Duration(seconds: 1));
-    }
+    _say("$dayName!", stayDuration: const Duration(seconds: 1));
   }
   
   bool get _isNight {
@@ -455,7 +310,6 @@ class _HomePageState extends State<HomePage> {
 
     _dailyQuestsListenable = Storage.watch(Storage.dailyQuestsKey);
     _dailyQuestsListenable?.addListener(_onStorageChange);
-    _startIdleChatter();
     _resetUserTouchTimer();
   }
 
@@ -484,7 +338,6 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _bubbleTimer?.cancel();
     _typewriterTimer?.cancel();
-    _idleChatterTimer?.cancel();
     _touchIdleTimer?.cancel();
     _weeklyPageController.dispose();
     _dailyQuestsListenable?.removeListener(_onStorageChange);
@@ -579,11 +432,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: Responsive.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         border: Border.symmetric(
-          horizontal: BorderSide(color: AppTheme.accent, width: 2.0),
+          horizontal: BorderSide(color: AppTheme.accent, width: Responsive.dp(2.0)),
         ),
         boxShadow: [
           BoxShadow(
@@ -603,7 +456,7 @@ class _HomePageState extends State<HomePage> {
                 'WEEKLY QUEST PROGRESS',
                 style: AppTheme.label().copyWith(
                   color: AppTheme.text2,
-                  fontSize: 11,
+                  fontSize: Responsive.sp(11),
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                 ),
@@ -614,9 +467,9 @@ class _HomePageState extends State<HomePage> {
                   children: List.generate(maxWeeks + 1, (index) {
                     final isActive = (maxWeeks - _activeWeekIndex) == index;
                     return Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(left: 4),
+                      width: Responsive.w(6),
+                      height: Responsive.w(6),
+                      margin: EdgeInsets.only(left: Responsive.w(4)),
                       decoration: BoxDecoration(
                         color: isActive ? AppTheme.accent : AppTheme.text2.withValues(alpha: 0.3),
                         shape: BoxShape.rectangle, // "squared dots"
@@ -626,9 +479,9 @@ class _HomePageState extends State<HomePage> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.h(16)),
           SizedBox(
-            height: 48,
+            height: Responsive.h(48),
             child: PageView.builder(
               controller: _weeklyPageController,
               onPageChanged: (idx) {
@@ -689,26 +542,26 @@ class _HomePageState extends State<HomePage> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeOutBack,
-                          width: isToday ? 44 : 34,
-                          height: isToday ? 44 : 34,
+                          width: isToday ? Responsive.w(44) : Responsive.w(34),
+                          height: isToday ? Responsive.w(44) : Responsive.w(34),
                           decoration: BoxDecoration(
                             color: backgroundColor,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(Responsive.r(10)),
                           ),
                           child: CustomPaint(
                             painter: ProgressSquarePainter(
                               progress: progress,
                               progressColor: AppTheme.green,
                               backgroundColor: borderColor,
-                              strokeWidth: isToday ? 2.5 : 1.5,
-                              borderRadius: 10,
+                              strokeWidth: isToday ? Responsive.dp(2.5) : Responsive.dp(1.5),
+                              borderRadius: Responsive.r(10),
                             ),
                             child: Center(
                               child: Text(
                                 letter,
                                 style: AppTheme.h3().copyWith(
                                   fontWeight: isToday ? FontWeight.w900 : FontWeight.bold,
-                                  fontSize: isToday ? 16 : 13,
+                                  fontSize: isToday ? Responsive.sp(16) : Responsive.sp(13),
                                   color: textColor,
                                 ),
                               ),
@@ -745,7 +598,7 @@ class _HomePageState extends State<HomePage> {
             // Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+                padding: Responsive.fromLTRB(20, 40, 20, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -753,12 +606,12 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       children: [
                         Container(
-                          width: 56,
-                          height: 56,
+                          width: Responsive.w(56),
+                          height: Responsive.w(56),
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.accent, width: 1.5),
+                            borderRadius: BorderRadius.circular(Responsive.r(16)),
+                            border: Border.all(color: AppTheme.accent, width: Responsive.dp(1.5)),
                             image: _profileImagePath != null &&
                                     _profileImagePath!.isNotEmpty &&
                                     File(_profileImagePath!).existsSync()
@@ -772,10 +625,10 @@ class _HomePageState extends State<HomePage> {
                                   _profileImagePath!.isEmpty ||
                                   !File(_profileImagePath!).existsSync()
                               ? Icon(Icons.person_rounded,
-                                  color: AppTheme.text3, size: 32)
+                                  color: AppTheme.text3, size: Responsive.icon(32))
                               : null,
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: Responsive.w(16)),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -788,38 +641,38 @@ class _HomePageState extends State<HomePage> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(Storage.getCurrentUser() ?? 'Athlete',
-                                    style: AppTheme.h1().copyWith(fontSize: 22)),
-                                const SizedBox(width: 8),
+                                    style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22))),
+                                SizedBox(width: Responsive.w(8)),
                                 Text('Lv.${s.level}',
                                     style: AppTheme.mono(
                                             color: AppTheme.accent, size: 12)
                                         .copyWith(fontWeight: FontWeight.bold)),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: Responsive.h(8)),
                             // XP Progress Bar
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  width: 140,
-                                  height: 6,
+                                  width: Responsive.w(140),
+                                  height: Responsive.h(6),
                                   decoration: BoxDecoration(
                                       color: AppTheme.line,
-                                      borderRadius: BorderRadius.circular(4)),
+                                      borderRadius: BorderRadius.circular(Responsive.r(4))),
                                   child: Stack(
                                     children: [
                                       AnimatedContainer(
                                         duration:
                                             const Duration(milliseconds: 600),
-                                        width: 140 * progress,
+                                        width: Responsive.w(140) * progress,
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(colors: [
                                             AppTheme.accent,
                                             AppTheme.cyan
                                           ]),
                                           borderRadius:
-                                              BorderRadius.circular(4),
+                                              BorderRadius.circular(Responsive.r(4)),
                                           boxShadow: [
                                             BoxShadow(
                                                 color: AppTheme.accent
@@ -831,11 +684,11 @@ class _HomePageState extends State<HomePage> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: Responsive.h(4)),
                                 Text('Rank ${s.rank} - ${s.xp}/$xpNeeded XP',
                                     style: AppTheme.caption(color: AppTheme.text2)
                                         .copyWith(
-                                            fontSize: 9,
+                                            fontSize: Responsive.sp(9),
                                             fontWeight: FontWeight.bold)),
                               ],
                             ),
@@ -853,14 +706,14 @@ class _HomePageState extends State<HomePage> {
                           MaterialPageRoute(
                               builder: (_) => const InventoryScreen())),
                       child: Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: Responsive.all(10),
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.line, width: 1.5),
+                          borderRadius: BorderRadius.circular(Responsive.r(12)),
+                          border: Border.all(color: AppTheme.line, width: Responsive.dp(1.5)),
                         ),
                         child: Icon(Icons.backpack_rounded,
-                            size: 20, color: AppTheme.text1),
+                            size: Responsive.icon(20), color: AppTheme.text1),
                       ),
                     ),
                   ],
@@ -871,14 +724,14 @@ class _HomePageState extends State<HomePage> {
             // Player Card (Full Width)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 24, 0, 24),
+                padding: Responsive.fromLTRB(0, 24, 0, 24),
                 child: Container(
                   width: double.infinity,
-                  height: 160,
+                  height: Responsive.h(160),
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     border: Border.symmetric(
-                      horizontal: BorderSide(color: AppTheme.accent, width: 2.0),
+                      horizontal: BorderSide(color: AppTheme.accent, width: Responsive.dp(2.0)),
                     ),
                     boxShadow: [
                       BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 6)),
@@ -889,7 +742,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       // Ground Line
                       Positioned(
-                        bottom: 30, left: 20, right: 20,
+                        bottom: Responsive.h(30), left: Responsive.w(20), right: Responsive.w(20),
                         child: Container(
                           height: 2,
                           decoration: BoxDecoration(
@@ -904,7 +757,7 @@ class _HomePageState extends State<HomePage> {
 
                       // Player Model
                       Positioned(
-                        bottom: 30, left: 0, right: 0, height: 260,
+                        bottom: Responsive.h(30), left: 0, right: 0, height: Responsive.h(260),
                         child: Align(
                           alignment: Alignment.bottomCenter,
                           child: Player(
@@ -938,20 +791,20 @@ class _HomePageState extends State<HomePage> {
                       // Talking Comic Speech Bubble (Positioned right of the player head, with full wrap boundary)
                       if (_bubbleMessage != null)
                         Positioned(
-                          bottom: 110,
-                          left: MediaQuery.of(context).size.width / 2 + 25,
-                          right: 16,
+                          bottom: Responsive.h(110),
+                          left: MediaQuery.of(context).size.width / 2 + Responsive.w(25),
+                          right: Responsive.w(16),
                           child: CustomPaint(
                             painter: ComicBubblePainter(
                               color: AppTheme.surface.withValues(alpha: 0.95),
                               borderColor: AppTheme.accent,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16), // Extra bottom padding for the tail
+                              padding: Responsive.fromLTRB(12, 8, 12, 16), // Extra bottom padding for the tail
                               child: Text(
                                 _typedBubbleMessage,
                                 style: AppTheme.body().copyWith(
-                                  fontSize: 11.5,
+                                  fontSize: Responsive.sp(11.5),
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.text1,
                                 ),
@@ -963,8 +816,8 @@ class _HomePageState extends State<HomePage> {
                       // Talk Button in Player Card (Bottom Right, Weekend only)
                       if (DateTime.now().weekday == 6 || DateTime.now().weekday == 7)
                         Positioned(
-                          top: 12,
-                          left: 12,
+                          top: Responsive.h(12),
+                          left: Responsive.w(12),
                           child: SGTouchable(
                             onTap: () {
                               AppTheme.tap();
@@ -974,13 +827,13 @@ class _HomePageState extends State<HomePage> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.all(8),
+                              padding: Responsive.all(8),
                               decoration: BoxDecoration(
                                 color: _isDialogueOpen ? AppTheme.accent : AppTheme.surface.withValues(alpha: 0.9),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: _isDialogueOpen ? AppTheme.accent : AppTheme.line,
-                                  width: 1.5,
+                                  width: Responsive.dp(1.5),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -992,7 +845,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               child: Icon(
                                 Icons.forum_rounded,
-                                size: 18,
+                                size: Responsive.icon(18),
                                 color: _isDialogueOpen ? AppTheme.black : AppTheme.text1,
                               ),
                             ),
@@ -1008,13 +861,13 @@ class _HomePageState extends State<HomePage> {
             if ((DateTime.now().weekday == 6 || DateTime.now().weekday == 7) && _isDialogueOpen)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  padding: Responsive.fromLTRB(20, 0, 20, 16),
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                    padding: Responsive.fromLTRB(14, 10, 14, 10),
                     decoration: BoxDecoration(
                       color: AppTheme.surface.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
+                      borderRadius: BorderRadius.circular(Responsive.r(14)),
+                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: Responsive.dp(1.5)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1024,8 +877,8 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.forum_rounded, color: AppTheme.accent, size: 14),
-                                const SizedBox(width: 6),
+                                Icon(Icons.forum_rounded, color: AppTheme.accent, size: Responsive.icon(14)),
+                                SizedBox(width: Responsive.w(6)),
                                 Text(
                                   "CHOOSE A QUESTION",
                                   style: AppTheme.mono(color: AppTheme.accent, size: 10)
@@ -1041,17 +894,17 @@ class _HomePageState extends State<HomePage> {
                                 });
                               },
                               child: Container(
-                                padding: const EdgeInsets.all(4),
+                                padding: Responsive.all(4),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: AppTheme.black.withValues(alpha: 0.3),
                                 ),
-                                child: Icon(Icons.close_rounded, color: AppTheme.text2, size: 12),
+                                child: Icon(Icons.close_rounded, color: AppTheme.text2, size: Responsive.icon(12)),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: Responsive.h(10)),
                         if (_currentWeekendQuestions.isEmpty)
                           Center(
                             child: Text(
@@ -1065,7 +918,7 @@ class _HomePageState extends State<HomePage> {
                             final q = entry.value;
                             final isSelected = _selectedQuestionIndex == idx;
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 6.0),
+                              padding: EdgeInsets.only(bottom: Responsive.h(6)),
                               child: SGTouchable(
                                 onTap: _selectedQuestionIndex != null
                                     ? null // Disable taps during active transition
@@ -1088,10 +941,10 @@ class _HomePageState extends State<HomePage> {
                                 child: AnimatedContainer(
                                   duration: const Duration(seconds: 2),
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: Responsive.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: AppTheme.black.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(Responsive.r(10)),
                                     border: Border.all(
                                       color: isSelected ? const Color(0xFF2196F3) : AppTheme.line, // Blue vs gray
                                       width: isSelected ? 2.0 : 1.0,
@@ -1118,7 +971,7 @@ class _HomePageState extends State<HomePage> {
             // Weekly Progress Squares Row
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                padding: Responsive.fromLTRB(0, 0, 0, 100),
                 child: _buildWeeklyQuestProgressRow(),
               ),
             ),

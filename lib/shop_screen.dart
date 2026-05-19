@@ -75,7 +75,7 @@ class _ShopPageState extends State<ShopPage> {
             ),
             border: Border(
               top: BorderSide(
-                  color: AppTheme.silver.withValues(alpha: 0.3), width: 1.5),
+                  color: AppTheme.silver.withValues(alpha: 0.3), width: Responsive.dp(1.5)),
             ),
             boxShadow: [
               BoxShadow(
@@ -87,30 +87,30 @@ class _ShopPageState extends State<ShopPage> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: Responsive.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Drag Handle
                   Container(
-                    width: 48,
-                    height: 5,
+                    width: Responsive.w(48),
+                    height: Responsive.h(5),
                     decoration: BoxDecoration(
                       color: AppTheme.silver.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2.5),
+                      borderRadius: BorderRadius.circular(Responsive.r(2.5)),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: Responsive.h(24)),
 
                   // Large Item Square
                   Container(
-                    width: 96,
-                    height: 96,
+                    width: Responsive.h(96),
+                    height: Responsive.h(96),
                     decoration: BoxDecoration(
                       color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(Responsive.r(20)),
                       border: Border.all(
-                          color: AppTheme.silver.withValues(alpha: 0.25), width: 1.5),
+                          color: AppTheme.silver.withValues(alpha: 0.25), width: Responsive.dp(1.5)),
                     ),
                     child: Center(
                       child: ChestSprite(
@@ -122,22 +122,22 @@ class _ShopPageState extends State<ShopPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: Responsive.h(20)),
 
                   // Title & Price Info
                   Text(
                     chestName,
                     style: AppTheme.h2()
-                        .copyWith(fontSize: 22, fontWeight: FontWeight.bold),
+                        .copyWith(fontSize: Responsive.sp(22), fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: Responsive.h(8)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'Price: ',
                         style: AppTheme.caption(color: AppTheme.text2)
-                            .copyWith(fontSize: 14),
+                            .copyWith(fontSize: Responsive.sp(14)),
                       ),
                       Text(
                         '\$$price',
@@ -148,32 +148,32 @@ class _ShopPageState extends State<ShopPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.h(16)),
 
                   // Description
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: Responsive.w(16)),
                     child: Text(
                       description,
                       textAlign: TextAlign.center,
                       style: AppTheme.body().copyWith(
                         color: AppTheme.text2,
-                        fontSize: 13,
+                        fontSize: Responsive.sp(13),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: Responsive.h(32)),
 
                   // Action Button
                   if (isFull)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: Responsive.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(Responsive.r(16)),
                         border: Border.all(
-                            color: AppTheme.red.withValues(alpha: 0.2), width: 1.5),
+                            color: AppTheme.red.withValues(alpha: 0.2), width: Responsive.dp(1.5)),
                       ),
                       child: Center(
                         child: Text(
@@ -201,7 +201,7 @@ class _ShopPageState extends State<ShopPage> {
                           style: AppTheme.label(color: AppTheme.red).copyWith(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
-                            fontSize: 12,
+                            fontSize: Responsive.sp(12),
                           ),
                         ),
                       ),
@@ -221,10 +221,10 @@ class _ShopPageState extends State<ShopPage> {
                       },
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: Responsive.symmetric(vertical: 16),
                         decoration: BoxDecoration(
                           color: AppTheme.accent,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(Responsive.r(16)),
                         ),
                         child: Center(
                           child: Text(
@@ -237,7 +237,7 @@ class _ShopPageState extends State<ShopPage> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: Responsive.h(12)),
                 ],
               ),
             ),
@@ -276,7 +276,7 @@ class _ShopPageState extends State<ShopPage> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+            padding: Responsive.fromLTRB(20, 40, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -287,7 +287,7 @@ class _ShopPageState extends State<ShopPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Gear Shop', style: AppTheme.h1()),
-                        const SizedBox(height: 4),
+                        SizedBox(height: Responsive.h(4)),
                         Text(
                           'Exchange coins for elite upgrades.',
                           style: AppTheme.caption(color: AppTheme.text2),
@@ -298,16 +298,16 @@ class _ShopPageState extends State<ShopPage> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: Responsive.symmetric(
                             horizontal: 12,
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(Responsive.r(10)),
                             border: Border.all(
                                 color: AppTheme.text1.withValues(alpha: 0.1),
-                                width: 1),
+                                width: Responsive.dp(1)),
                             boxShadow: [
                               BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.1),
@@ -319,10 +319,10 @@ class _ShopPageState extends State<ShopPage> {
                             children: [
                               Icon(
                                 Icons.attach_money_rounded,
-                                size: 16,
+                                size: Responsive.icon(16),
                                 color: AppTheme.accent,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: Responsive.w(6)),
                               Text(
                                 '${_s.coins}',
                                 style: AppTheme.label().copyWith(
@@ -334,23 +334,23 @@ class _ShopPageState extends State<ShopPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: Responsive.w(10)),
                         GestureDetector(
                           onTap: _openBuyCoins,
                           child: Container(
-                            width: 34,
-                            height: 34,
+                            width: Responsive.h(34),
+                            height: Responsive.h(34),
                             decoration: BoxDecoration(
                               color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(Responsive.r(10)),
                               border: Border.all(
                                 color: AppTheme.accent,
-                                width: 1.5,
+                                width: Responsive.dp(1.5),
                               ),
                             ),
                             child: Icon(
                               Icons.add,
-                              size: 18,
+                              size: Responsive.icon(18),
                               color: AppTheme.accent,
                             ),
                           ),
@@ -359,14 +359,14 @@ class _ShopPageState extends State<ShopPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: Responsive.h(16)),
                 // Segment tabs
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(2),
+                  padding: Responsive.all(2),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.silver, width: 1.5),
+                    borderRadius: BorderRadius.circular(Responsive.r(12)),
+                    border: Border.all(color: AppTheme.silver, width: Responsive.dp(1.5)),
                   ),
                   child: CupertinoSlidingSegmentedControl<int>(
                     backgroundColor: AppTheme.surface,
@@ -378,7 +378,7 @@ class _ShopPageState extends State<ShopPage> {
                     children: {
                       for (int i = 0; i < _tabs.length; i++)
                         i: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: Responsive.symmetric(vertical: 8),
                           child: Text(
                             _tabs[i],
                             style: AppTheme.label(
@@ -396,7 +396,7 @@ class _ShopPageState extends State<ShopPage> {
         ),
         if (isChestTab)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+            padding: Responsive.fromLTRB(20, 16, 20, 120),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _chestCard(
@@ -434,16 +434,16 @@ class _ShopPageState extends State<ShopPage> {
                 children: [
                   Icon(
                     Icons.hourglass_empty_rounded,
-                    size: 64,
+                    size: Responsive.icon(64),
                     color: AppTheme.text2.withValues(alpha: 0.3),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.h(16)),
                   Text(
                     'COMING SOON',
                     style: AppTheme.h2()
                         .copyWith(letterSpacing: 4, color: AppTheme.text2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: Responsive.h(8)),
                   Text(
                     'The blacksmith is still forging these items.',
                     style: AppTheme.caption(color: AppTheme.text2),
@@ -468,11 +468,11 @@ class _ShopPageState extends State<ShopPage> {
     final isFull = availableSlots == 0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: Responsive.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.black,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.silver, width: 1.5),
+        borderRadius: BorderRadius.circular(Responsive.r(20)),
+        border: Border.all(color: AppTheme.silver, width: Responsive.dp(1.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -485,13 +485,13 @@ class _ShopPageState extends State<ShopPage> {
         children: [
           // Item square container enclosing the chest visual centered perfectly
           Container(
-            width: 56,
-            height: 56,
+            width: Responsive.h(56),
+            height: Responsive.h(56),
             decoration: BoxDecoration(
               color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Responsive.r(12)),
               border: Border.all(
-                  color: AppTheme.silver.withValues(alpha: 0.15), width: 1.2),
+                  color: AppTheme.silver.withValues(alpha: 0.15), width: Responsive.dp(1.2)),
             ),
             child: Center(
               child: ChestSprite(
@@ -503,7 +503,7 @@ class _ShopPageState extends State<ShopPage> {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.w(16)),
           // Chest Title: guaranteed to be in the same line
           Expanded(
             child: Text(
@@ -515,21 +515,21 @@ class _ShopPageState extends State<ShopPage> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: Responsive.w(12)),
           // Compact Buy Button: guaranteed to be in the same line
           SGTouchable(
             onTap: () => _buyChest(chestTypeKey, name, price),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: Responsive.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: (canBuy && !isFull) ? AppTheme.accent : AppTheme.surface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(Responsive.r(14)),
                 border: Border.all(
                   color: (canBuy && !isFull)
                       ? AppTheme.accent
                       : AppTheme.text1.withValues(alpha: 0.15),
-                  width: 1.5,
+                  width: Responsive.dp(1.5),
                 ),
               ),
               child: Row(
@@ -541,7 +541,7 @@ class _ShopPageState extends State<ShopPage> {
                       color: (canBuy && !isFull)
                           ? Colors.black
                           : Colors.white.withValues(alpha: 0.9),
-                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: Responsive.sp(13.5)),
                   ),
                   if (!isFull)
                     Text(
@@ -646,19 +646,19 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
         style: AppTheme.body(),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
+            padding: Responsive.symmetric(horizontal: 28),
             child: ScaleTransition(
               scale: _scale,
               child: FadeTransition(
                 opacity: _opacity,
                 child: Container(
-                  padding: const EdgeInsets.all(28),
+                  padding: Responsive.all(28),
                   decoration: BoxDecoration(
                     color: AppTheme.black.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(Responsive.r(28)),
                     border: Border.all(
                       color: AppTheme.silver,
-                      width: 2.0,
+                      width: Responsive.dp(2.0),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -676,11 +676,11 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                         style: AppTheme.label().copyWith(
                           color: glowColor,
                           letterSpacing: 3.0,
-                          fontSize: 12,
+                          fontSize: Responsive.sp(12),
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: Responsive.h(8)),
                       // Title Text
                       Text(
                         widget.qty > 1
@@ -692,12 +692,12 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: Responsive.h(32)),
 
                       // Perfectly Centered Glowing Sprite Visual
                       SizedBox(
-                        width: 180,
-                        height: 180,
+                        width: Responsive.h(180),
+                        height: Responsive.h(180),
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -706,30 +706,30 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                               chestType: chestSpriteType,
                               animation: 'Idle',
                               fps: 12,
-                              size: 110,
+                              size: Responsive.h(110),
                               alignment: Alignment.center,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: Responsive.h(24)),
 
                       // Chest Name Label
                       Text(
                         widget.chestName,
                         style: AppTheme.h1().copyWith(
-                          fontSize: 24,
+                          fontSize: Responsive.sp(24),
                           fontWeight: FontWeight.w900,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: Responsive.h(6)),
                       Text(
                         'Stored securely in your inventory',
                         style: AppTheme.caption(color: AppTheme.text2),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 36),
+                      SizedBox(height: Responsive.h(36)),
 
                       // Action Button (Continue)
                       AnimatedOpacity(
@@ -739,10 +739,10 @@ class _ChestArrivalPopupState extends State<_ChestArrivalPopup>
                           onTap: widget.onDone,
                           child: Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: Responsive.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               color: AppTheme.accent,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(Responsive.r(16)),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppTheme.accent.withValues(alpha: 0.3),

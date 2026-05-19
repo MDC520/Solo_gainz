@@ -228,6 +228,13 @@ class _CinematicDepthPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // ── 1. Shifting Cosmic Aura / Nebulas ──
+    _drawDeepAura(canvas, size);
+
+    // ── 2. Sweeping Cinematic Light Rays / God Rays ──
+    _drawCinematicRays(canvas, size);
+
+    // ── 3. Shifting Atmospheric Veils (for Light/Dark mode contrasts) ──
     if (isDark) {
       _drawAura(canvas, size, color: AppTheme.accent, offset: 0.0);
       _drawAura(canvas, size, color: AppTheme.purple, offset: 0.5);
@@ -236,8 +243,110 @@ class _CinematicDepthPainter extends CustomPainter {
       _drawVeil(canvas, size, angle: -0.2, speed: 0.05, opacity: 0.01, color: const Color(0xFF1D4ED8));
     }
 
+    // ── 4. Mysterious Drifting Power Particles / Embers ──
+    _drawMysteriousParticles(canvas, size);
+
+    // ── 5. Standard Horizon & Breathing Cores ──
     _drawHorizon(canvas, size);
     _drawBreathingCore(canvas, size);
+  }
+
+  void _drawDeepAura(Canvas canvas, Size size) {
+    // Shifting colored nebulas at different coordinates
+    final center1 = Offset(
+      size.width * (0.5 + 0.3 * math.sin(t * 2 * math.pi)),
+      size.height * (0.4 + 0.2 * math.cos(t * math.pi)),
+    );
+    final center2 = Offset(
+      size.width * (0.5 - 0.25 * math.cos(t * 2 * math.pi)),
+      size.height * (0.6 - 0.2 * math.sin(t * math.pi)),
+    );
+
+    final nebula1 = Paint()
+      ..shader = RadialGradient(
+        center: Alignment(
+          (center1.dx / size.width) * 2 - 1,
+          (center1.dy / size.height) * 2 - 1,
+        ),
+        radius: 1.5,
+        colors: [
+          (isDark ? AppTheme.accent : const Color(0xFF00E676)).withValues(alpha: isDark ? 0.16 : 0.06),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final nebula2 = Paint()
+      ..shader = RadialGradient(
+        center: Alignment(
+          (center2.dx / size.width) * 2 - 1,
+          (center2.dy / size.height) * 2 - 1,
+        ),
+        radius: 1.5,
+        colors: [
+          (isDark ? AppTheme.purple : const Color(0xFFD500F9)).withValues(alpha: isDark ? 0.16 : 0.06),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), nebula1);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), nebula2);
+  }
+
+  void _drawCinematicRays(Canvas canvas, Size size) {
+    final double angle = math.pi / 4; // 45 degrees
+    
+    // Create sweeping light shafts
+    for (int i = 0; i < 3; i++) {
+      final double phase = (t + (i * 0.33)) % 1.0;
+      final double sweepPos = -300.0 + (phase * (size.width + 600.0));
+      
+      final rayPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.transparent,
+            (i % 2 == 0 ? AppTheme.accent : AppTheme.purple).withValues(alpha: isDark ? 0.06 : 0.02),
+            Colors.transparent,
+          ],
+          stops: const [0.3, 0.5, 0.7],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+      
+      canvas.save();
+      canvas.translate(sweepPos, 0);
+      canvas.rotate(angle);
+      canvas.drawRect(Rect.fromLTWH(-size.width, -size.height, size.width * 2, size.height * 2), rayPaint);
+      canvas.restore();
+    }
+  }
+
+  void _drawMysteriousParticles(Canvas canvas, Size size) {
+    final random = math.Random(12345); // Seeded random for deterministic behavior
+    final int particleCount = 20;
+
+    for (int i = 0; i < particleCount; i++) {
+      final speed = 0.06 + random.nextDouble() * 0.12;
+      final radius = 2.0 + random.nextDouble() * 4.0;
+      final startX = random.nextDouble() * size.width;
+      final startY = random.nextDouble() * size.height;
+      
+      // Rising position calculation
+      final double yPos = (startY - (t * speed * size.height)) % size.height;
+      // Subtle horizontal waving motion
+      final double xPos = (startX + math.sin(t * 2 * math.pi + (i * 12)) * 18.0) % size.width;
+      
+      // Pulsing opacity (fade near top and bottom)
+      double opacity = 0.10 + 0.15 * math.sin(t * math.pi * 2 + i);
+      final centerDist = (Offset(xPos, yPos) - Offset(size.width / 2, size.height / 2)).distance;
+      final maxDist = math.sqrt(size.width * size.width + size.height * size.height) / 2;
+      opacity = (opacity * (1.0 - (centerDist / maxDist).clamp(0.0, 0.8)));
+
+      final particlePaint = Paint()
+        ..color = (i % 2 == 0 ? AppTheme.accent : AppTheme.purple).withValues(alpha: opacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.5);
+      
+      canvas.drawCircle(Offset(xPos, yPos), radius, particlePaint);
+    }
   }
 
   void _drawAura(Canvas canvas, Size size, {required Color color, required double offset}) {
@@ -250,7 +359,7 @@ class _CinematicDepthPainter extends CustomPainter {
         ),
         radius: 1.2,
         colors: [
-          color.withValues(alpha: 0.05 + (pulse * 0.1)),
+          color.withValues(alpha: 0.05 + (pulse * 0.08)),
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));

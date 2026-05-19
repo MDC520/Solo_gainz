@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'responsive.dart';
 
 /// Animated pixel-art player sprite.
 /// Loops through a sequence of PNG frames at a configurable frame rate.
@@ -125,7 +126,8 @@ class _PlayerState extends State<Player> {
 
   void _startTimer() {
     if (widget.fps <= 0) return;
-    final interval = Duration(milliseconds: (1000 / widget.fps).round());
+    final adjustedFps = Responsive.fps(widget.fps);
+    final interval = Duration(milliseconds: (1000 / adjustedFps).round());
     _timer = Timer.periodic(interval, (_) {
       if (!mounted || _frames.isEmpty || widget.paused) return;
 
@@ -159,11 +161,12 @@ class _PlayerState extends State<Player> {
     if (_frames.isEmpty) {
       return SizedBox(width: widget.size, height: widget.size);
     }
+    final renderSize = widget.size != null ? Responsive.w(widget.size!) : widget.size;
     return Image.asset(
       _frames[_frame],
       fit: BoxFit.contain,
-      width: widget.size,
-      height: widget.size,
+      width: renderSize,
+      height: renderSize,
       color: widget.color,
       alignment: widget.alignment,
       filterQuality: FilterQuality.none,
@@ -172,8 +175,8 @@ class _PlayerState extends State<Player> {
       errorBuilder: (context, error, stackTrace) {
         debugPrint('Error loading sprite $_frame: $error');
         return SizedBox(
-          width: widget.size,
-          height: widget.size,
+          width: renderSize,
+          height: renderSize,
           child: const Center(
             child: Icon(Icons.broken_image, color: Colors.red, size: 40),
           ),
