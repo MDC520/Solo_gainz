@@ -1,6 +1,6 @@
-import 'storage.dart';
-import 'theme.dart';
-import 'background.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
 
 class _Bundle {
   final int coins;

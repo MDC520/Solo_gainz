@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'storage.dart';
-import 'theme.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
 
 class QuestPage extends StatefulWidget {
   const QuestPage({super.key});
@@ -345,7 +345,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       debugPrint('Error completing custom quest: $e');
     }
   }
-
 
   void _levelUp() {
     if (_stats == null) return;
@@ -1243,7 +1242,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       child: child,
     );
   }
-
 
 
   Widget _buildCustomList() {

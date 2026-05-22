@@ -4,9 +4,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/scheduler.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'theme.dart';
-import 'player.dart';
+import '../ui/theme.dart';
+import '../widgets/player.dart';
 
 // Helper to convert IP string to dynamic 8-character Hex Join Code
 String ipToJoinCode(String ip) {
@@ -128,6 +127,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
   String _localIp = '127.0.0.1';
   bool _isConnecting = false;
   bool _isHost = false;
+  bool _hasSpawned = false;
 
   // Lobby Loading message
   String _lobbyStatus = '';
@@ -171,6 +171,9 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
   bool _jumpPressed = false;
   bool _attackPressed = false;
   bool _kickPressed = false;
+
+  // Pause state
+  bool _isPaused = false;
 
   // Double-tap running
   DateTime? _lastLeftDown;
@@ -461,13 +464,13 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
     try {
       final Map<String, dynamic> data = jsonDecode(raw);
 
-      // Width exchange
+      // Width exchange (only spawn joiner once)
       if (data.containsKey('roomWidth')) {
         setState(() {
           _mapWidth = (data['roomWidth'] as num).toDouble();
         });
-        if (!_isHost) {
-          // Client spawns on the right of the host's map setting
+        if (!_isHost && !_hasSpawned) {
+          _hasSpawned = true;
           setState(() {
             _playerX = _mapWidth - 200.0;
             _remoteX = 200.0;
@@ -518,6 +521,120 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
     } catch (_) {}
   }
 
+  // Pause menu overlay
+  void _showPauseMenu() {
+    setState(() => _isPaused = true);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.dark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(color: AppTheme.accent),
+        ),
+        title: Text('PAUSED', textAlign: TextAlign.center, style: AppTheme.pixel(size: 22, color: AppTheme.accent)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            SGTouchable(
+              onTap: () {
+                Navigator.pop(ctx);
+                setState(() => _isPaused = false);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('RESUME', textAlign: TextAlign.center, style: AppTheme.label(color: Colors.black)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SGTouchable(
+              onTap: () {
+                final hasOpponent = _isHost && _hostMaxPlayers == 2 && _gameSocket != null;
+                if (hasOpponent) {
+                  showDialog(
+                    context: ctx,
+                    barrierDismissible: false,
+                    builder: (confirmCtx) => AlertDialog(
+                      backgroundColor: AppTheme.dark,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: AppTheme.red),
+                      ),
+                      title: Text('ARE YOU SURE?', textAlign: TextAlign.center, style: AppTheme.pixel(size: 16, color: AppTheme.red)),
+                      content: Text(
+                        'Exiting as host will kick the other player from the session.',
+                        textAlign: TextAlign.center,
+                        style: AppTheme.body(color: AppTheme.text2),
+                      ),
+                      actions: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SGTouchable(
+                                onTap: () => Navigator.pop(confirmCtx),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text('CANCEL', textAlign: TextAlign.center, style: AppTheme.label(color: Colors.black)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SGTouchable(
+                                onTap: () {
+                                  Navigator.pop(confirmCtx);
+                                  Navigator.pop(ctx);
+                                  _disconnectAndReturn('Exited game session.');
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.red.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppTheme.red),
+                                  ),
+                                  child: Text('EXIT', textAlign: TextAlign.center, style: AppTheme.label(color: AppTheme.red)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  Navigator.pop(ctx);
+                  _disconnectAndReturn('Exited game session.');
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.red.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.red),
+                ),
+                child: Text('EXIT', textAlign: TextAlign.center, style: AppTheme.label(color: AppTheme.red)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Bidirectional high frequency status write
   void _sendStatePacket() {
     if (_gameSocket == null) return;
@@ -562,6 +679,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
       setState(() {
         _currentScreen = 'lobby';
         _isConnecting = false;
+        _hasSpawned = false;
         _discoveredRooms.clear();
       });
       _startUdpDiscovery();
@@ -571,6 +689,8 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
   // Core 60fps Game Tick Loop
   void _gameTick(Duration elapsed) {
     if (!mounted || _currentScreen != 'game') return;
+
+    if (_isPaused) return;
 
     setState(() {
       _screenWidth = MediaQuery.of(context).size.width;
@@ -582,6 +702,13 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
       if (!_playerGrounded) accel *= 0.4; // Air control penalty
 
       double joystickInput = (_rightPressed ? 1.0 : 0.0) - (_leftPressed ? 1.0 : 0.0);
+
+      // Flip model to face movement direction
+      if (joystickInput > 0) {
+        _playerFlip = false;
+      } else if (joystickInput < 0) {
+        _playerFlip = true;
+      }
       
       // Lock movement when attacking or hit
       if (_isPunching || _isKicking || _playerHit) {
@@ -1290,7 +1417,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.dark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: AppTheme.cyan)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppTheme.cyan)),
         title: Text('ROOM PASSWORD', style: AppTheme.label(color: AppTheme.cyan)),
         content: TextField(
           controller: _joinPasswordCtrl,
@@ -1406,83 +1533,94 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
 
           // HUD overlay (Health bars)
           Positioned(
-            top: 24,
-            left: 24,
-            right: 24,
+            top: 16,
+            left: 0,
+            right: 0,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Local HP bar
-                Expanded(
+                // Player 2 HP bar (Left side)
+                SizedBox(
+                  width: 120,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _isHost 
-                          ? (_hostMaxPlayers == 1 ? 'PLAYER 1 (SOLO)' : 'PLAYER 1 (HOST)') 
-                          : 'PLAYER 2 (YOU)', 
-                        style: AppTheme.pixel(size: 11, color: AppTheme.cyan)
-                      ),
-                      const SizedBox(height: 4),
                       Container(
-                        height: 14,
+                        height: 6,
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppTheme.glassBorder, width: 1.5),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: AppTheme.glassBorder, width: 1),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: FractionallySizedBox(
+                          borderRadius: BorderRadius.circular(2),
+                          child: Align(
                             alignment: Alignment.centerLeft,
-                            widthFactor: localHpPercent,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(colors: [Colors.teal, Colors.tealAccent]),
+                            child: FractionallySizedBox(
+                              widthFactor: remoteHpPercent,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(colors: [Colors.redAccent, Colors.red]),
+                                ),
                               ),
                             ),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _isHost ? 'P2 (OPPONENT)' : 'P2 (YOU)', 
+                        style: AppTheme.pixel(size: 8, color: AppTheme.red)
                       ),
                     ],
                   ),
                 ),
                 
                 if (_hostMaxPlayers == 2) ...[
-                  // VS center logo
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('VS', style: AppTheme.pixel(size: 18, color: AppTheme.text3)),
+                  // Pause button center
+                  SGTouchable(
+                    onTap: () => _showPauseMenu(),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.zero,
+                        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.6), width: 1.5),
+                      ),
+                      child: Icon(Icons.stop_rounded, color: AppTheme.accent, size: 14),
+                    ),
                   ),
 
-                  // Remote HP bar
-                  Expanded(
+                  // Player 1 HP bar (Right side)
+                  SizedBox(
+                    width: 120,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(!_isHost ? 'PLAYER 1 (HOST)' : 'PLAYER 2 (OPPONENT)', style: AppTheme.pixel(size: 11, color: AppTheme.red)),
-                        const SizedBox(height: 4),
                         Container(
-                          height: 14,
+                          height: 6,
                           decoration: BoxDecoration(
                             color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppTheme.glassBorder, width: 1.5),
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(color: AppTheme.glassBorder, width: 1),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(2),
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: FractionallySizedBox(
-                                widthFactor: remoteHpPercent,
+                                widthFactor: localHpPercent,
                                 child: Container(
                                   decoration: const BoxDecoration(
-                                    gradient: LinearGradient(colors: [Colors.redAccent, Colors.red]),
+                                    gradient: LinearGradient(colors: [Colors.teal, Colors.tealAccent]),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 2),
+                        Text('P1 (HOST)', style: AppTheme.pixel(size: 8, color: AppTheme.cyan)),
                       ],
                     ),
                   ),
@@ -1784,7 +1922,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
                                   loop: false,
                                 )
                               : Image.asset(
-                                  'Assets/Player Model/Kick01/Kick0101.png',
+                                  'assets/Player Model/Kick01/Kick0101.png',
                                   width: 140,
                                   height: 140,
                                   alignment: Alignment.center,
@@ -1840,7 +1978,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
                                   loop: false,
                                 )
                               : Image.asset(
-                                  'Assets/Player Model/Punch01/Punch0101.png',
+                                  'assets/Player Model/Punch01/Punch0101.png',
                                   width: 140,
                                   height: 140,
                                   alignment: Alignment.center,
@@ -1896,7 +2034,7 @@ class _PvpScreenState extends State<PvpScreen> with SingleTickerProviderStateMix
                                   loop: false,
                                 )
                               : Image.asset(
-                                  'Assets/Player Model/Jump/Jump02.png',
+                                  'assets/Player Model/Jump/Jump02.png',
                                   width: 140,
                                   height: 140,
                                   alignment: Alignment.center,

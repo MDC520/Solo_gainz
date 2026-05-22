@@ -4,10 +4,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'storage.dart';
-import 'theme.dart';
-import 'player.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
+import '../widgets/player.dart';
 import 'inventory_screen.dart';
+import 'engine_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -973,6 +974,46 @@ class _HomePageState extends State<HomePage> {
               child: Padding(
                 padding: Responsive.fromLTRB(0, 0, 0, 100),
                 child: _buildWeeklyQuestProgressRow(),
+              ),
+            ),
+
+            // Engine Screen Button
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: Responsive.fromLTRB(20, 0, 20, 24),
+                child: SGTouchable(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EngineScreen()),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: Responsive.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(Responsive.r(14)),
+                      border: Border.all(color: AppTheme.accent, width: Responsive.dp(1.5)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.sports_kabaddi_rounded, color: AppTheme.accent, size: Responsive.icon(22)),
+                        SizedBox(width: Responsive.w(12)),
+                        Text(
+                          'POSE & COLLIDER EDITOR',
+                          style: AppTheme.mono(color: AppTheme.accent, size: 12).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

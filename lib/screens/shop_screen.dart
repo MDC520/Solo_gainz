@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 
 import 'buy_screen.dart';
-import 'storage.dart';
-import 'theme.dart';
-import 'chest.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
+import '../widgets/chest.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});

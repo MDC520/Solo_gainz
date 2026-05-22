@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'responsive.dart';
+import '../ui/responsive.dart';
 
 /// Animated pixel-art player sprite.
 /// Loops through a sequence of PNG frames at a configurable frame rate.
@@ -114,13 +114,13 @@ class _PlayerState extends State<Player> {
 
   void _buildFrameList() {
     if (widget.animation == 'Jump Fall') {
-      _frames = ['Assets/Player Model/Jump/Jump03.png'];
+      _frames = ['assets/Player Model/Jump/Jump03.png'];
       return;
     }
     final count = _frameCounts[widget.animation] ?? 7;
     _frames = List.generate(count, (i) {
       final idx = (i + 1).toString().padLeft(2, '0');
-      return 'Assets/Player Model/${widget.animation}/${widget.animation}$idx.png';
+      return 'assets/Player Model/${widget.animation}/${widget.animation}$idx.png';
     });
   }
 

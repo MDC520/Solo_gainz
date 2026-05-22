@@ -1,7 +1,7 @@
-import 'storage.dart';
-import 'theme.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
 import 'home_screen.dart';
-import 'background.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});

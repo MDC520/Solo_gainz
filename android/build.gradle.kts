@@ -22,6 +22,8 @@ subprojects {
 subprojects {
     configurations.all {
         resolutionStrategy {
+            force("androidx.glance:glance:1.1.1")
+            force("androidx.glance:glance-appwidget:1.1.1")
             force("androidx.browser:browser:1.8.0")
             force("androidx.datastore:datastore-preferences:1.1.1")
             force("androidx.datastore:datastore-core:1.1.1")
@@ -49,8 +51,8 @@ subprojects {
             targetCompatibility = "17"
         }
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             }
         }
     }

@@ -1,17 +1,17 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:ui';
-import 'background.dart';
-import 'splash_screen.dart';
-import 'home_screen.dart';
-import 'onboarding_screen.dart';
-import 'quest_screen.dart';
-import 'dungeon_screen.dart';
-import 'shop_screen.dart';
-import 'profile_screen.dart';
-import 'storage.dart';
-import 'security_service.dart';
-import 'notifications.dart';
-import 'theme.dart';
+import 'widgets/background.dart';
+import 'screens/splash_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/quest_screen.dart';
+import 'screens/dungeon_screen.dart';
+import 'screens/shop_screen.dart';
+import 'screens/profile_screen.dart';
+import 'models/storage.dart';
+import 'services/security_service.dart';
+import 'services/notifications.dart';
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,7 +103,7 @@ class _AppRootState extends State<_AppRoot> {
   }
 
   Future<void> _afterSplash() async {
-    try { await Storage.checkDailyLoginReward(); } catch (_) {}
+    try { await Storage.checkDailyLoginReward(); } catch (e) { debugPrint('checkDailyLoginReward error: $e'); }
     _setState(Storage.isOnboarded() ? _AppState.shell : _AppState.onboarding);
   }
 

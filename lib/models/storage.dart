@@ -4,8 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:path_provider/path_provider.dart';
-import 'security_service.dart';
-import 'notifications.dart';
+import '../services/security_service.dart';
+import '../services/notifications.dart';
+import 'achievements.dart';
 
 part 'storage.g.dart';
 
@@ -279,22 +280,24 @@ class Storage {
   static Future<void> addCoins(int amount) async {
     final stats = getUserStats()..coins += amount;
     await saveUserStats(stats);
+    AchievementChecker.checkOnCoins(stats.coins, stats.achievements);
   }
 
   static Future<void> addXp(int amount) async {
     final stats = getUserStats();
-    final int originalLevel = stats.level;
-    final String originalRank = stats.rank;
-
     stats.xp += amount;
+    bool rankChanged = false;
+    bool levelChanged = false;
     while (true) {
       final need = RankSystem.getXpNeededForNextLevel(stats.rank);
       if (stats.xp >= need) {
         stats.xp -= need;
         stats.level++;
+        levelChanged = true;
         if (RankSystem.canPromoteRank(stats.rank, stats.level)) {
           final next = RankSystem.getNextRank(stats.rank);
           if (next != null) stats.rank = next;
+          rankChanged = true;
         }
       } else {
         break;
@@ -302,14 +305,15 @@ class Storage {
     }
     await saveUserStats(stats);
 
-    // Trigger gamified milestones notifications
-    if (stats.rank != originalRank) {
+    if (rankChanged) {
       NotificationService.showRankUp(stats.rank);
-    } else if (stats.level > originalLevel) {
+    } else if (levelChanged) {
       NotificationService.showLevelUp(stats.level);
     }
-  }
 
+    AchievementChecker.checkOnLevel(stats.level, stats.achievements);
+    AchievementChecker.checkOnRank(stats.rank, stats.achievements);
+  }
   static Future<void> addLifetimeStat(String key, int amount) async {
     final stats = getUserStats();
     stats.lifetimeStats[key] = (stats.lifetimeStats[key] ?? 0) + amount;
@@ -325,14 +329,42 @@ class Storage {
   }
 
   static Future<void> checkDailyLoginReward() async {
-    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final lastStr = getData('last_daily_reward_date');
     final last = lastStr != null ? DateTime.tryParse(lastStr) : null;
-    
-    if (last == null || today.isAfter(last)) {
-      await addCoins(30);
-      await saveData('last_daily_reward_date', today.toIso8601String());
+
+    int streak = getData('login_streak', defaultValue: 0);
+    final lastStreakDateStr = getData('last_streak_date');
+    final lastStreakDate = lastStreakDateStr != null ? DateTime.tryParse(lastStreakDateStr) : null;
+
+    if (last != null && !today.isAfter(last)) return;
+
+    final yesterday = today.subtract(const Duration(days: 1));
+    if (lastStreakDate != null && lastStreakDate == yesterday) {
+      streak++;
+    } else {
+      streak = 1;
     }
+
+    final streakMultiplier = 1.0 + (streak - 1) * 0.15;
+    final baseCoins = 30;
+    final bonusCoins = (baseCoins * streakMultiplier).round();
+    final bonusXp = (streak * 5).round();
+
+    await addCoins(bonusCoins);
+    await addXp(bonusXp);
+    await saveData('last_daily_reward_date', today.toIso8601String());
+    await saveData('last_streak_date', today.toIso8601String());
+    await saveData('login_streak', streak);
+
+    AchievementChecker.checkOnStreak(streak, getUserStats().achievements);
+  }
+
+  static int getLoginStreak() => getData('login_streak', defaultValue: 0);
+  static double getStreakMultiplier() {
+    final streak = getLoginStreak();
+    return 1.0 + (streak - 1) * 0.15;
   }
 
   static int getProgress() => getData('progress', defaultValue: 0);
@@ -629,7 +661,9 @@ class Storage {
         if (settings['last_daily_reward_date'] != null) await saveData('last_daily_reward_date', settings['last_daily_reward_date']);
         if (settings['is_dark_mode'] != null) await saveData('is_dark_mode', settings['is_dark_mode']);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Storage.decodeAndApplyData error: $e');
+    }
   }
 
   static Map<String, dynamic> _questToMap(DailyQuest q) => {
@@ -654,4 +688,3 @@ class Storage {
   static Map<String, int> _castIntMap(dynamic raw) => (raw as Map?)?.map((k, v) => MapEntry(k.toString(), (v as num).toInt())) ?? {};
   static DateTime _parseDate(dynamic raw) => raw != null ? (DateTime.tryParse(raw.toString()) ?? DateTime.now()) : DateTime.now();
 }
-

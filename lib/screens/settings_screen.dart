@@ -1,8 +1,8 @@
 
-import 'storage.dart';
-import 'notifications.dart';
-import 'theme.dart';
-import 'background.dart';
+import '../models/storage.dart';
+import '../services/notifications.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

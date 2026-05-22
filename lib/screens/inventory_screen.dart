@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'storage.dart';
-import 'notifications.dart';
-import 'theme.dart';
-import 'main.dart';
-import 'chest.dart';
-import 'open_screen.dart';
-import 'background.dart';
+import '../models/storage.dart';
+import '../services/notifications.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
+import '../widgets/chest.dart';
+import '../main.dart';
 import 'history_screen.dart';
+import 'open_screen.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});

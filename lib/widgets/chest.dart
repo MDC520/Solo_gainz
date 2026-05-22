@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'responsive.dart';
+import '../ui/responsive.dart';
 
 /// Animated chest sprite widget.
 /// Loops through PNG frames for idle animation, or plays once for open animation.
@@ -79,18 +79,18 @@ class _ChestSpriteState extends State<ChestSprite> {
       animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
     } else if (type.contains('iron')) {
       folder = 'Iron Chest';
-      animFolder = widget.animation == 'Open' ? 'Open' : 'Idle';
+      animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
     } else if (type.contains('mysterious')) {
       folder = 'Mysterious Chest';
       animFolder = widget.animation == 'Open' ? 'open' : 'Idle';
     } else {
       folder = 'Gold Chest';
-      animFolder = widget.animation == 'Open' ? 'oepn' : 'idle';
+      animFolder = widget.animation == 'Open' ? 'open' : 'idle';
     }
 
     // Each animation loop in Assets consists of 5 frames (1.png through 5.png)
     _frames = List.generate(5, (i) {
-      return 'Assets/Chests/$folder/$animFolder/${i + 1}.png';
+      return 'assets/Chests/$folder/$animFolder/${i + 1}.png';
     });
   }
 

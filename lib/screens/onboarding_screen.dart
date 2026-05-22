@@ -1,7 +1,7 @@
-import 'storage.dart';
-import 'notifications.dart';
-import 'theme.dart';
-import 'background.dart';
+import '../models/storage.dart';
+import '../services/notifications.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
 import 'dart:math' as math;
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -392,7 +392,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 height: 130,
                                 width: 130,
                                 child: Image.asset(
-                                  'Assets/Rank Shields/$rankFile',
+                                  'assets/Rank Shields/$rankFile',
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) => Icon(
                                       Icons.shield_rounded,
@@ -1407,7 +1407,7 @@ class RankDeck extends StatelessWidget {
                     child: Transform.rotate(
                       angle: rotation,
                       child: Image.asset(
-                        'Assets/Rank Shields/${_ranks[i]}',
+                        'assets/Rank Shields/${_ranks[i]}',
                         width: 120,
                         height: 120,
                         fit: BoxFit.contain,

@@ -1,8 +1,8 @@
 import 'dart:math';
-import 'storage.dart';
-import 'theme.dart';
-import 'chest.dart';
-import 'background.dart';
+import '../models/storage.dart';
+import '../ui/theme.dart';
+import '../widgets/background.dart';
+import '../widgets/chest.dart';
 
 class OpenScreen extends StatefulWidget {
   final int slotIndex;
@@ -186,7 +186,7 @@ class _OpenScreenState extends State<OpenScreen> with TickerProviderStateMixin {
           weight: 25),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 60),
     ]).animate(_burstCtrl);
-    
+
     // Animate instantly from tap (0.0 to 0.55 interval)
     _rewardScale = Tween<double>(begin: 0.1, end: 1.0).animate(CurvedAnimation(
         parent: _burstCtrl,
@@ -743,7 +743,7 @@ class _SpotlightPainter extends CustomPainter {
     if (progress <= 0.0) return;
 
     final double cx = size.width / 2;
-    
+
     // Create the cone path (like a classic theatre spotlight radiating downwards)
     final path = Path();
     path.moveTo(cx - 20, 0); // Narrow beam start at the very top of the screen

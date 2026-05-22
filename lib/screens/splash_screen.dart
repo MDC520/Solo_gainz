@@ -1,4 +1,4 @@
-import 'theme.dart';
+import '../ui/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onDone;
