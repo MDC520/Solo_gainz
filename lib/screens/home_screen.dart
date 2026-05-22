@@ -7,8 +7,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/storage.dart';
 import '../ui/theme.dart';
 import '../widgets/player.dart';
+import '../widgets/weekly_day_square.dart';
 import 'inventory_screen.dart';
-import 'engine_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -433,141 +433,83 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Container(
-      padding: Responsive.symmetric(horizontal: 20, vertical: 18),
+      margin: Responsive.symmetric(horizontal: 20),
+      padding: Responsive.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        border: Border.symmetric(
-          horizontal: BorderSide(color: AppTheme.accent, width: Responsive.dp(2.0)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(Responsive.r(14)),
+        border: Border.all(color: AppTheme.line, width: Responsive.dp(1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'WEEKLY QUEST PROGRESS',
-                style: AppTheme.label().copyWith(
-                  color: AppTheme.text2,
-                  fontSize: Responsive.sp(11),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
+              Expanded(
+                child: Text(
+                  'Weekly Progress',
+                  style: AppTheme.h3().copyWith(
+                    fontSize: Responsive.sp(14),
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.text1,
+                  ),
                 ),
               ),
-              // top right dots squared dots indicator (only show if history pages exist)
               if (maxWeeks > 0)
                 Row(
                   children: List.generate(maxWeeks + 1, (index) {
                     final isActive = (maxWeeks - _activeWeekIndex) == index;
-                    return Container(
-                      width: Responsive.w(6),
-                      height: Responsive.w(6),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: isActive ? Responsive.w(14) : Responsive.w(5),
+                      height: Responsive.w(5),
                       margin: EdgeInsets.only(left: Responsive.w(4)),
                       decoration: BoxDecoration(
-                        color: isActive ? AppTheme.accent : AppTheme.text2.withValues(alpha: 0.3),
-                        shape: BoxShape.rectangle, // "squared dots"
+                        color: isActive ? AppTheme.accent : AppTheme.line,
+                        borderRadius: BorderRadius.circular(Responsive.r(3)),
                       ),
                     );
                   }),
                 ),
             ],
           ),
-          SizedBox(height: Responsive.h(16)),
+          if (maxWeeks > 0) ...[
+            SizedBox(height: Responsive.h(4)),
+            Text(
+              'Swipe for past weeks',
+              style: AppTheme.caption().copyWith(fontSize: Responsive.sp(9)),
+            ),
+          ],
+          SizedBox(height: Responsive.h(14)),
           SizedBox(
-            height: Responsive.h(48),
+            height: Responsive.h(52),
             child: PageView.builder(
               controller: _weeklyPageController,
-              onPageChanged: (idx) {
-                setState(() {
-                  _activeWeekIndex = idx;
-                });
-              },
+              onPageChanged: (idx) => setState(() => _activeWeekIndex = idx),
               itemCount: maxWeeks + 1,
               itemBuilder: (context, index) {
-                // Invert swipe page mapping so that page index 0 is the oldest week,
-                // and the rightmost page is the current active week.
                 final int weekOffset = maxWeeks - index;
 
                 return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: days.map((d) {
-                    final isToday = (weekOffset == 0) && (d == todayIndex);
-                    final isFuture = (weekOffset == 0) && (d > todayIndex);
-                    final double progress = getQuestProgress(d, weekOffset);
+                    final isToday = weekOffset == 0 && d == todayIndex;
+                    final isFuture = weekOffset == 0 && d > todayIndex;
+                    final progress = getQuestProgress(d, weekOffset);
                     final completed = progress >= 1.0;
                     final letter = getDayLetter(d);
                     final name = getDayName(d);
 
-                    // Precise color states based on User specifications:
-                    Color borderColor;
-                    Color backgroundColor;
-                    Color textColor;
-
-                    if (isToday) {
-                      if (completed) {
-                        borderColor = AppTheme.green;
-                        backgroundColor = AppTheme.green.withValues(alpha: 0.18);
-                      } else {
-                        borderColor = Colors.blue;
-                        backgroundColor = Colors.blue.withValues(alpha: 0.15);
-                      }
-                      textColor = AppTheme.accent; // lighted up active day
-                    } else if (isFuture) {
-                      borderColor = AppTheme.line.withValues(alpha: 0.25);
-                      backgroundColor = AppTheme.surface.withValues(alpha: 0.2);
-                      textColor = AppTheme.text2.withValues(alpha: 0.5);
-                    } else {
-                      // Past days in current week or any days in previous weeks:
-                      if (completed) {
-                        borderColor = AppTheme.green.withValues(alpha: 0.6);
-                        backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
-                      } else {
-                        borderColor = AppTheme.red.withValues(alpha: 0.4);
-                        backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
-                      }
-                      textColor = AppTheme.text2.withValues(alpha: 0.8);
-                    }
-
-                    return GestureDetector(
-                      onTap: () => _onDayTapped(name, isToday, isFuture, progress),
-                      child: Tooltip(
-                        message: '$name: ${completed ? "Completed" : "Not Completed"}',
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutBack,
-                          width: isToday ? Responsive.w(44) : Responsive.w(34),
-                          height: isToday ? Responsive.w(44) : Responsive.w(34),
-                          decoration: BoxDecoration(
-                            color: backgroundColor,
-                            borderRadius: BorderRadius.circular(Responsive.r(10)),
-                          ),
-                          child: CustomPaint(
-                            painter: ProgressSquarePainter(
-                              progress: progress,
-                              progressColor: AppTheme.green,
-                              backgroundColor: borderColor,
-                              strokeWidth: isToday ? Responsive.dp(2.5) : Responsive.dp(1.5),
-                              borderRadius: Responsive.r(10),
-                            ),
-                            child: Center(
-                              child: Text(
-                                letter,
-                                style: AppTheme.h3().copyWith(
-                                  fontWeight: isToday ? FontWeight.w900 : FontWeight.bold,
-                                  fontSize: isToday ? Responsive.sp(16) : Responsive.sp(13),
-                                  color: textColor,
-                                ),
-                              ),
-                            ),
-                          ),
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: Responsive.w(2)),
+                        child: WeeklyDaySquare(
+                          letter: letter,
+                          progress: progress,
+                          completed: completed,
+                          isToday: isToday,
+                          isFuture: isFuture,
+                          onTap: () => _onDayTapped(name, isToday, isFuture, progress),
+                          tooltip: '$name · ${completed ? 'Done' : isFuture ? 'Upcoming' : progress > 0 ? '${(progress * 100).round()}%' : 'Missed'}',
                         ),
                       ),
                     );
@@ -976,46 +918,6 @@ class _HomePageState extends State<HomePage> {
                 child: _buildWeeklyQuestProgressRow(),
               ),
             ),
-
-            // Engine Screen Button
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: Responsive.fromLTRB(20, 0, 20, 24),
-                child: SGTouchable(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const EngineScreen()),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: Responsive.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(Responsive.r(14)),
-                      border: Border.all(color: AppTheme.accent, width: Responsive.dp(1.5)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.sports_kabaddi_rounded, color: AppTheme.accent, size: Responsive.icon(22)),
-                        SizedBox(width: Responsive.w(12)),
-                        Text(
-                          'POSE & COLLIDER EDITOR',
-                          style: AppTheme.mono(color: AppTheme.accent, size: 12).copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
 
@@ -1077,62 +979,6 @@ class _SleepZsState extends State<_SleepZs> with SingleTickerProviderStateMixin 
         );
       },
     );
-  }
-}
-
-class ProgressSquarePainter extends CustomPainter {
-  final double progress; // 0.0 to 1.0
-  final Color progressColor;
-  final Color backgroundColor;
-  final double strokeWidth;
-  final double borderRadius;
-
-  ProgressSquarePainter({
-    required this.progress,
-    required this.progressColor,
-    required this.backgroundColor,
-    required this.strokeWidth,
-    required this.borderRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(
-      strokeWidth / 2,
-      strokeWidth / 2,
-      size.width - strokeWidth,
-      size.height - strokeWidth,
-    );
-    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    if (progress <= 0.0) {
-      paint.color = backgroundColor;
-      canvas.drawRRect(rrect, paint);
-    } else if (progress >= 1.0) {
-      paint.color = progressColor;
-      canvas.drawRRect(rrect, paint);
-    } else {
-      paint.shader = SweepGradient(
-        colors: [progressColor, progressColor, backgroundColor, backgroundColor],
-        stops: [0.0, progress, progress, 1.0],
-        transform: const GradientRotation(-pi / 2), // Start at top center of the square
-      ).createShader(rect);
-      canvas.drawRRect(rrect, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant ProgressSquarePainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.progressColor != progressColor ||
-        oldDelegate.backgroundColor != backgroundColor ||
-        oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.borderRadius != borderRadius;
   }
 }
 

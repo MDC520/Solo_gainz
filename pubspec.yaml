@@ -53,7 +53,61 @@ flutter:
   uses-material-design: true
 
   assets:
+    # App icon
     - assets/icon.png
-    - assets/Player Model/
-    - assets/Rank Shields/
-    - assets/Chests/
+
+    # Player Model — animations
+    - assets/Player Model/Idle/
+    - assets/Player Model/Walk/
+    - assets/Player Model/Run/
+    - assets/Player Model/Sprint/
+    - assets/Player Model/Jump/
+    - assets/Player Model/Push/
+    - assets/Player Model/Pull/
+    - assets/Player Model/PushIdle/
+    - assets/Player Model/Hit/
+    - assets/Player Model/GetUp/
+    - assets/Player Model/Knockback/
+    - assets/Player Model/Stunned/
+    - assets/Player Model/Kick01/
+    - assets/Player Model/Kick02/
+    - assets/Player Model/Kick03/
+    - assets/Player Model/Punch01/
+    - assets/Player Model/Punch02/
+    - assets/Player Model/Punch03/
+    - assets/Player Model/Roll/
+    - assets/Player Model/Slide/
+    - assets/Player Model/Land/
+    - assets/Player Model/ShockLight/
+    - assets/Player Model/ShockHeavy/
+    - assets/Player Model/LadderClimb/
+    - assets/Player Model/LadderClimbFinish/
+    - assets/Player Model/LadderClimbHorizontal/
+    - assets/Player Model/ThrowOverarm/
+    - assets/Player Model/ThrowUnderarm/
+    - assets/Player Model/RunToIdle/
+
+    # Rank shields
+    - assets/Rank Shields/A Rank.png
+    - assets/Rank Shields/B Rank.png
+    - assets/Rank Shields/C Rank.png
+    - assets/Rank Shields/D Rank.png
+    - assets/Rank Shields/E Rank.png
+    - assets/Rank Shields/S Rank.png
+    - assets/Rank Shields/SS Rank.png
+
+    # Chests — wooden
+    - assets/Chests/Wooden Chest/Idle/
+    - assets/Chests/Wooden Chest/open/
+
+    # Chests — iron
+    - assets/Chests/Iron Chest/Idle/
+    - assets/Chests/Iron Chest/open/
+
+    # Chests — gold
+    - assets/Chests/Gold Chest/idle/
+    - assets/Chests/Gold Chest/open/
+
+    # Chests — mysterious
+    - assets/Chests/Mysterious Chest/Idle/
+    - assets/Chests/Mysterious Chest/open/

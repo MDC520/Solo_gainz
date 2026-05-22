@@ -1,7 +1,7 @@
 import '../models/storage.dart';
 import '../ui/theme.dart';
 import '../widgets/background.dart';
-import 'home_screen.dart';
+import '../widgets/weekly_day_square.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -208,72 +208,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           SizedBox(height: Responsive.h(16)),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: days.map((d) {
-              final isToday = (weekOffset == 0) && (d == _todayIndex);
-              final isFuture = (weekOffset == 0) && (d > _todayIndex);
-              final double progress = _getQuestProgress(d, weekOffset);
+              final isToday = weekOffset == 0 && d == _todayIndex;
+              final isFuture = weekOffset == 0 && d > _todayIndex;
+              final progress = _getQuestProgress(d, weekOffset);
               final completed = progress >= 1.0;
               final letter = _getDayLetter(d);
               final name = _getDayName(d);
 
-              Color borderColor;
-              Color backgroundColor;
-              Color textColor;
-
-              if (isToday) {
-                if (completed) {
-                  borderColor = AppTheme.green;
-                  backgroundColor = AppTheme.green.withValues(alpha: 0.18);
-                } else {
-                  borderColor = Colors.blue;
-                  backgroundColor = Colors.blue.withValues(alpha: 0.15);
-                }
-                textColor = AppTheme.accent;
-              } else if (isFuture) {
-                borderColor = AppTheme.line.withValues(alpha: 0.25);
-                backgroundColor = AppTheme.surface.withValues(alpha: 0.2);
-                textColor = AppTheme.text2.withValues(alpha: 0.5);
-              } else {
-                if (completed) {
-                  borderColor = AppTheme.green.withValues(alpha: 0.6);
-                  backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
-                } else {
-                  borderColor = AppTheme.red.withValues(alpha: 0.4);
-                  backgroundColor = AppTheme.surface.withValues(alpha: 0.4);
-                }
-                textColor = AppTheme.text2.withValues(alpha: 0.8);
-              }
-
-              return Tooltip(
-                message: '$name: ${completed ? "Completed" : "Not Completed"}',
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutBack,
-                  width: isToday ? Responsive.h(44) : Responsive.h(34),
-                  height: isToday ? Responsive.h(44) : Responsive.h(34),
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(Responsive.r(10)),
-                  ),
-                  child: CustomPaint(
-                    painter: ProgressSquarePainter(
-                      progress: progress,
-                      progressColor: AppTheme.green,
-                      backgroundColor: borderColor,
-                      strokeWidth: isToday ? Responsive.dp(2.5) : Responsive.dp(1.5),
-                      borderRadius: Responsive.r(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        letter,
-                        style: AppTheme.h3().copyWith(
-                          fontWeight: isToday ? FontWeight.w900 : FontWeight.bold,
-                          fontSize: isToday ? Responsive.sp(16) : Responsive.sp(13),
-                          color: textColor,
-                        ),
-                      ),
-                    ),
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: Responsive.w(2)),
+                  child: WeeklyDaySquare(
+                    letter: letter,
+                    progress: progress,
+                    completed: completed,
+                    isToday: isToday,
+                    isFuture: isFuture,
+                    tooltip: '$name · ${completed ? 'Done' : isFuture ? 'Upcoming' : progress > 0 ? '${(progress * 100).round()}%' : 'Missed'}',
                   ),
                 ),
               );

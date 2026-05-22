@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:image_cropper/image_cropper.dart';
+import '../services/profile_image_crop.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onDone;
@@ -625,33 +625,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
+        imageQuality: 92,
       );
       if (image != null) {
-        final croppedFile = await ImageCropper().cropImage(
-          sourcePath: image.path,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-          compressQuality: 85,
-          maxWidth: 512,
-          maxHeight: 512,
-          uiSettings: [
-            AndroidUiSettings(
-              toolbarTitle: 'Crop & Rotate Profile Picture',
-              toolbarColor: AppTheme.bg,
-              toolbarWidgetColor: Colors.white,
-              activeControlsWidgetColor: AppTheme.accent,
-              initAspectRatio: CropAspectRatioPreset.square,
-              lockAspectRatio: true,
-              hideBottomControls: false,
-            ),
-            IOSUiSettings(
-              title: 'Crop & Rotate Profile Picture',
-              aspectRatioLockEnabled: true,
-              resetAspectRatioEnabled: false,
-            ),
-          ],
+        final croppedFile = await ProfileImageCrop.crop(
+          image.path,
+          webContext: context,
         );
         if (croppedFile != null) {
           setState(() => _profileImagePath = croppedFile.path);

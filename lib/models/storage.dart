@@ -280,7 +280,7 @@ class Storage {
   static Future<void> addCoins(int amount) async {
     final stats = getUserStats()..coins += amount;
     await saveUserStats(stats);
-    AchievementChecker.checkOnCoins(stats.coins, stats.achievements);
+    await AchievementChecker.checkOnCoins(stats.coins, stats.achievements);
   }
 
   static Future<void> addXp(int amount) async {
@@ -311,8 +311,8 @@ class Storage {
       NotificationService.showLevelUp(stats.level);
     }
 
-    AchievementChecker.checkOnLevel(stats.level, stats.achievements);
-    AchievementChecker.checkOnRank(stats.rank, stats.achievements);
+    await AchievementChecker.checkOnLevel(stats.level, stats.achievements);
+    await AchievementChecker.checkOnRank(stats.rank, stats.achievements);
   }
   static Future<void> addLifetimeStat(String key, int amount) async {
     final stats = getUserStats();
@@ -358,7 +358,7 @@ class Storage {
     await saveData('last_streak_date', today.toIso8601String());
     await saveData('login_streak', streak);
 
-    AchievementChecker.checkOnStreak(streak, getUserStats().achievements);
+    await AchievementChecker.checkOnStreak(streak, getUserStats().achievements);
   }
 
   static int getLoginStreak() => getData('login_streak', defaultValue: 0);

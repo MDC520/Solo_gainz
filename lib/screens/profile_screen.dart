@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-
 import '../models/storage.dart';
+import '../services/profile_image_crop.dart';
 import '../ui/theme.dart';
 import '../widgets/background.dart';
 import 'settings_screen.dart';
@@ -39,31 +38,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _pickImage(ImageSource source) async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image =
-          await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 92,
+      );
       if (image != null) {
-        final croppedFile = await ImageCropper().cropImage(
-          sourcePath: image.path,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-          compressQuality: 85,
-          maxWidth: 512,
-          maxHeight: 512,
-          uiSettings: [
-            AndroidUiSettings(
-              toolbarTitle: 'Crop & Rotate Profile Picture',
-              toolbarColor: AppTheme.bg,
-              toolbarWidgetColor: Colors.white,
-              activeControlsWidgetColor: AppTheme.accent,
-              initAspectRatio: CropAspectRatioPreset.square,
-              lockAspectRatio: true,
-              hideBottomControls: false,
-            ),
-            IOSUiSettings(
-              title: 'Crop & Rotate Profile Picture',
-              aspectRatioLockEnabled: true,
-              resetAspectRatioEnabled: false,
-            ),
-          ],
+        final croppedFile = await ProfileImageCrop.crop(
+          image.path,
+          webContext: context,
         );
         if (croppedFile != null) {
           final permPath = await Storage.setProfileImage(croppedFile.path);
