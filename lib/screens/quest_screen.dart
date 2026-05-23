@@ -225,7 +225,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (i < 0 || i >= _quests.length) return;
       final q = _quests[i];
       if (q.completed) return;
-      
+
       q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
       await Storage.updateDailyQuest(i, q);
 
@@ -245,17 +245,17 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (i < 0 || i >= _quests.length) return;
       final q = _quests[i];
       if (q.completed) return;
-      
+
       q.completed = true;
       await Storage.updateDailyQuest(i, q);
-      
+
       if (_stats != null) {
         _stats!.xp += q.xpReward;
         _levelUp();
         await Storage.addLifetimeStat('total_completed', 1);
         _checkAchievements();
       }
-      
+
       if (mounted) {
         setState(() {});
         _xpDialog(q.xpReward);
@@ -312,7 +312,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (i < 0 || i >= _customQuests.length) return;
       final q = _customQuests[i];
       if (q.completed) return;
-      
+
       q.currentProgress = (q.currentProgress + delta).clamp(0, q.maxGoal);
       await Storage.updateCustomQuest(i, q);
       if (mounted) setState(() {});
@@ -326,17 +326,17 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       if (i < 0 || i >= _customQuests.length) return;
       final q = _customQuests[i];
       if (q.completed) return;
-      
+
       q.completed = true;
       await Storage.updateCustomQuest(i, q);
-      
+
       if (_stats != null) {
         _stats!.xp += q.xpReward;
         _levelUp();
         await Storage.addLifetimeStat('total_completed', 1);
         _checkAchievements();
       }
-      
+
       if (mounted) {
         setState(() {});
         _xpDialog(q.xpReward);
@@ -411,10 +411,14 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     final isEditingQuest = editIndex != null;
     final questToEdit = isEditingQuest ? _customQuests[editIndex] : null;
 
-    final nameCtrl = TextEditingController(text: isEditingQuest ? questToEdit!.questName : '');
+    final nameCtrl = TextEditingController(
+        text: isEditingQuest ? questToEdit!.questName : '');
     String system = isEditingQuest ? questToEdit!.system : 'reps';
-    String recur = isEditingQuest ? (questToEdit!.questType.contains('_onetime') ? 'One Time' : 'Daily') : 'Daily';
-    final goalCtrl = TextEditingController(text: isEditingQuest ? questToEdit!.maxGoal.toString() : '10');
+    String recur = isEditingQuest
+        ? (questToEdit!.questType.contains('_onetime') ? 'One Time' : 'Daily')
+        : 'Daily';
+    final goalCtrl = TextEditingController(
+        text: isEditingQuest ? questToEdit!.maxGoal.toString() : '10');
     int selectedIcon = 1;
 
     if (isEditingQuest) {
@@ -435,11 +439,14 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
               child: Container(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom),
                 decoration: BoxDecoration(
                   color: AppTheme.black.withValues(alpha: 0.8),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: 1.5),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(28)),
+                  border: Border.all(
+                      color: AppTheme.text1.withValues(alpha: 0.2), width: 1.5),
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
@@ -450,7 +457,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       children: [
                         Center(
                           child: Container(
-                            width: Responsive.w(32), height: Responsive.h(3.5),
+                            width: Responsive.w(32),
+                            height: Responsive.h(3.5),
                             decoration: BoxDecoration(
                               color: AppTheme.glassBorder,
                               borderRadius: BorderRadius.circular(2),
@@ -461,32 +469,40 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                         Row(
                           children: [
                             Text(
-                              isEditingQuest ? 'Refine Mission' : 'Forge Mission',
-                              style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22), letterSpacing: -0.5),
+                              isEditingQuest
+                                  ? 'Refine Mission'
+                                  : 'Forge Mission',
+                              style: AppTheme.h1().copyWith(
+                                  fontSize: Responsive.sp(22),
+                                  letterSpacing: -0.5),
                             ),
                           ],
                         ),
                         SizedBox(height: Responsive.h(24)),
-                        
                         _sheetLabel('MISSION NAME'),
                         SizedBox(height: Responsive.h(10)),
                         Container(
                           decoration: BoxDecoration(
                             color: AppTheme.glassMedium,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.3)),
+                            border: Border.all(
+                                color: AppTheme.glassBorder
+                                    .withValues(alpha: 0.3)),
                           ),
                           child: CupertinoTextField(
                             controller: nameCtrl,
-                            style: AppTheme.body(color: AppTheme.text1).copyWith(fontSize: Responsive.sp(14)),
+                            style: AppTheme.body(color: AppTheme.text1)
+                                .copyWith(fontSize: Responsive.sp(14)),
                             placeholder: 'e.g., Diamond Pushups',
-                            placeholderStyle: AppTheme.body(color: AppTheme.text2).copyWith(fontSize: Responsive.sp(14)),
+                            placeholderStyle:
+                                AppTheme.body(color: AppTheme.text2)
+                                    .copyWith(fontSize: Responsive.sp(14)),
                             cursorColor: AppTheme.accent,
-                            padding: Responsive.symmetric(horizontal: 16, vertical: 14),
+                            padding: Responsive.symmetric(
+                                horizontal: 16, vertical: 14),
                             decoration: null,
                           ),
                         ),
-                        
                         SizedBox(height: Responsive.h(20)),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,8 +516,10 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                                   SizedBox(height: Responsive.h(10)),
                                   _buildSlidingToggle(
                                     options: ['Reps', 'Timer'],
-                                    selected: system == 'reps' ? 'Reps' : 'Timer',
-                                    onSelect: (v) => setModalState(() => system = v.toLowerCase()),
+                                    selected:
+                                        system == 'reps' ? 'Reps' : 'Timer',
+                                    onSelect: (v) => setModalState(
+                                        () => system = v.toLowerCase()),
                                   ),
                                 ],
                               ),
@@ -512,23 +530,31 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _sheetLabel(system == 'reps' ? 'GOAL' : 'SEC'),
+                                  _sheetLabel(
+                                      system == 'reps' ? 'GOAL' : 'SEC'),
                                   SizedBox(height: Responsive.h(10)),
                                   Container(
                                     decoration: BoxDecoration(
                                       color: AppTheme.glassMedium,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: AppTheme.glassBorder.withValues(alpha: 0.3)),
+                                      border: Border.all(
+                                          color: AppTheme.glassBorder
+                                              .withValues(alpha: 0.3)),
                                     ),
                                     child: CupertinoTextField(
                                       controller: goalCtrl,
-                                      style: AppTheme.mono(color: AppTheme.accent, size: 14), // mono uses responsive sp internally
+                                      style: AppTheme.mono(
+                                          color: AppTheme.accent,
+                                          size:
+                                              14), // mono uses responsive sp internally
                                       placeholder: '10',
-                                      placeholderStyle: AppTheme.mono(color: AppTheme.text2, size: 14),
+                                      placeholderStyle: AppTheme.mono(
+                                          color: AppTheme.text2, size: 14),
                                       keyboardType: TextInputType.number,
                                       cursorColor: AppTheme.accent,
                                       textAlign: TextAlign.center,
-                                      padding: Responsive.symmetric(vertical: 12),
+                                      padding:
+                                          Responsive.symmetric(vertical: 12),
                                       decoration: null,
                                     ),
                                   ),
@@ -537,7 +563,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             ),
                           ],
                         ),
-
                         SizedBox(height: Responsive.h(20)),
                         _sheetLabel('FREQUENCY'),
                         SizedBox(height: Responsive.h(10)),
@@ -546,7 +571,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                           selected: recur,
                           onSelect: (v) => setModalState(() => recur = v),
                         ),
-
                         SizedBox(height: Responsive.h(20)),
                         _sheetLabel('ICON'),
                         SizedBox(height: Responsive.h(12)),
@@ -559,22 +583,32 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               final idx = i + 1;
                               final isSelected = selectedIcon == idx;
                               return SGTouchable(
-                                onTap: () => setModalState(() => selectedIcon = idx),
+                                onTap: () =>
+                                    setModalState(() => selectedIcon = idx),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
-                                  margin: EdgeInsets.only(right: Responsive.w(12)),
-                                  width: Responsive.h(52), height: Responsive.h(52),
+                                  margin:
+                                      EdgeInsets.only(right: Responsive.w(12)),
+                                  width: Responsive.h(52),
+                                  height: Responsive.h(52),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppTheme.accent : AppTheme.glassMedium,
+                                    color: isSelected
+                                        ? AppTheme.accent
+                                        : AppTheme.glassMedium,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: isSelected ? AppTheme.accent : AppTheme.glassBorder.withValues(alpha: 0.3),
+                                      color: isSelected
+                                          ? AppTheme.accent
+                                          : AppTheme.glassBorder
+                                              .withValues(alpha: 0.3),
                                       width: 1.5,
                                     ),
                                   ),
                                   child: Icon(
                                     _getCustomQuestIcon(idx),
-                                    color: isSelected ? Colors.white : AppTheme.text2,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppTheme.text2,
                                     size: Responsive.icon(22),
                                   ),
                                 ),
@@ -582,10 +616,11 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             },
                           ),
                         ),
-                        
                         SizedBox(height: Responsive.h(32)),
                         SGButton(
-                          label: isEditingQuest ? 'UPDATE MISSION' : 'FORGE MISSION',
+                          label: isEditingQuest
+                              ? 'UPDATE MISSION'
+                              : 'FORGE MISSION',
                           height: 50,
                           onTap: () {
                             final name = nameCtrl.text.trim();
@@ -593,9 +628,11 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             if (name.isEmpty) return;
                             Navigator.pop(ctx);
                             if (isEditingQuest) {
-                              _applyCustomQuestEdit(editIndex, name, system, goal, recur, selectedIcon);
+                              _applyCustomQuestEdit(editIndex, name, system,
+                                  goal, recur, selectedIcon);
                             } else {
-                              _addCustomQuest(name, system, goal, recur, selectedIcon);
+                              _addCustomQuest(
+                                  name, system, goal, recur, selectedIcon);
                             }
                           },
                           customColor: AppTheme.accent,
@@ -612,7 +649,9 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _sheetLabel(String t) => Text(t, style: AppTheme.label(color: AppTheme.text2).copyWith(fontSize: 10, letterSpacing: 1.2));
+  Widget _sheetLabel(String t) => Text(t,
+      style: AppTheme.label(color: AppTheme.text2)
+          .copyWith(fontSize: 10, letterSpacing: 1.2));
 
   Widget _buildSlidingToggle({
     required List<String> options,
@@ -656,13 +695,17 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       onTap: () => onSelect(opt),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: const BoxDecoration(color: Colors.transparent),
+                        decoration:
+                            const BoxDecoration(color: Colors.transparent),
                         child: Text(
                           opt,
                           textAlign: TextAlign.center,
                           style: AppTheme.label(
                             color: active ? Colors.white : AppTheme.text2,
-                          ).copyWith(fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.normal),
+                          ).copyWith(
+                              fontSize: 11,
+                              fontWeight:
+                                  active ? FontWeight.bold : FontWeight.normal),
                         ),
                       ),
                     ),
@@ -676,10 +719,12 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-  void _applyCustomQuestEdit(int index, String name, String system, int goal, String recur, int iconIdx) {
+  void _applyCustomQuestEdit(int index, String name, String system, int goal,
+      String recur, int iconIdx) {
     final oldQuest = _customQuests[index];
-    final questType = 'custom_$iconIdx${recur == 'One Time' ? '_one_time' : ''}';
-    
+    final questType =
+        'custom_$iconIdx${recur == 'One Time' ? '_one_time' : ''}';
+
     setState(() {
       _customQuests[index] = DailyQuest(
         questName: name,
@@ -760,13 +805,14 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
   void _showExercisePickerFor(int index) {
     final allExercises = ExerciseLibrary.all;
     // Exclude exercises already assigned to other slots
-    final usedTypes = _quests.asMap().entries
+    final usedTypes = _quests
+        .asMap()
+        .entries
         .where((e) => e.key != index)
         .map((e) => e.value.questType)
         .toSet();
-    final available = allExercises
-        .where((e) => !usedTypes.contains(e.type))
-        .toList();
+    final available =
+        allExercises.where((e) => !usedTypes.contains(e.type)).toList();
 
     showModalBottomSheet(
       context: context,
@@ -780,7 +826,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           color: AppTheme.bg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           border: Border(
-            top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
+            top: BorderSide(
+                color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
           ),
         ),
         child: Column(
@@ -792,7 +839,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 children: [
                   Center(
                     child: Container(
-                      width: 40, height: 4,
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
                         color: AppTheme.line,
                         borderRadius: BorderRadius.circular(2),
@@ -812,7 +860,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                             color: AppTheme.surface,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.close, color: AppTheme.text2, size: 20),
+                          child: Icon(Icons.close,
+                              color: AppTheme.text2, size: 20),
                         ),
                       ),
                     ],
@@ -835,7 +884,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(14),
@@ -844,9 +894,12 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       child: Row(
                         children: [
                           Container(
-                            width: 36, height: 36,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
-                              color: (isTimer ? AppTheme.amber : AppTheme.accent).withValues(alpha: 0.15),
+                              color:
+                                  (isTimer ? AppTheme.amber : AppTheme.accent)
+                                      .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -868,7 +921,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                               ],
                             ),
                           ),
-                          Icon(Icons.chevron_right, color: AppTheme.text3, size: 20),
+                          Icon(Icons.chevron_right,
+                              color: AppTheme.text3, size: 20),
                         ],
                       ),
                     ),
@@ -905,7 +959,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     final systems = ['timer', 'reps', 'km'];
     final labels = ['Timer (seconds)', 'Reps', 'Kilometers'];
     final icons = [Icons.timer, Icons.repeat, Icons.straighten];
-    final canUseKm = ['running', 'treadmill', 'elliptical', 'sprints'].contains(quest.questType);
+    final canUseKm = ['running', 'treadmill', 'elliptical', 'sprints']
+        .contains(quest.questType);
 
     showModalBottomSheet(
       context: context,
@@ -915,7 +970,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           color: AppTheme.bg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           border: Border(
-            top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
+            top: BorderSide(
+                color: AppTheme.accent.withValues(alpha: 0.3), width: 1.5),
           ),
         ),
         child: Padding(
@@ -925,7 +981,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: AppTheme.line,
                     borderRadius: BorderRadius.circular(2),
@@ -935,7 +992,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
               const SizedBox(height: 20),
               Text('Tracking System', style: AppTheme.h2()),
               const SizedBox(height: 6),
-              Text('How do you want to track this exercise?', style: AppTheme.caption()),
+              Text('How do you want to track this exercise?',
+                  style: AppTheme.caption()),
               const SizedBox(height: 24),
               ...List.generate(systems.length, (i) {
                 final sys = systems[i];
@@ -951,7 +1009,8 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                   },
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(
                       color: isLocked
                           ? AppTheme.surface.withValues(alpha: 0.5)
@@ -962,29 +1021,43 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                       border: Border.all(
                         color: isLocked
                             ? AppTheme.line.withValues(alpha: 0.5)
-                            : isSelected ? AppTheme.accent : AppTheme.line,
+                            : isSelected
+                                ? AppTheme.accent
+                                : AppTheme.line,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
                     child: Row(
                       children: [
-                        Icon(icons[i], color: isLocked ? AppTheme.muted : (isSelected ? AppTheme.accent : AppTheme.text2), size: 22),
+                        Icon(icons[i],
+                            color: isLocked
+                                ? AppTheme.muted
+                                : (isSelected
+                                    ? AppTheme.accent
+                                    : AppTheme.text2),
+                            size: 22),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Text(labels[i], style: AppTheme.h3(
-                            color: isLocked ? AppTheme.muted : (isSelected ? AppTheme.accent : AppTheme.text1),
-                          )),
+                          child: Text(labels[i],
+                              style: AppTheme.h3(
+                                color: isLocked
+                                    ? AppTheme.muted
+                                    : (isSelected
+                                        ? AppTheme.accent
+                                        : AppTheme.text1),
+                              )),
                         ),
                         if (isLocked)
                           Icon(Icons.lock, color: AppTheme.muted, size: 20)
                         else if (isSelected)
-                          Icon(Icons.check_circle, color: AppTheme.accent, size: 22),
+                          Icon(Icons.check_circle,
+                              color: AppTheme.accent, size: 22),
                       ],
                     ),
                   ),
                 );
               }),
-              const SizedBox(height: 8),
+        const SizedBox(height: 4),
             ],
           ),
         ),
@@ -1001,7 +1074,9 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
       _quests[index] = DailyQuest(
         questName: q.questName,
         questType: q.questType,
-        maxGoal: newSystem == 'timer' ? max * 6 : (newSystem == 'km' ? (max ~/ 10).clamp(1, 50) : max),
+        maxGoal: newSystem == 'timer'
+            ? max * 6
+            : (newSystem == 'km' ? (max ~/ 10).clamp(1, 50) : max),
         xpReward: q.xpReward,
         system: newSystem,
       );
@@ -1019,107 +1094,112 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Daily Missions', style: AppTheme.h1()),
-                          const SizedBox(height: 4),
-                          Text(
-                            _isEditing ? 'Tap a card to customize it.' : 'Complete your daily grind.',
-                            style: AppTheme.caption(color: _isEditing ? AppTheme.accent : AppTheme.text2),
-                          ),
-                        ],
-                      ),
-                      SGTouchable(
-                        onTap: (_allDone || _tab == 1) ? null : _toggleEditMode,
-                        disabled: _allDone || _tab == 1,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: 110,
-                          height: 38,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Daily Missions', style: AppTheme.h1()),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isEditing
+                              ? 'Tap a card to customize it.'
+                              : 'Complete your daily grind.',
+                          style: AppTheme.caption(
+                              color: _isEditing
+                                  ? AppTheme.accent
+                                  : AppTheme.text2),
+                        ),
+                      ],
+                    ),
+                    SGTouchable(
+                      onTap: (_allDone || _tab == 1) ? null : _toggleEditMode,
+                      disabled: _allDone || _tab == 1,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: 110,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: (_allDone || _tab == 1)
+                              ? AppTheme.surface.withValues(alpha: 0.5)
+                              : _isEditing
+                                  ? AppTheme.accent
+                                  : AppTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
                             color: (_allDone || _tab == 1)
-                                ? AppTheme.surface.withValues(alpha: 0.5)
+                                ? AppTheme.text3.withValues(alpha: 0.3)
                                 : _isEditing
                                     ? AppTheme.accent
-                                    : AppTheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: (_allDone || _tab == 1)
-                                  ? AppTheme.text3.withValues(alpha: 0.3)
-                                  : _isEditing
-                                      ? AppTheme.accent
-                                      : AppTheme.text1,
-                              width: 1.5,
-                            ),
+                                    : AppTheme.text1,
+                            width: 1.5,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _isEditing ? Icons.check : Icons.tune_rounded,
-                                size: 16,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isEditing ? Icons.check : Icons.tune_rounded,
+                              size: 16,
+                              color: (_allDone || _tab == 1)
+                                  ? AppTheme.muted
+                                  : _isEditing
+                                      ? Colors.black
+                                      : AppTheme.text2,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _isEditing ? 'Done' : 'Customize',
+                              style: AppTheme.label(
                                 color: (_allDone || _tab == 1)
                                     ? AppTheme.muted
                                     : _isEditing
                                         ? Colors.black
                                         : AppTheme.text2,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _isEditing ? 'Done' : 'Customize',
-                                style: AppTheme.label(
-                                  color: (_allDone || _tab == 1)
-                                      ? AppTheme.muted
-                                      : _isEditing
-                                          ? Colors.black
-                                          : AppTheme.text2,
-                                ).copyWith(fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                   AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: _isEditing ? 0.4 : 1.0,
-                    child: AbsorbPointer(
-                      absorbing: _isEditing,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(2), // Space for the border
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.silver, width: 1.5),
-                        ),
-                        child: CupertinoSlidingSegmentedControl<int>(
-                          backgroundColor: AppTheme.surface,
-                          thumbColor: AppTheme.accent, // Make the selector green
-                          groupValue: _tab,
-                          onValueChanged: (v) {
-                            if (v != null) setState(() => _tab = v);
-                          },
-                          children: {
-                            0: _buildTab('Daily Quests', _tab == 0),
-                            1: _buildTab('Custom Quests', _tab == 1),
-                          },
+                              ).copyWith(fontSize: 11),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: _isEditing ? 0.4 : 1.0,
+                  child: AbsorbPointer(
+                    absorbing: _isEditing,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(2), // Space for the border
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.silver, width: 1.5),
+                      ),
+                      child: CupertinoSlidingSegmentedControl<int>(
+                        backgroundColor: AppTheme.surface,
+                        thumbColor: AppTheme.accent, // Make the selector green
+                        groupValue: _tab,
+                        onValueChanged: (v) {
+                          if (v != null) setState(() => _tab = v);
+                        },
+                        children: {
+                          0: _buildTab('Daily Quests', _tab == 0),
+                          1: _buildTab('Custom Quests', _tab == 1),
+                        },
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+        ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
           sliver: _tab == 0 ? _buildDailyList() : _buildCustomList(),
@@ -1178,7 +1258,9 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           index: i,
           enabled: _isEditing,
           child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero).animate(
+            position:
+                Tween<Offset>(begin: const Offset(0.2, 0), end: Offset.zero)
+                    .animate(
               CurvedAnimation(parent: _anims[i], curve: Curves.easeOutCubic),
             ),
             child: Padding(
@@ -1243,7 +1325,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
     );
   }
 
-
   Widget _buildCustomList() {
     if (_customQuests.isEmpty) {
       return SliverFillRemaining(
@@ -1254,27 +1335,36 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: Responsive.h(120), height: Responsive.h(120),
+                width: Responsive.h(120),
+                height: Responsive.h(120),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [AppTheme.accent.withValues(alpha: 0.15), Colors.transparent],
+                    colors: [
+                      AppTheme.accent.withValues(alpha: 0.15),
+                      Colors.transparent
+                    ],
                   ),
                 ),
                 child: Center(
                   child: Container(
-                    width: Responsive.h(60), height: Responsive.h(60),
+                    width: Responsive.h(60),
+                    height: Responsive.h(60),
                     decoration: BoxDecoration(
                       color: AppTheme.glassMedium,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3), width: 1.2),
+                      border: Border.all(
+                          color: AppTheme.accent.withValues(alpha: 0.3),
+                          width: 1.2),
                     ),
-                    child: Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: Responsive.icon(28)),
+                    child: Icon(Icons.auto_awesome_rounded,
+                        color: AppTheme.accent, size: Responsive.icon(28)),
                   ),
                 ),
               ),
               SizedBox(height: Responsive.h(24)),
-              Text('Uncharted Territory', style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22))),
+              Text('Uncharted Territory',
+                  style: AppTheme.h1().copyWith(fontSize: Responsive.sp(22))),
               SizedBox(height: Responsive.h(8)),
               Text(
                 'Forge custom missions to define your own path and push beyond limits.',
@@ -1307,15 +1397,19 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
           index: i,
           enabled: true,
           child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
-              CurvedAnimation(parent: _customAnims[i], curve: Curves.easeOutCubic),
+            position:
+                Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero)
+                    .animate(
+              CurvedAnimation(
+                  parent: _customAnims[i], curve: Curves.easeOutCubic),
             ),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _QuestCard(
                 questIndex: i,
                 quest: quest,
-                color: AppTheme.purple, // Custom quests get a distinct purple aura
+                color:
+                    AppTheme.purple, // Custom quests get a distinct purple aura
                 onUpdate: (delta) => _updateCustomReps(i, delta),
                 onComplete: () => _completeCustomQuest(i),
                 isEditing: _isEditing,
@@ -1333,7 +1427,7 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 
   Widget _buildCustomFooter() {
     if (_customQuests.length >= 3) return const SizedBox.shrink();
-    
+
     return SGTouchable(
       onTap: _showCreateCustomQuestSheet,
       child: Container(
@@ -1578,7 +1672,8 @@ class _QuestCardState extends State<_QuestCard> {
     );
   }
 
-  Widget _buildActiveCard(DailyQuest quest, double pct, bool isTimer, int iconIndex) {
+  Widget _buildActiveCard(
+      DailyQuest quest, double pct, bool isTimer, int iconIndex) {
     final isKm = quest.system == 'km';
 
     return KeyedSubtree(
@@ -1605,9 +1700,7 @@ class _QuestCardState extends State<_QuestCard> {
                 : AppTheme.surface,
             borderRadius: BorderRadius.circular(Responsive.r(16)),
             border: Border.all(
-              color: _isEditingLocal
-                  ? Colors.transparent
-                  : AppTheme.silver,
+              color: _isEditingLocal ? Colors.transparent : AppTheme.silver,
               width: Responsive.dp(1.5),
             ),
           ),
@@ -1622,23 +1715,35 @@ class _QuestCardState extends State<_QuestCard> {
                     decoration: BoxDecoration(
                       color: widget.color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(Responsive.r(10)),
-                      border: Border.all(color: AppTheme.silver.withValues(alpha: 0.3), width: Responsive.dp(1.5)),
+                      border: Border.all(
+                          color: AppTheme.silver.withValues(alpha: 0.3),
+                          width: Responsive.dp(1.5)),
                     ),
                     child: Center(
                       child: iconIndex > 0
-                          ? Icon(_getCustomQuestIcon(iconIndex), color: AppTheme.text1, size: Responsive.icon(20))
-                          : Text('${widget.questIndex + 1}', 
-                              style: AppTheme.h2(color: AppTheme.text1).copyWith(fontSize: Responsive.sp(18), fontWeight: FontWeight.w800)),
+                          ? Icon(_getCustomQuestIcon(iconIndex),
+                              color: AppTheme.text1, size: Responsive.icon(20))
+                          : Text('${widget.questIndex + 1}',
+                              style: AppTheme.h2(color: AppTheme.text1)
+                                  .copyWith(
+                                      fontSize: Responsive.sp(18),
+                                      fontWeight: FontWeight.w800)),
                     ),
                   ),
                   SizedBox(width: Responsive.w(14)),
-                  Container(width: Responsive.dp(1.5), height: Responsive.h(24), color: widget.color.withValues(alpha: 0.2)),
+                  Container(
+                      width: Responsive.dp(1.5),
+                      height: Responsive.h(24),
+                      color: widget.color.withValues(alpha: 0.2)),
                   SizedBox(width: Responsive.w(14)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(quest.questName, style: AppTheme.h3().copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                        Text(quest.questName,
+                            style: AppTheme.h3().copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5)),
                         SizedBox(height: Responsive.h(2)),
                         Text(
                           isTimer
@@ -1659,9 +1764,11 @@ class _QuestCardState extends State<_QuestCard> {
                         decoration: BoxDecoration(
                           color: AppTheme.red.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(Responsive.r(10)),
-                          border: Border.all(color: AppTheme.red.withValues(alpha: 0.2)),
+                          border: Border.all(
+                              color: AppTheme.red.withValues(alpha: 0.2)),
                         ),
-                        child: Icon(Icons.delete_outline_rounded, size: Responsive.icon(18), color: AppTheme.red),
+                        child: Icon(Icons.delete_outline_rounded,
+                            size: Responsive.icon(18), color: AppTheme.red),
                       ),
                     ),
                 ],
@@ -1675,10 +1782,12 @@ class _QuestCardState extends State<_QuestCard> {
                   transitionBuilder: (child, anim) => SlideTransition(
                     position: Tween<Offset>(
                       begin: child.key == const ValueKey('edit')
-                          ? const Offset(0, -0.6)   // edit slides in from top
-                          : const Offset(0, 0.6),   // normal slides in from bottom
+                          ? const Offset(0, -0.6) // edit slides in from top
+                          : const Offset(
+                              0, 0.6), // normal slides in from bottom
                       end: Offset.zero,
-                    ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutQuart)),
+                    ).animate(CurvedAnimation(
+                        parent: anim, curve: Curves.easeOutQuart)),
                     child: FadeTransition(opacity: anim, child: child),
                   ),
                   child: _isEditingLocal
@@ -1761,14 +1870,19 @@ class _QuestCardState extends State<_QuestCard> {
                   decoration: BoxDecoration(
                     color: AppTheme.accent.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(Responsive.r(10)),
-                    border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35), width: Responsive.dp(1.2)),
+                    border: Border.all(
+                        color: AppTheme.accent.withValues(alpha: 0.35),
+                        width: Responsive.dp(1.2)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.swap_horiz, size: Responsive.icon(14), color: AppTheme.accent),
+                      Icon(Icons.swap_horiz,
+                          size: Responsive.icon(14), color: AppTheme.accent),
                       SizedBox(width: Responsive.w(6)),
-                      Text('Change', style: AppTheme.label(color: AppTheme.accent).copyWith(fontSize: Responsive.sp(11))),
+                      Text('Change',
+                          style: AppTheme.label(color: AppTheme.accent)
+                              .copyWith(fontSize: Responsive.sp(11))),
                     ],
                   ),
                 ),
@@ -1783,16 +1897,24 @@ class _QuestCardState extends State<_QuestCard> {
                   decoration: BoxDecoration(
                     color: AppTheme.amber.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(Responsive.r(10)),
-                    border: Border.all(color: AppTheme.amber.withValues(alpha: 0.35), width: Responsive.dp(1.2)),
+                    border: Border.all(
+                        color: AppTheme.amber.withValues(alpha: 0.35),
+                        width: Responsive.dp(1.2)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.tune, size: Responsive.icon(14), color: AppTheme.amber),
+                      Icon(Icons.tune,
+                          size: Responsive.icon(14), color: AppTheme.amber),
                       SizedBox(width: Responsive.w(6)),
                       Text(
-                        quest.system == 'timer' ? 'Timer' : quest.system == 'km' ? 'KM' : 'Reps',
-                        style: AppTheme.label(color: AppTheme.amber).copyWith(fontSize: Responsive.sp(11)),
+                        quest.system == 'timer'
+                            ? 'Timer'
+                            : quest.system == 'km'
+                                ? 'KM'
+                                : 'Reps',
+                        style: AppTheme.label(color: AppTheme.amber)
+                            .copyWith(fontSize: Responsive.sp(11)),
                       ),
                     ],
                   ),
@@ -1824,7 +1946,9 @@ class _LinearProgress extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppTheme.text1.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(Responsive.r(2)),
-                border: Border.all(color: AppTheme.text1.withValues(alpha: 0.2), width: Responsive.dp(0.5)),
+                border: Border.all(
+                    color: AppTheme.text1.withValues(alpha: 0.2),
+                    width: Responsive.dp(0.5)),
               ),
             ),
             AnimatedContainer(
@@ -1911,16 +2035,18 @@ class _ActionButtonState extends State<_ActionButton> {
             border: Border.all(
               color: widget.active
                   ? AppTheme.accent
-                  : (widget.disabled ? AppTheme.text3.withValues(alpha: 0.5) : AppTheme.text1),
+                  : (widget.disabled
+                      ? AppTheme.text3.withValues(alpha: 0.5)
+                      : AppTheme.text1),
             ),
           ),
-            child: Icon(
-              widget.icon,
-              size: Responsive.icon(20),
-              color: widget.active
-                  ? Colors.white
-                  : (widget.disabled ? AppTheme.text3 : AppTheme.text1),
-            ),
+          child: Icon(
+            widget.icon,
+            size: Responsive.icon(20),
+            color: widget.active
+                ? Colors.white
+                : (widget.disabled ? AppTheme.text3 : AppTheme.text1),
+          ),
         ),
       ),
     );
@@ -1982,16 +2108,12 @@ class _CelebrationCardState extends State<_CelebrationCard>
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
-          builder: (context) => _DetailedCountdownSheet(onTimerZero: widget.onTimerZero),
+          builder: (context) =>
+              _DetailedCountdownSheet(onTimerZero: widget.onTimerZero),
         );
       },
-      child: Container(
+      child: Padding(
         padding: Responsive.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.green.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(Responsive.r(16)),
-          border: Border.all(color: AppTheme.text1, width: Responsive.dp(1.5)),
-        ),
         child: Row(
           children: [
             AnimatedBuilder(
@@ -2002,7 +2124,8 @@ class _CelebrationCardState extends State<_CelebrationCard>
                   child: child,
                 );
               },
-              child: Icon(Icons.emoji_events, size: Responsive.icon(22), color: AppTheme.green),
+              child: Icon(Icons.emoji_events,
+                  size: Responsive.icon(22), color: AppTheme.green),
             ),
             SizedBox(width: Responsive.w(12)),
             Expanded(
@@ -2013,7 +2136,6 @@ class _CelebrationCardState extends State<_CelebrationCard>
                   Text('DAILY MISSIONS COMPLETE',
                       style: AppTheme.h3(color: AppTheme.green)
                           .copyWith(fontSize: Responsive.sp(12))),
-                  Text('Next reset', style: AppTheme.caption()),
                 ],
               ),
             ),
@@ -2038,7 +2160,8 @@ class _DetailedCountdownSheet extends StatefulWidget {
   const _DetailedCountdownSheet({required this.onTimerZero});
 
   @override
-  State<_DetailedCountdownSheet> createState() => _DetailedCountdownSheetState();
+  State<_DetailedCountdownSheet> createState() =>
+      _DetailedCountdownSheetState();
 }
 
 class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
@@ -2088,7 +2211,8 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
       }
 
       setState(() => _remaining = diff);
-    })..start();
+    })
+      ..start();
   }
 
   @override
@@ -2104,7 +2228,8 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
     final hours = _remaining.inHours.toString().padLeft(2, '0');
     final minutes = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
-    final millis = ((_remaining.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0');
+    final millis =
+        ((_remaining.inMilliseconds % 1000) ~/ 10).toString().padLeft(2, '0');
 
     return Padding(
       padding: EdgeInsets.only(
@@ -2116,7 +2241,9 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(Responsive.r(20)),
-          border: Border.all(color: AppTheme.green.withValues(alpha: 0.4), width: Responsive.dp(2)),
+          border: Border.all(
+              color: AppTheme.green.withValues(alpha: 0.4),
+              width: Responsive.dp(2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2133,7 +2260,8 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(Responsive.r(18))),
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(Responsive.r(18))),
               ),
               child: Row(
                 children: [
@@ -2144,13 +2272,17 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                       child: child,
                     ),
                     child: Container(
-                      width: Responsive.h(36), height: Responsive.h(36),
+                      width: Responsive.h(36),
+                      height: Responsive.h(36),
                       decoration: BoxDecoration(
                         color: AppTheme.green.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(Responsive.r(10)),
-                        border: Border.all(color: AppTheme.green.withValues(alpha: 0.4)),
+                        border: Border.all(
+                            color: AppTheme.green.withValues(alpha: 0.4)),
                       ),
-                      child: Icon(Icons.emoji_events, size: Responsive.icon(20), color: const Color(0xFF00E676)),
+                      child: Icon(Icons.emoji_events,
+                          size: Responsive.icon(20),
+                          color: const Color(0xFF00E676)),
                     ),
                   ),
                   SizedBox(width: Responsive.w(12)),
@@ -2158,11 +2290,14 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ALL MISSIONS COMPLETE',
-                          style: AppTheme.label(color: AppTheme.green).copyWith(fontSize: Responsive.sp(11), letterSpacing: 1.5),
+                        Text(
+                          'ALL MISSIONS COMPLETE',
+                          style: AppTheme.label(color: AppTheme.green).copyWith(
+                              fontSize: Responsive.sp(11), letterSpacing: 1.5),
                         ),
                         SizedBox(height: Responsive.h(2)),
-                        Text('Next reset countdown',
+                        Text(
+                          'Next reset countdown',
                           style: AppTheme.caption(color: AppTheme.text2),
                         ),
                       ],
@@ -2171,13 +2306,16 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
                   AnimatedBuilder(
                     animation: _pulseAnim,
                     builder: (ctx, child) => Container(
-                      width: Responsive.h(8), height: Responsive.h(8),
+                      width: Responsive.h(8),
+                      height: Responsive.h(8),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.green.withValues(alpha: _pulseAnim.value),
+                        color:
+                            AppTheme.green.withValues(alpha: _pulseAnim.value),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.green.withValues(alpha: _pulseAnim.value * 0.5),
+                            color: AppTheme.green
+                                .withValues(alpha: _pulseAnim.value * 0.5),
                             blurRadius: 8,
                             spreadRadius: 2,
                           ),
@@ -2190,7 +2328,9 @@ class _DetailedCountdownSheetState extends State<_DetailedCountdownSheet>
             ),
 
             // ── Divider ──
-            Container(height: Responsive.h(1), color: AppTheme.green.withValues(alpha: 0.15)),
+            Container(
+                height: Responsive.h(1),
+                color: AppTheme.green.withValues(alpha: 0.15)),
 
             // ── Bottom: Timer Split View ──
             Padding(
@@ -2296,7 +2436,8 @@ class _HintCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.info_outline, size: Responsive.icon(14), color: AppTheme.muted),
+          Icon(Icons.info_outline,
+              size: Responsive.icon(14), color: AppTheme.muted),
           SizedBox(width: Responsive.w(8)),
           Text(
             'Complete all daily quests to finish your training.',
@@ -2447,8 +2588,11 @@ class _MarchingDashPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MarchingDashPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color || oldDelegate.opacity != opacity;
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.opacity != opacity;
 }
+
 // ── Custom Delayed Reorder Listener ──────────────────────────────
 class _SoloReorderListener extends ReorderableDragStartListener {
   const _SoloReorderListener({

@@ -16,13 +16,15 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   UserStats? _s;
   String _playerAnim = 'Run'; // Refined in initState based on time
   int _playerAnimId = 0;
   String? _profileImagePath;
+  late AnimationController _profileZoomCtrl;
+  OverlayEntry? _zoomEntry;
   ValueListenable<Box>? _dailyQuestsListenable;
-  int _activeWeekIndex = 0;
+  ValueListenable<Box>? _profileImageListenable;
   late final PageController _weeklyPageController;
   String? _bubbleMessage;
   Timer? _bubbleTimer;
@@ -295,22 +297,22 @@ class _HomePageState extends State<HomePage> {
     final diffDays = todaySunday.difference(joinSunday).inDays;
     final int weeksPassed = (diffDays / 7).round();
     final int maxWeeks = weeksPassed.clamp(0, 3);
-    
-    _activeWeekIndex = maxWeeks; // Start on the rightmost page (current week)
+
     _weeklyPageController = PageController(initialPage: maxWeeks);
     _load();
     final weekday = DateTime.now().weekday;
     final isWeekend = weekday == 6 || weekday == 7;
     _playerAnim = isWeekend ? 'Idle' : (_isNight ? 'Stunned' : 'Run');
     _playerAnimId++;
-    if (isWeekend) {
-      final rand = Random();
-      final List<WeekendQuestion> shuffled = List.from(_weekendPool)..shuffle(rand);
-      _currentWeekendQuestions = shuffled.take(3).toList();
-    }
+    final rand = Random();
+    final List<WeekendQuestion> shuffled = List.from(_weekendPool)..shuffle(rand);
+    _currentWeekendQuestions = shuffled.take(3).toList();
 
     _dailyQuestsListenable = Storage.watch(Storage.dailyQuestsKey);
     _dailyQuestsListenable?.addListener(_onStorageChange);
+    _profileImageListenable = Storage.watch('profile_image');
+    _profileImageListenable?.addListener(_onStorageChange);
+    _profileZoomCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
     _resetUserTouchTimer();
   }
 
@@ -335,6 +337,65 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _openProfileZoom() {
+    AppTheme.tap();
+    _profileZoomCtrl.forward(from: 0);
+    _zoomEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeProfileZoom,
+              child: AnimatedBuilder(
+                animation: _profileZoomCtrl,
+                builder: (context, _) => Container(
+                  color: Colors.black.withValues(alpha: 0.92 * _profileZoomCtrl.value),
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: GestureDetector(
+              onTap: () {},
+              child: AnimatedBuilder(
+                animation: _profileZoomCtrl,
+                builder: (context, _) => Transform.scale(
+                  scale: _profileZoomCtrl.value,
+                  child: _profileImagePath != null &&
+                          _profileImagePath!.isNotEmpty &&
+                          File(_profileImagePath!).existsSync()
+                      ? Image.file(
+                          File(_profileImagePath!),
+                          width: Responsive.w(260),
+                          height: Responsive.w(260),
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: Responsive.w(260),
+                          height: Responsive.w(260),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            border: Border.all(color: AppTheme.accent, width: Responsive.dp(2)),
+                          ),
+                          child: Icon(Icons.person_rounded, size: Responsive.w(80), color: AppTheme.text3),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    Overlay.of(context).insert(_zoomEntry!);
+  }
+
+  void _closeProfileZoom() {
+    _profileZoomCtrl.reverse().then((_) {
+      _zoomEntry?.remove();
+      _zoomEntry = null;
+    });
+  }
+
   @override
   void dispose() {
     _bubbleTimer?.cancel();
@@ -342,6 +403,9 @@ class _HomePageState extends State<HomePage> {
     _touchIdleTimer?.cancel();
     _weeklyPageController.dispose();
     _dailyQuestsListenable?.removeListener(_onStorageChange);
+    _profileImageListenable?.removeListener(_onStorageChange);
+    _zoomEntry?.remove();
+    _profileZoomCtrl.dispose();
     super.dispose();
   }
 
@@ -433,65 +497,27 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Container(
-      margin: Responsive.symmetric(horizontal: 20),
-      padding: Responsive.symmetric(horizontal: 16, vertical: 14),
+      margin: Responsive.symmetric(horizontal: 4),
+      padding: Responsive.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(Responsive.r(14)),
-        border: Border.all(color: AppTheme.line, width: Responsive.dp(1)),
+        border: Border.all(color: AppTheme.accent, width: Responsive.dp(2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Weekly Progress',
-                  style: AppTheme.h3().copyWith(
-                    fontSize: Responsive.sp(14),
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.text1,
-                  ),
-                ),
-              ),
-              if (maxWeeks > 0)
-                Row(
-                  children: List.generate(maxWeeks + 1, (index) {
-                    final isActive = (maxWeeks - _activeWeekIndex) == index;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: isActive ? Responsive.w(14) : Responsive.w(5),
-                      height: Responsive.w(5),
-                      margin: EdgeInsets.only(left: Responsive.w(4)),
-                      decoration: BoxDecoration(
-                        color: isActive ? AppTheme.accent : AppTheme.line,
-                        borderRadius: BorderRadius.circular(Responsive.r(3)),
-                      ),
-                    );
-                  }),
-                ),
-            ],
-          ),
-          if (maxWeeks > 0) ...[
-            SizedBox(height: Responsive.h(4)),
-            Text(
-              'Swipe for past weeks',
-              style: AppTheme.caption().copyWith(fontSize: Responsive.sp(9)),
-            ),
-          ],
-          SizedBox(height: Responsive.h(14)),
           SizedBox(
-            height: Responsive.h(52),
+            height: Responsive.h(38),
             child: PageView.builder(
-              controller: _weeklyPageController,
-              onPageChanged: (idx) => setState(() => _activeWeekIndex = idx),
-              itemCount: maxWeeks + 1,
-              itemBuilder: (context, index) {
-                final int weekOffset = maxWeeks - index;
+            controller: _weeklyPageController,
+            itemCount: maxWeeks + 1,
+            itemBuilder: (context, index) {
+              final int weekOffset = maxWeeks - index;
 
-                return Row(
-                  children: days.map((d) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: days.map((d) {
                     final isToday = weekOffset == 0 && d == todayIndex;
                     final isFuture = weekOffset == 0 && d > todayIndex;
                     final progress = getQuestProgress(d, weekOffset);
@@ -548,28 +574,31 @@ class _HomePageState extends State<HomePage> {
                     // Avatar + Info Column
                     Row(
                       children: [
-                        Container(
-                          width: Responsive.w(56),
-                          height: Responsive.w(56),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(Responsive.r(16)),
-                            border: Border.all(color: AppTheme.accent, width: Responsive.dp(1.5)),
-                            image: _profileImagePath != null &&
-                                    _profileImagePath!.isNotEmpty &&
-                                    File(_profileImagePath!).existsSync()
-                                ? DecorationImage(
-                                    image: FileImage(File(_profileImagePath!)),
-                                    fit: BoxFit.cover,
-                                  )
+                        GestureDetector(
+                          onTap: _openProfileZoom,
+                          child: Container(
+                            width: Responsive.w(56),
+                            height: Responsive.w(56),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              borderRadius: BorderRadius.circular(Responsive.r(16)),
+                              border: Border.all(color: AppTheme.accent, width: Responsive.dp(1.5)),
+                              image: _profileImagePath != null &&
+                                      _profileImagePath!.isNotEmpty &&
+                                      File(_profileImagePath!).existsSync()
+                                  ? DecorationImage(
+                                      image: FileImage(File(_profileImagePath!)),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: _profileImagePath == null ||
+                                    _profileImagePath!.isEmpty ||
+                                    !File(_profileImagePath!).existsSync()
+                                ? Icon(Icons.person_rounded,
+                                    color: AppTheme.text3, size: Responsive.icon(32))
                                 : null,
                           ),
-                          child: _profileImagePath == null ||
-                                  _profileImagePath!.isEmpty ||
-                                  !File(_profileImagePath!).existsSync()
-                              ? Icon(Icons.person_rounded,
-                                  color: AppTheme.text3, size: Responsive.icon(32))
-                              : null,
                         ),
                         SizedBox(width: Responsive.w(16)),
                         Column(
@@ -756,9 +785,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
 
-                      // Talk Button in Player Card (Bottom Right, Weekend only)
-                      if (DateTime.now().weekday == 6 || DateTime.now().weekday == 7)
-                        Positioned(
+                      // Talk Button in Player Card
+                      Positioned(
                           top: Responsive.h(12),
                           left: Responsive.w(12),
                           child: SGTouchable(
@@ -801,7 +829,7 @@ class _HomePageState extends State<HomePage> {
             ),
 
             // Weekend Dialogue Panel
-            if ((DateTime.now().weekday == 6 || DateTime.now().weekday == 7) && _isDialogueOpen)
+            if (_isDialogueOpen)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: Responsive.fromLTRB(20, 0, 20, 16),
@@ -926,8 +954,6 @@ class _HomePageState extends State<HomePage> {
   );
 }
 }
-
-
 
 class _SleepZs extends StatefulWidget {
   const _SleepZs();

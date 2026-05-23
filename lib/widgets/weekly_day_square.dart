@@ -95,16 +95,7 @@ class WeeklyDaySquare extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (completed)
-                  Positioned(
-                    top: Responsive.h(3),
-                    right: Responsive.w(3),
-                    child: Icon(
-                      Icons.check_rounded,
-                      size: Responsive.icon(10),
-                      color: AppTheme.green,
-                    ),
-                  ),
+
               ],
             ),
           ),

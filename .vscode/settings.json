@@ -1,6 +1,16 @@
 {
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 500,
-  "dart.flutterHotReloadOnSave": "allIfDirty",
-  "dart.hotReloadOnSave": "allIfDirty"
+  "files.autoSave": "onFocusChange",
+  "files.autoSaveDelay": 50,
+  "dart.flutterHotReloadOnSave": true,
+  "dart.hotReloadOnSave": true,
+  "dart.enableFlutterHotReload": true,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Dart-Code.dart-code"
+  },
+  "editor.wordWrap": "on",
+  "dart.lineLength": 80,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.dartFixAll": true
+  }
 }

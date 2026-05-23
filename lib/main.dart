@@ -16,7 +16,7 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set system UI to transparent and edge-to-edge for immersive feel
+  // Set system UI to transparent and immersive (hides notch area)
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -27,8 +27,8 @@ Future<void> main() async {
     systemStatusBarContrastEnforced: false,
   ));
 
-  // Enable full edge-to-edge display
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // Enable immersiveSticky to hide notch and system UI
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   // Lock to portrait
   await SystemChrome.setPreferredOrientations([
@@ -48,7 +48,6 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Init error: $e');
   }
-
 
   runApp(const SoloGainzApp());
 }
@@ -103,7 +102,11 @@ class _AppRootState extends State<_AppRoot> {
   }
 
   Future<void> _afterSplash() async {
-    try { await Storage.checkDailyLoginReward(); } catch (e) { debugPrint('checkDailyLoginReward error: $e'); }
+    try {
+      await Storage.checkDailyLoginReward();
+    } catch (e) {
+      debugPrint('checkDailyLoginReward error: $e');
+    }
     _setState(Storage.isOnboarded() ? _AppState.shell : _AppState.onboarding);
   }
 
@@ -136,6 +139,7 @@ class AppShellState extends State<AppShell>
   void setIndex(int index) {
     if (mounted) setState(() => _idx = index);
   }
+
   late AnimationController _navAnimCtrl;
 
   // Pages are built lazily via AutomaticKeepAlive pattern
@@ -148,13 +152,14 @@ class AppShellState extends State<AppShell>
   ];
 
   List<Widget> get _pages => [
-    const RepaintBoundary(child: SGScreenEntrance(child: HomePage())),
-    const RepaintBoundary(child: SGScreenEntrance(child: QuestPage())),
-    const RepaintBoundary(child: SGScreenEntrance(child: DungeonPage())),
-    const RepaintBoundary(child: SGScreenEntrance(child: ShopPage())),
-    RepaintBoundary(
-        child: SGScreenEntrance(child: ProfilePage(onLogout: widget.onLogout))),
-  ];
+        const RepaintBoundary(child: SGScreenEntrance(child: HomePage())),
+        const RepaintBoundary(child: SGScreenEntrance(child: QuestPage())),
+        const RepaintBoundary(child: SGScreenEntrance(child: DungeonPage())),
+        const RepaintBoundary(child: SGScreenEntrance(child: ShopPage())),
+        RepaintBoundary(
+            child: SGScreenEntrance(
+                child: ProfilePage(onLogout: widget.onLogout))),
+      ];
 
   @override
   void initState() {
@@ -183,7 +188,8 @@ class AppShellState extends State<AppShell>
     return AnimatedBuilder(
       animation: AppTheme.isDarkNotifier,
       builder: (context, _) => ValueListenableBuilder(
-        valueListenable: Storage.watch(['is_navbar_floating', 'is_navbar_hidden']),
+        valueListenable:
+            Storage.watch(['is_navbar_floating', 'is_navbar_hidden']),
         builder: (context, _, __) {
           final isFloating = Storage.isNavbarFloating();
           final isHidden = Storage.isNavbarHidden();
@@ -206,7 +212,7 @@ class AppShellState extends State<AppShell>
                 backgroundColor: Colors.transparent,
                 extendBody: true,
                 body: SafeArea(
-                  top: true,
+                  top: false,
                   bottom: false,
                   child: IndexedStack(index: _idx, children: _pages),
                 ),
@@ -224,22 +230,34 @@ class AppShellState extends State<AppShell>
                       final borderColor = Colors.white.withValues(alpha: 0.22);
 
                       return Container(
-                        margin: EdgeInsets.fromLTRB(marginSide, 0, marginSide, _gap * t),
+                        margin: EdgeInsets.fromLTRB(
+                            marginSide, 0, marginSide, _gap * t),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(radius),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                             child: Container(
                               height: currentNavH,
-                              padding: EdgeInsets.only(bottom: bottomPadding * (1 - t)),
+                              padding: EdgeInsets.only(
+                                  bottom: bottomPadding * (1 - t)),
                               decoration: BoxDecoration(
                                 color: AppTheme.black,
                                 borderRadius: BorderRadius.circular(radius),
                                 border: Border(
-                                  top: BorderSide(color: borderColor, width: 1.2),
-                                  bottom: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
-                                  left: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
-                                  right: t > 0 ? BorderSide(color: borderColor, width: 1.2 * t) : BorderSide.none,
+                                  top: BorderSide(
+                                      color: borderColor, width: 1.2),
+                                  bottom: t > 0
+                                      ? BorderSide(
+                                          color: borderColor, width: 1.2 * t)
+                                      : BorderSide.none,
+                                  left: t > 0
+                                      ? BorderSide(
+                                          color: borderColor, width: 1.2 * t)
+                                      : BorderSide.none,
+                                  right: t > 0
+                                      ? BorderSide(
+                                          color: borderColor, width: 1.2 * t)
+                                      : BorderSide.none,
                                 ),
                               ),
                               child: child,
@@ -264,12 +282,17 @@ class AppShellState extends State<AppShell>
                                   color: sel ? AppTheme.accent : AppTheme.text3,
                                 ),
                                 SizedBox(height: Responsive.h(4)),
-                                Text(item.$3, style: GoogleFonts.outfit(
-                                  fontSize: Responsive.sp(10),
-                                  fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                                  color: sel ? AppTheme.accent : AppTheme.text3,
-                                  letterSpacing: 0.5,
-                                )),
+                                Text(item.$3,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: Responsive.sp(10),
+                                      fontWeight: sel
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: sel
+                                          ? AppTheme.accent
+                                          : AppTheme.text3,
+                                      letterSpacing: 0.5,
+                                    )),
                               ],
                             ),
                           ),
@@ -279,8 +302,7 @@ class AppShellState extends State<AppShell>
                   ),
                 ),
               ),
-
-             ],
+            ],
           );
         },
       ),

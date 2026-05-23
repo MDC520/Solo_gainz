@@ -5,7 +5,27 @@
       "name": "solo_gainz (debug)",
       "request": "launch",
       "type": "dart",
-      "program": "lib/main.dart"
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "showMemoryUsage": false,
+      "enableCodeMetrics": true
+    },
+    {
+      "name": "solo_gainz (profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "solo_gainz (release)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "release"
     }
   ]
+}
 }
