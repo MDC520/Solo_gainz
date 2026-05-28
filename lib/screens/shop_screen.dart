@@ -306,13 +306,9 @@ class _ShopPageState extends State<ShopPage> {
                             color: AppTheme.surface,
                             borderRadius: BorderRadius.circular(Responsive.r(10)),
                             border: Border.all(
-                                color: AppTheme.text1.withValues(alpha: 0.1),
-                                width: Responsive.dp(1)),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 8),
-                            ],
+                              color: AppTheme.accent,
+                              width: Responsive.dp(1.5),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,

@@ -4,7 +4,7 @@ import '../ui/theme.dart';
 enum LivelyBackgroundMode { normal, wood }
 
 /// LivelyBackground — "Cinematic Depth"
-/// 
+///
 /// A high-premium, immersive background for Solo Gainz.
 /// Supports both the standard cinematic aura mode and a premium wood texture mode for the Vault.
 class LivelyBackground extends StatefulWidget {
@@ -13,8 +13,8 @@ class LivelyBackground extends StatefulWidget {
   final LivelyBackgroundMode mode;
 
   const LivelyBackground({
-    super.key, 
-    required this.child, 
+    super.key,
+    required this.child,
     this.isMoving = true,
     this.mode = LivelyBackgroundMode.normal,
   });
@@ -26,9 +26,8 @@ class LivelyBackground extends StatefulWidget {
 class _LivelyBackgroundState extends State<LivelyBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  int _completedCycles = 0;
 
-  double get _effectiveT => _completedCycles + _ctrl.value;
+  double get _effectiveT => _ctrl.value;
 
   @override
   void initState() {
@@ -37,11 +36,6 @@ class _LivelyBackgroundState extends State<LivelyBackground>
       vsync: this,
       duration: const Duration(seconds: 25),
     );
-    _ctrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _completedCycles++;
-      }
-    });
     if (widget.isMoving) {
       _ctrl.repeat();
     }
@@ -96,8 +90,8 @@ class _LivelyBackgroundState extends State<LivelyBackground>
                   end: Alignment.bottomCenter,
                   colors: [
                     const Color(0xFFF1F5F9), // Slate 100
-                    AppTheme.black,          // Slate 200 (Silver Light)
-                    AppTheme.dark,           // Slate 300 (Silver Dark)
+                    AppTheme.black, // Slate 200 (Silver Light)
+                    AppTheme.dark, // Slate 300 (Silver Dark)
                   ],
                   stops: const [0.0, 0.4, 1.0],
                 ),
@@ -130,8 +124,12 @@ class _LivelyBackgroundState extends State<LivelyBackground>
                   radius: 1.5,
                   colors: [
                     Colors.transparent,
-                    isDark ? Colors.black.withValues(alpha: 0.4) : AppTheme.text1.withValues(alpha: 0.05),
-                    isDark ? Colors.black.withValues(alpha: 0.8) : AppTheme.text1.withValues(alpha: 0.1),
+                    isDark
+                        ? Colors.black.withValues(alpha: 0.4)
+                        : AppTheme.text1.withValues(alpha: 0.05),
+                    isDark
+                        ? Colors.black.withValues(alpha: 0.8)
+                        : AppTheme.text1.withValues(alpha: 0.1),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
@@ -147,17 +145,17 @@ class _LivelyBackgroundState extends State<LivelyBackground>
   }
 
   Widget _buildWoodBackground(bool isDark) {
-    final List<Color> woodColors = isDark 
-      ? [
-          const Color(0xFF2D1B18), // Deep Mahogany
-          const Color(0xFF3E2723), // Dark Coffee
-          const Color(0xFF2B1A17), // Charcoal Wood
-        ]
-      : [
-          const Color(0xFFD7B899), // Light Oak
-          const Color(0xFFEBC9A0), // Pine
-          const Color(0xFFC19A6B), // Golden Wood
-        ];
+    final List<Color> woodColors = isDark
+        ? [
+            const Color(0xFF2D1B18), // Deep Mahogany
+            const Color(0xFF3E2723), // Dark Coffee
+            const Color(0xFF2B1A17), // Charcoal Wood
+          ]
+        : [
+            const Color(0xFFD7B899), // Light Oak
+            const Color(0xFFEBC9A0), // Pine
+            const Color(0xFFC19A6B), // Golden Wood
+          ];
 
     return Stack(
       children: [
@@ -173,7 +171,7 @@ class _LivelyBackgroundState extends State<LivelyBackground>
             ),
           ),
         ),
-        
+
         // 2. Wood Planks and Grain Layer
         Positioned.fill(
           child: CustomPaint(
@@ -191,7 +189,9 @@ class _LivelyBackgroundState extends State<LivelyBackground>
                   radius: 1.4,
                   colors: [
                     Colors.transparent,
-                    isDark ? Colors.black.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.2),
+                    isDark
+                        ? Colors.black.withValues(alpha: 0.6)
+                        : Colors.black.withValues(alpha: 0.2),
                   ],
                   stops: const [0.2, 1.0],
                 ),
@@ -202,7 +202,9 @@ class _LivelyBackgroundState extends State<LivelyBackground>
 
         // 4. Subtle Top Light highlight
         Positioned(
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           height: 150,
           child: IgnorePointer(
             child: Container(
@@ -211,7 +213,9 @@ class _LivelyBackgroundState extends State<LivelyBackground>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.2),
+                    isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.white.withValues(alpha: 0.2),
                     Colors.transparent,
                   ],
                 ),
@@ -263,7 +267,8 @@ class _CinematicDepthPainter extends CustomPainter {
       _drawAura(canvas, size, color: AppTheme.purple, offset: 0.5);
     } else {
       _drawVeil(canvas, size, speed: 0.03, opacity: 0.015, color: Colors.black);
-      _drawVeil(canvas, size, speed: 0.05, opacity: 0.01, color: const Color(0xFF1D4ED8));
+      _drawVeil(canvas, size,
+          speed: 0.05, opacity: 0.01, color: const Color(0xFF1D4ED8));
     }
 
     // ── 5. Drifting Power Particles / Embers (cached) ──
@@ -277,9 +282,9 @@ class _CinematicDepthPainter extends CustomPainter {
   // ── paint helpers ──
 
   Alignment _offsetToAlignment(Offset pos, Size size) => Alignment(
-    (pos.dx / size.width) * 2 - 1,
-    (pos.dy / size.height) * 2 - 1,
-  );
+        (pos.dx / size.width) * 2 - 1,
+        (pos.dy / size.height) * 2 - 1,
+      );
 
   void _drawDeepAura(Canvas canvas, Size size) {
     final center1 = Offset(
@@ -305,9 +310,12 @@ class _CinematicDepthPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
     }
 
-    drawNebula(center1, isDark ? AppTheme.accent : const Color(0xFF00E676), isDark ? 0.16 : 0.06);
-    drawNebula(center2, isDark ? AppTheme.purple : const Color(0xFFD500F9), isDark ? 0.16 : 0.06);
-    drawNebula(center3, isDark ? AppTheme.cyan : const Color(0xFF00BCD4), isDark ? 0.10 : 0.04);
+    drawNebula(center1, isDark ? AppTheme.accent : const Color(0xFF00E676),
+        isDark ? 0.16 : 0.06);
+    drawNebula(center2, isDark ? AppTheme.purple : const Color(0xFFD500F9),
+        isDark ? 0.16 : 0.06);
+    drawNebula(center3, isDark ? AppTheme.cyan : const Color(0xFF00BCD4),
+        isDark ? 0.10 : 0.04);
   }
 
   void _drawCinematicRays(Canvas canvas, Size size) {
@@ -321,7 +329,8 @@ class _CinematicDepthPainter extends CustomPainter {
           end: Alignment.bottomRight,
           colors: [
             Colors.transparent,
-            (i % 2 == 0 ? AppTheme.accent : AppTheme.purple).withValues(alpha: isDark ? 0.06 : 0.02),
+            (i % 2 == 0 ? AppTheme.accent : AppTheme.purple)
+                .withValues(alpha: isDark ? 0.06 : 0.02),
             Colors.transparent,
           ],
           stops: const [0.3, 0.5, 0.7],
@@ -329,7 +338,10 @@ class _CinematicDepthPainter extends CustomPainter {
       canvas.save();
       canvas.translate(sweepPos, 0);
       canvas.rotate(angle);
-      canvas.drawRect(Rect.fromLTWH(-size.width, -size.height, size.width * 2, size.height * 2), rayPaint);
+      canvas.drawRect(
+          Rect.fromLTWH(
+              -size.width, -size.height, size.width * 2, size.height * 2),
+          rayPaint);
       canvas.restore();
     }
   }
@@ -338,11 +350,14 @@ class _CinematicDepthPainter extends CustomPainter {
     final int count = 12;
     for (int i = 0; i < count; i++) {
       final double phase = (t + i * 0.08) % 1.0;
-      final double x = size.width * (0.1 + 0.8 * ((phase * 1.7 + i * 0.13) % 1.0));
-      final double y = size.height * (0.1 + 0.7 * ((phase * 0.9 + i * 0.21) % 1.0));
+      final double x =
+          size.width * (0.1 + 0.8 * ((phase * 1.7 + i * 0.13) % 1.0));
+      final double y =
+          size.height * (0.1 + 0.7 * ((phase * 0.9 + i * 0.21) % 1.0));
       final double alpha = 0.02 + 0.03 * math.sin(phase * math.pi * 2);
       final paint = Paint()
-        ..color = (isDark ? Colors.white : Colors.black).withValues(alpha: alpha)
+        ..color =
+            (isDark ? Colors.white : Colors.black).withValues(alpha: alpha)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2);
       canvas.drawCircle(Offset(x, y), 1.5, paint);
     }
@@ -351,23 +366,33 @@ class _CinematicDepthPainter extends CustomPainter {
   void _drawCachedParticles(Canvas canvas, Size size) {
     for (int i = 0; i < _particles.length; i++) {
       final p = _particles[i];
-      final double yPos = (p.startY * size.height - (t * p.speed * size.height)) % size.height;
-      final double xPos = (p.startX * size.width + math.sin(t * 2 * math.pi * p.wobbleFreq + p.hueShift * math.pi * 2) * p.wobbleAmp) % size.width;
+      final double yPos =
+          (p.startY * size.height - (t * p.speed * size.height)) % size.height;
+      final double xPos = (p.startX * size.width +
+              math.sin(t * 2 * math.pi * p.wobbleFreq +
+                      p.hueShift * math.pi * 2) *
+                  p.wobbleAmp) %
+          size.width;
 
       double opacity = 0.10 + 0.15 * math.sin(t * math.pi * 2 + i);
-      final centerDist = (Offset(xPos, yPos) - Offset(size.width / 2, size.height / 2)).distance;
-      final maxDist = math.sqrt(size.width * size.width + size.height * size.height) / 2;
+      final centerDist =
+          (Offset(xPos, yPos) - Offset(size.width / 2, size.height / 2))
+              .distance;
+      final maxDist =
+          math.sqrt(size.width * size.width + size.height * size.height) / 2;
       opacity *= (1.0 - (centerDist / maxDist).clamp(0.0, 0.8));
 
       final particlePaint = Paint()
-        ..color = (i % 2 == 0 ? AppTheme.accent : AppTheme.purple).withValues(alpha: opacity)
+        ..color = (i % 2 == 0 ? AppTheme.accent : AppTheme.purple)
+            .withValues(alpha: opacity)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.radius * 0.5);
 
       canvas.drawCircle(Offset(xPos, yPos), p.radius, particlePaint);
     }
   }
 
-  void _drawAura(Canvas canvas, Size size, {required Color color, required double offset}) {
+  void _drawAura(Canvas canvas, Size size,
+      {required Color color, required double offset}) {
     final pulse = (math.sin((t + offset) * 2 * math.pi) + 1) / 2;
     final paint = Paint()
       ..shader = RadialGradient(
@@ -384,7 +409,9 @@ class _CinematicDepthPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
   }
 
-  void _drawVeil(Canvas canvas, Size size, {
+  void _drawVeil(
+    Canvas canvas,
+    Size size, {
     required double speed,
     required double opacity,
     required Color color,
@@ -413,12 +440,18 @@ class _CinematicDepthPainter extends CustomPainter {
         colors: [
           Colors.transparent,
           Colors.transparent,
-          isDark ? Colors.black.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.01),
-          isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.03),
+          isDark
+              ? Colors.black.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.01),
+          isDark
+              ? Colors.black.withValues(alpha: 0.3)
+              : Colors.black.withValues(alpha: 0.03),
         ],
         stops: const [0.0, 0.4, 0.7, 1.0],
-      ).createShader(Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY));
-    canvas.drawRect(Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY), paint);
+      ).createShader(
+          Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY));
+    canvas.drawRect(
+        Rect.fromLTWH(0, horizonY, size.width, size.height - horizonY), paint);
   }
 
   void _drawBreathingCore(Canvas canvas, Size size) {
@@ -430,8 +463,8 @@ class _CinematicDepthPainter extends CustomPainter {
         colors: [
           Colors.transparent,
           isDark
-            ? AppTheme.accent.withValues(alpha: 0.01 + (pulse * 0.02))
-            : Colors.black.withValues(alpha: 0.002 + (pulse * 0.005)),
+              ? AppTheme.accent.withValues(alpha: 0.01 + (pulse * 0.02))
+              : Colors.black.withValues(alpha: 0.002 + (pulse * 0.005)),
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -439,7 +472,8 @@ class _CinematicDepthPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CinematicDepthPainter old) => old.t != t || old.isDark != isDark;
+  bool shouldRepaint(_CinematicDepthPainter old) =>
+      old.t != t || old.isDark != isDark;
 }
 
 class _ParticleData {
@@ -468,12 +502,16 @@ class _WoodGrainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final plankPaint = Paint()
-      ..color = isDark ? Colors.black.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.08)
+      ..color = isDark
+          ? Colors.black.withValues(alpha: 0.15)
+          : Colors.black.withValues(alpha: 0.08)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
     final grainPaint = Paint()
-      ..color = isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.03)
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.02)
+          : Colors.black.withValues(alpha: 0.03)
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
 

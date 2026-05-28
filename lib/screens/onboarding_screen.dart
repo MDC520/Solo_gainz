@@ -1365,34 +1365,17 @@ class RankDeck extends StatelessWidget {
             ),
             // The Shields
             ...List.generate(_ranks.length, (i) {
-              // We want SS Rank (last) to be in the front, so we order them
-              // but for a fan, usually center is front.
-              // Let's make it a progressive fan where the right-most (highest ranks)
-              // are slightly more prominent or the center is the hero.
               final indexOffset = i - (_ranks.length - 1) / 2;
               final xOffset = indexOffset * 36.0;
-              final rotation = indexOffset * 0.14;
-              final yOffset = indexOffset.abs() * 12.0;
-              final scale = 1.0 - (indexOffset.abs() * 0.05);
-              final opacity = 1.0 - (indexOffset.abs() * 0.1);
 
               return Positioned(
                 left: centerX + xOffset - 60,
-                top: 20 + yOffset,
-                child: Opacity(
-                  opacity: opacity.clamp(0.5, 1.0),
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Transform.rotate(
-                      angle: rotation,
-                      child: Image.asset(
-                        'assets/Rank Shields/${_ranks[i]}',
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
+                top: 50,
+                child: Image.asset(
+                  'assets/Rank Shields/${_ranks[i]}',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.contain,
                 ),
               );
             }),

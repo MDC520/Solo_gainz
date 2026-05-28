@@ -11,6 +11,6 @@
   "editor.wordWrap": "on",
   "dart.lineLength": 80,
   "editor.codeActionsOnSave": {
-    "source.fixAll.dartFixAll": true
+    "source.fixAll.dartFixAll": "explicit"
   }
 }
