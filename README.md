@@ -23,11 +23,36 @@
 
 ---
 
+## 📋 Table of Contents
+- [Overview](#-overview)
+- [Features](#-features)
+- [Screenshots & Demo](#-screenshots--demo)
+- [Quick Start](#-quick-start)
+- [Screens](#-screens)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Installation](#-installation)
+- [Game Controls](#-game-controls)
+- [Building & Deployment](#-building--deployment)
+- [Development](#-development)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Contact](#-contact)
+
+---
+
 ## ✦ Overview
 
 **Solo Gainz** is a Flutter mobile app that gamifies your fitness journey. Complete daily quests, earn XP and gold, open loot chests, and take your character into a real-time combat training arena. The more you train in real life, the stronger your in-game avatar becomes.
 
+### 🔒 Privacy First
 All data is stored **100% locally on-device** — no account needed, no cloud sync, full privacy.
+
+### 🎮 Game Philosophy
+- **Reward real fitness** — Your workouts directly improve your character's stats
+- **No pay-to-win** — All content accessible through normal gameplay
+- **Solo experience** — Play entirely offline or compete with friends via LAN
+- **Pixel-perfect UI** — Retro aesthetic with modern UX
 
 ---
 
@@ -41,6 +66,7 @@ All data is stored **100% locally on-device** — no account needed, no cloud sy
 | **XP & Leveling** | Gain XP from quests, level up your character rank |
 | **Rank System** | Ascend from E → D → C → B → A → S → SS rank |
 | **Notifications** | Daily reminders to keep your streak alive |
+| **Statistics** | Track XP earned, quests completed, streak data |
 
 ### ⚔️ Combat Dungeon
 | Feature | Description |
@@ -66,6 +92,38 @@ All data is stored **100% locally on-device** — no account needed, no cloud sy
 - **Pixel-art sprite animations** — frame-by-frame PNG animation system
 - **Cyberpunk aesthetic** — neon accents, grid overlays, glowing gradients
 - **Responsive layout** — adapts to phones and tablets
+
+---
+
+## ✦ Screenshots & Demo
+
+| Screen | Description |
+|---|---|
+| **Home** | Dashboard with stats, daily quests, and weekly streak calendar |
+| **Combat Arena** | Real-time 2D training with physics-based combat |
+| **Shop** | Buy cosmetics, chests, and premium items |
+| **Inventory** | Manage items, chests, and rewards |
+| **Profile** | Avatar customization and character stats |
+| **PVP** | Local LAN multiplayer fights |
+
+---
+
+## ✦ Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/MDC520/Solo_gainz.git
+cd Solo_gainz
+
+# Install dependencies
+flutter pub get
+
+# Run the app on a connected device or emulator
+flutter run
+
+# Watch for changes during development
+flutter run --verbose
+```
 
 ---
 
@@ -117,6 +175,20 @@ lib/
 │   ├── player.dart           # Pixel-art sprite animation player
 │   └── weekly_day_square.dart  # Calendar day tile
 └── main.dart            # App entry point, init, navigation shell
+
+assets/
+├── Chests/              # Loot chest animation frames
+│   ├── Wooden Chest/
+│   ├── Iron Chest/
+│   ├── Gold Chest/
+│   └── Mysterious Chest/
+└── Player Model/        # 24+ character animation sets
+    ├── Idle/
+    ├── Walk/
+    ├── Run/
+    ├── Jump/
+    ├── Punch01-03/
+    └── ... (20+ more animations)
 ```
 
 ---
@@ -137,22 +209,49 @@ lib/
 | **Networking** | Raw TCP/UDP sockets (dart:io) for LAN PVP |
 | **State Management** | Flutter setState + ValueNotifier + Hive listeners |
 | **Animation** | Flutter Ticker + AnimationController |
+| **Physics** | Custom 2D physics engine |
 
 ---
 
 ## ✦ Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/solo_gainz.git
-cd solo_gainz
+### Prerequisites
+- **Flutter** 3.0.0+ ([Install Flutter](https://flutter.dev/docs/get-started/install))
+- **Dart** 3.0.0+ (comes with Flutter)
+- **Android Studio** or **Xcode** for device/emulator
+- **Git** for version control
 
-# Install dependencies
+### Step-by-Step
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/MDC520/Solo_gainz.git
+cd Solo_gainz
+
+# 2. Install dependencies
 flutter pub get
 
-# Run the app
+# 3. Run code generation (for Hive adapters)
+flutter pub run build_runner build
+
+# 4. Run the app
 flutter run
+
+# 5. (Optional) Run with verbose logging
+flutter run --verbose
 ```
+
+### Platform-Specific Notes
+
+#### Android
+- Minimum SDK: API 21+
+- Requires permissions: CAMERA, SCHEDULE_EXACT_ALARM, POST_NOTIFICATIONS
+- Secure storage uses Android Keystore
+
+#### iOS
+- Minimum deployment target: iOS 11.0+
+- Requires permissions: Camera
+- Secure storage uses Keychain
 
 > **Note:** The app is designed for mobile (Android/iOS). Desktop/web may have limited functionality due to platform-specific plugins (secure storage, notifications, TCP sockets).
 
@@ -177,26 +276,155 @@ flutter run
 └─────────────────────────────────────────────────┘
 ```
 
+### Combat System
+- **Hit Detection**: Frame-by-frame collider checking
+- **Damage Scaling**: Combos deal increasing damage
+- **Knockback**: Physics-based collision responses
+- **AI Behavior**: Clone mimics player movements with slight delays
+
 ---
 
-## ✦ Building
+## ✦ Building & Deployment
 
+### Debug Build
 ```bash
-# Debug build
 flutter run --debug
+```
 
-# Release APK (Android)
+### Release Builds
+
+#### Android APK
+```bash
 flutter build apk --release
 
-# Release IPA (iOS)
+# Output: build/app/outputs/flutter-app.apk
+```
+
+#### Android App Bundle (for Play Store)
+```bash
+flutter build appbundle --release
+
+# Output: build/app/outputs/bundle/release/app-release.aab
+```
+
+#### iOS IPA
+```bash
 flutter build ios --release
 
-# Generate launcher icons
-flutter pub run flutter_launcher_icons
-
-# Generate Hive adapters
-flutter pub run build_runner build
+# Output: build/ios/iphoneos/Runner.app
+# Use Xcode to archive and export for App Store or Ad Hoc distribution
 ```
+
+### Icon Generation
+```bash
+flutter pub run flutter_launcher_icons
+```
+
+### Code Generation
+```bash
+flutter pub run build_runner build
+
+# Watch for changes
+flutter pub run build_runner watch
+```
+
+---
+
+## ✦ Development
+
+### Hot Reload
+During development, use hot reload to see changes instantly:
+
+```bash
+# In the running app's terminal, press 'r'
+r           # Hot reload (maintains app state)
+R           # Hot restart (clears state)
+q           # Quit
+```
+
+### Project Structure Best Practices
+- **Keep screens isolated**: Each screen should be self-contained
+- **Reuse widgets**: Place common UI components in `widgets/`
+- **Service layer**: Platform integrations go in `services/`
+- **Model separation**: Business logic in `models/`, UI state in screens
+
+### Testing
+```bash
+# Run all tests
+flutter test
+
+# Run specific test file
+flutter test test/models/storage_test.dart
+
+# Run with coverage
+flutter test --coverage
+```
+
+### Code Analysis
+```bash
+# Analyze code for issues
+flutter analyze
+
+# Format code
+dart format lib/
+
+# Fix common issues
+dart fix --apply
+```
+
+---
+
+## ✦ Contributing
+
+Contributions are welcome! To contribute:
+
+1. **Fork** the repository
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Commit changes** (`git commit -m 'Add amazing feature'`)
+4. **Push to branch** (`git push origin feature/amazing-feature`)
+5. **Open a Pull Request**
+
+### Code Style
+- Follow [Dart Style Guide](https://dart.dev/guides/language/effective-dart/style)
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Keep functions small and focused
+
+---
+
+## ✦ License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+You are free to:
+- ✓ Use this project commercially
+- ✓ Modify and distribute
+- ✓ Use privately
+
+---
+
+## ✦ Contact
+
+**Created by:** MDC520  
+**Repository:** [https://github.com/MDC520/Solo_gainz](https://github.com/MDC520/Solo_gainz)
+
+### Support
+- 📧 Open an issue on GitHub for bug reports and feature requests
+- 💬 Discussions available on GitHub for general questions
+- 🎮 Share your achievements and gameplay videos!
+
+---
+
+## ✦ Acknowledgments
+
+- **Flutter Team** for the amazing framework
+- **Hive Database** for local data persistence
+- **Community Contributors** for feedback and support
+- **Pixel Art Community** for inspiration
+
+---
+
+**Made with ❤️ for fitness enthusiasts who love gaming**
 
 ---
 
