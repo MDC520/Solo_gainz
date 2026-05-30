@@ -4,7 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/storage.dart';
 import '../ui/theme.dart';
@@ -258,7 +260,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 
       if (mounted) {
         setState(() {});
-        _xpDialog(q.xpReward);
       }
     } catch (e) {
       debugPrint('Error completing quest: $e');
@@ -339,7 +340,6 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
 
       if (mounted) {
         setState(() {});
-        _xpDialog(q.xpReward);
       }
     } catch (e) {
       debugPrint('Error completing custom quest: $e');
@@ -877,54 +877,91 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
                 itemBuilder: (ctx, i) {
                   final ex = available[i];
                   final isTimer = ex.system == 'timer';
-                  return SGTouchable(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _applyExerciseChange(index, ex);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.line, width: 1),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color:
-                                  (isTimer ? AppTheme.amber : AppTheme.accent)
-                                      .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              isTimer ? Icons.timer : Icons.fitness_center,
-                              color: isTimer ? AppTheme.amber : AppTheme.accent,
-                              size: 18,
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.line, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SGTouchable(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _applyExerciseChange(index, ex);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: (isTimer
+                                              ? AppTheme.amber
+                                              : AppTheme.accent)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      isTimer
+                                          ? Icons.timer
+                                          : Icons.fitness_center,
+                                      color: isTimer
+                                          ? AppTheme.amber
+                                          : AppTheme.accent,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(ex.name, style: AppTheme.h3()),
+                                        Text(
+                                          isTimer
+                                              ? 'Timer-based'
+                                              : 'Rep-based',
+                                          style: AppTheme.caption(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(ex.name, style: AppTheme.h3()),
-                                Text(
-                                  isTimer ? 'Timer-based' : 'Rep-based',
-                                  style: AppTheme.caption(),
-                                ),
-                              ],
+                        ),
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: AppTheme.line,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: SGTouchable(
+                            onTap: () => _showExerciseInfoSheet(context, ex),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accent.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.info_outline_rounded,
+                                color: AppTheme.accent,
+                                size: 18,
+                              ),
                             ),
                           ),
-                          Icon(Icons.chevron_right,
-                              color: AppTheme.text3, size: 20),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -934,6 +971,300 @@ class _QuestPageState extends State<QuestPage> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  void _showExerciseInfoSheet(BuildContext context, Exercise ex) {
+    final isTimer = ex.system == 'timer';
+    final thumbnailUrl = ex.youtubeThumbnailUrl;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.bg.withValues(alpha: 0.9),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(
+                color: AppTheme.text1.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.glassBorder,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: (isTimer ? AppTheme.amber : AppTheme.accent)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: (isTimer ? AppTheme.amber : AppTheme.accent)
+                                  .withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Icon(
+                            isTimer ? Icons.timer : Icons.fitness_center,
+                            color: isTimer ? AppTheme.amber : AppTheme.accent,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ex.name,
+                                style: AppTheme.h1().copyWith(
+                                  fontSize: 20,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              Text(
+                                isTimer ? 'Timer-based Exercise' : 'Rep-based Exercise',
+                                style: AppTheme.caption(color: AppTheme.text2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'INSTRUCTION',
+                      style: AppTheme.label(color: AppTheme.text3).copyWith(
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.glassBorder.withValues(alpha: 0.5),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        ex.description.isNotEmpty
+                            ? ex.description
+                            : 'Perform this exercise with controlled movements. Ensure proper breathing and body alignment for maximum gains.',
+                        style: AppTheme.body(color: AppTheme.text1).copyWith(
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (thumbnailUrl != null && ex.youtubeUrl.isNotEmpty) ...[
+                      Text(
+                        'VIDEO TUTORIAL',
+                        style: AppTheme.label(color: AppTheme.text3).copyWith(
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SGTouchable(
+                        onTap: () => _launchYoutubeUrl(ex.youtubeUrl),
+                        child: Container(
+                          height: 180,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppTheme.glassBorder,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  thumbnailUrl,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 480,
+                                  cacheHeight: 270,
+                                  loadingBuilder: (ctx, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: AppTheme.surface,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              AppTheme.accent,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (ctx, error, stackTrace) => Container(
+                                    color: AppTheme.surface,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.video_library,
+                                        color: AppTheme.text3,
+                                        size: 40,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.6),
+                                        Colors.transparent,
+                                        Colors.black.withValues(alpha: 0.6),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                  ),
+                                ),
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.9),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.red.withValues(alpha: 0.5),
+                                          blurRadius: 12,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 32,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 12,
+                                  left: 16,
+                                  right: 16,
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.ondemand_video_rounded,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Watch on YouTube',
+                                        style: AppTheme.label(color: Colors.white).copyWith(
+                                          fontSize: 12,
+                                          shadows: [
+                                            const Shadow(
+                                              color: Colors.black,
+                                              offset: Offset(0, 1),
+                                              blurRadius: 4,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    SGButton(
+                      label: 'BACK TO CHOICES',
+                      height: 48,
+                      onTap: () => Navigator.pop(ctx),
+                      customColor: const Color(0xFF2563EB),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchYoutubeUrl(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      
+      // 1. Try to open the URL directly in the native YouTube app
+      bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+      
+      // 2. If native app is not installed, open the default browser instead
+      if (!launched) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error launching YouTube natively, trying web fallback: $e');
+      try {
+        final fallbackUri = Uri.parse(url);
+        await launchUrl(fallbackUri);
+      } catch (err) {
+        debugPrint('Ultimate launch fallback error: $err');
+      }
+    }
   }
 
   void _applyExerciseChange(int index, Exercise ex) {
@@ -1501,23 +1832,60 @@ class _QuestCard extends StatefulWidget {
   State<_QuestCard> createState() => _QuestCardState();
 }
 
-class _QuestCardState extends State<_QuestCard> {
+class _QuestCardState extends State<_QuestCard>
+    with TickerProviderStateMixin {
   Timer? _timer;
   bool _isRunning = false;
   bool _isEditingLocal = false;
   Timer? _staggerTimer;
 
+  // ── Completed card tap overlay ──
+  late final AnimationController _nameOverlayCtrl;
+  late final Animation<double> _nameOpacity;
+  late final Animation<double> _nameScale;
+  Timer? _nameHideTimer;
+  bool _nameLocked = false; // true while overlay is visible → blocks re-tap
+
   @override
   void initState() {
     super.initState();
     _isEditingLocal = widget.isEditing;
+    _nameOverlayCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+      reverseDuration: const Duration(milliseconds: 600),
+    );
+    _nameOpacity = CurvedAnimation(
+      parent: _nameOverlayCtrl,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+    _nameScale = Tween<double>(begin: 0.72, end: 1.0).animate(
+      CurvedAnimation(parent: _nameOverlayCtrl, curve: Curves.easeOutBack),
+    );
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _staggerTimer?.cancel();
+    _nameHideTimer?.cancel();
+    _nameOverlayCtrl.dispose();
     super.dispose();
+  }
+
+  void _onCompletedTap() {
+    if (_nameLocked) return; // ignore taps while overlay is showing
+    _nameLocked = true;
+    HapticFeedback.mediumImpact();
+    _nameOverlayCtrl.forward(from: 0);
+    _nameHideTimer?.cancel();
+    _nameHideTimer = Timer(const Duration(milliseconds: 3000), () {
+      if (!mounted) return;
+      _nameOverlayCtrl.reverse().whenComplete(() {
+        if (mounted) setState(() => _nameLocked = false); // unlock after fade-out
+      });
+    });
   }
 
   void _toggleTimer() {
@@ -1544,23 +1912,80 @@ class _QuestCardState extends State<_QuestCard> {
   }
 
   void _confirmCompletion() {
+    final quest = widget.quest;
+    final xp = quest.xpReward;
+
     showCupertinoDialog(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: Text('Complete Mission?', style: AppTheme.h2()),
-        content: Text(
-          'Are you ready to claim your rewards for ${widget.quest.questName}?',
-          style: AppTheme.body(),
+        title: Column(
+          children: [
+            Icon(
+              Icons.stars_rounded,
+              size: 40,
+              color: AppTheme.amber,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Claim Your Rewards!',
+              style: AppTheme.h2().copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Are you ready to finalize this mission?',
+                style: AppTheme.caption(color: AppTheme.text3),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.amber.withValues(alpha: 0.3),
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '+$xp XP',
+                      style: AppTheme.h2(color: AppTheme.amber).copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'for completing ${quest.questName}',
+                style: AppTheme.body().copyWith(fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
         actions: [
           CupertinoDialogAction(
-            child: Text('Cancel', style: AppTheme.label(color: AppTheme.text2)),
+            child: Text(
+              'Cancel',
+              style: AppTheme.label(color: AppTheme.text2),
+            ),
             onPressed: () => Navigator.pop(ctx),
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
             child: Text(
-              'Confirm',
+              'Claim',
               style: AppTheme.label(color: AppTheme.accent),
             ),
             onPressed: () {
@@ -1631,40 +2056,111 @@ class _QuestCardState extends State<_QuestCard> {
       child: widget.quest.completed
           ? ShatterWidget(
               isShattered: widget.isShattering,
-              child: Container(
-                key: const ValueKey('done'),
-                height: 110,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.green, Color(0xFF0D9488)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: GestureDetector(
+                onTap: _onCompletedTap,
+                child: Container(
+                  key: const ValueKey('done'),
+                  height: 110,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF00B8D4), Color(0xFF0077B6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00B8D4).withValues(alpha: 0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFFE2E8F0),
-                    width: 3.0,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.elasticOut,
-                        builder: (ctx, val, child) => Transform.scale(
-                          scale: val,
-                          child: const Icon(
-                            Icons.check_circle_outline,
-                            color: Colors.white,
-                            size: 52,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Stack(
+                      children: [
+                        // subtle diagonal shimmer
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.10),
+                                  Colors.white.withValues(alpha: 0.0),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        // check icon
+                        Center(
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 800),
+                            curve: Curves.elasticOut,
+                            builder: (ctx, val, child) => Transform.scale(
+                              scale: val,
+                              child: const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 52,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // ── Ghost quest-name overlay ──
+                        Positioned.fill(
+                          child: FadeTransition(
+                            opacity: _nameOpacity,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                child: Container(
+                                  color: Colors.black.withValues(alpha: 0.35),
+                                  alignment: Alignment.center,
+                                  child: ScaleTransition(
+                                    scale: _nameScale,
+                                    child: Text(
+                                      widget.quest.questName,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.6,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0xFF00B8D4),
+                                            blurRadius: 18,
+                                          ),
+                                          Shadow(
+                                            color: Colors.black54,
+                                            blurRadius: 6,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             )
@@ -1745,14 +2241,29 @@ class _QuestCardState extends State<_QuestCard> {
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5)),
                         SizedBox(height: Responsive.h(2)),
-                        Text(
-                          isTimer
-                              ? '${_formatTime(quest.currentProgress)} / ${_formatTime(quest.maxGoal)}'
-                              : isKm
-                                  ? '${quest.currentProgress} / ${quest.maxGoal} km'
-                                  : '${quest.currentProgress} / ${quest.maxGoal} reps',
-                          style: AppTheme.caption(color: AppTheme.text2),
-                        ),
+                        if (isTimer)
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppTheme.amber.withValues(alpha: 0.7),
+                                  width: Responsive.dp(2.5),
+                                ),
+                              ),
+                            ),
+                            padding: EdgeInsets.only(bottom: Responsive.h(2)),
+                            child: Text(
+                              '${_formatTime(quest.currentProgress)} / ${_formatTime(quest.maxGoal)}',
+                              style: AppTheme.caption(color: AppTheme.text2),
+                            ),
+                          )
+                        else
+                          Text(
+                            isKm
+                                ? '${quest.currentProgress} / ${quest.maxGoal} km'
+                                : '${quest.currentProgress} / ${quest.maxGoal} reps',
+                            style: AppTheme.caption(color: AppTheme.text2),
+                          ),
                       ],
                     ),
                   ),
